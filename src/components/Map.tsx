@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,14 +23,25 @@ export const Map: React.FC<MapProps> = ({
   const [map, setMap] = useState<any>(null);
 
   const initializeMap = async () => {
-    if (!mapContainer.current || !mapboxToken) return;
+    console.log('initializeMap called');
+    console.log('mapContainer.current:', mapContainer.current);
+    console.log('mapboxToken:', mapboxToken);
+    
+    if (!mapContainer.current || !mapboxToken) {
+      console.log('Early return - missing container or token');
+      return;
+    }
 
     try {
+      console.log('Starting map initialization...');
+      
       // Dynamically import Mapbox GL
       const mapboxgl = (await import('mapbox-gl')).default;
       
       // Import CSS
       await import('mapbox-gl/dist/mapbox-gl.css');
+      
+      console.log('Mapbox GL imported successfully');
       
       mapboxgl.accessToken = mapboxToken;
       
@@ -42,6 +52,8 @@ export const Map: React.FC<MapProps> = ({
         zoom: 13,
         pitch: 0,
       });
+
+      console.log('Map instance created');
 
       // Add navigation controls
       mapInstance.addControl(
@@ -76,6 +88,8 @@ export const Map: React.FC<MapProps> = ({
       setMap(mapInstance);
       setShowTokenInput(false);
       toast.success('Map loaded successfully! Click "Start Planning" to begin.');
+      
+      console.log('Map initialization completed successfully');
       
     } catch (error) {
       console.error('Error initializing map:', error);
@@ -180,7 +194,10 @@ export const Map: React.FC<MapProps> = ({
             />
             
             <Button 
-              onClick={initializeMap}
+              onClick={() => {
+                console.log('Load Map button clicked');
+                initializeMap();
+              }}
               disabled={!mapboxToken}
               className="w-full bg-blue-600 hover:bg-blue-700"
             >

@@ -28,12 +28,14 @@ export const Map: React.FC<MapProps> = ({
 
     try {
       // Dynamically import Mapbox GL
-      const mapboxgl = await import('mapbox-gl');
+      const mapboxgl = (await import('mapbox-gl')).default;
+      
+      // Import CSS
       await import('mapbox-gl/dist/mapbox-gl.css');
       
-      mapboxgl.default.accessToken = mapboxToken;
+      mapboxgl.accessToken = mapboxToken;
       
-      const mapInstance = new mapboxgl.default.Map({
+      const mapInstance = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/outdoors-v12',
         center: [-122.4194, 37.7749], // San Francisco
@@ -43,12 +45,12 @@ export const Map: React.FC<MapProps> = ({
 
       // Add navigation controls
       mapInstance.addControl(
-        new mapboxgl.default.NavigationControl(),
+        new mapboxgl.NavigationControl(),
         'top-right'
       );
 
       // Add click handler for route planning
-      mapInstance.on('click', (e) => {
+      mapInstance.on('click', (e: any) => {
         if (!isPlanning) return;
         
         const newPoint: [number, number] = [e.lngLat.lng, e.lngLat.lat];
@@ -56,7 +58,7 @@ export const Map: React.FC<MapProps> = ({
         setRoutePoints(newRoutePoints);
         
         // Add marker for the new point
-        new mapboxgl.default.Marker({ color: '#ef4444' })
+        new mapboxgl.Marker({ color: '#ef4444' })
           .setLngLat([e.lngLat.lng, e.lngLat.lat])
           .addTo(mapInstance);
         

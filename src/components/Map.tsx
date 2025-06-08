@@ -1,7 +1,6 @@
-
-import React, { useState, useEffect } from 'react';
-import { MapContainer } from './MapContainer';
-import { TokenInput } from './TokenInput';
+import React, { useState, useEffect } from "react";
+import { MapContainer } from "./MapContainer";
+import { TokenInput } from "./TokenInput";
 
 interface MapProps {
   isPlanning: boolean;
@@ -10,20 +9,20 @@ interface MapProps {
   setDistance: (distance: number) => void;
 }
 
-export const Map: React.FC<MapProps> = ({ 
-  isPlanning, 
-  routePoints, 
-  setRoutePoints, 
-  setDistance 
+export const Map: React.FC<MapProps> = ({
+  isPlanning,
+  routePoints,
+  setRoutePoints,
+  setDistance,
 }) => {
-  const [mapboxToken, setMapboxToken] = useState('');
+  const [mapboxToken, setMapboxToken] = useState("");
   const [showTokenInput, setShowTokenInput] = useState(true);
-  const [map, setMap] = useState<any>(null);
+  const [map, setMap] = useState<unknown>(null);
 
   // Store map instance globally for cleanup operations
   useEffect(() => {
     if (map) {
-      (window as any).currentMapInstance = map;
+      (window as unknown).currentMapInstance = map;
     }
   }, [map]);
 
@@ -40,7 +39,7 @@ export const Map: React.FC<MapProps> = ({
           setShowTokenInput={setShowTokenInput}
         />
       </div>
-      
+
       {showTokenInput && (
         <TokenInput
           mapboxToken={mapboxToken}

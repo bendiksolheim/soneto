@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer } from './MapContainer';
 import { TokenInput } from './TokenInput';
-import { clearRouteAndMarkers } from '@/utils/mapUtils';
 
 interface MapProps {
   isPlanning: boolean;
@@ -21,24 +20,26 @@ export const Map: React.FC<MapProps> = ({
   const [showTokenInput, setShowTokenInput] = useState(true);
   const [map, setMap] = useState<any>(null);
 
-  // Clear route when routePoints is empty
+  // Store map instance globally for cleanup operations
   useEffect(() => {
-    if (map && routePoints.length === 0) {
-      clearRouteAndMarkers(map);
+    if (map) {
+      (window as any).currentMapInstance = map;
     }
-  }, [routePoints, map]);
+  }, [map]);
 
   return (
     <div className="w-full h-screen relative">
-      <MapContainer
-        mapboxToken={mapboxToken}
-        isPlanning={isPlanning}
-        routePoints={routePoints}
-        setRoutePoints={setRoutePoints}
-        setDistance={setDistance}
-        setMap={setMap}
-        setShowTokenInput={setShowTokenInput}
-      />
+      <div className="w-full h-full">
+        <MapContainer
+          mapboxToken={mapboxToken}
+          isPlanning={isPlanning}
+          routePoints={routePoints}
+          setRoutePoints={setRoutePoints}
+          setDistance={setDistance}
+          setMap={setMap}
+          setShowTokenInput={setShowTokenInput}
+        />
+      </div>
       
       {showTokenInput && (
         <TokenInput

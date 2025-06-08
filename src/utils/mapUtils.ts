@@ -22,7 +22,7 @@ export const calculateDistance = (points: [number, number][]): number => {
   return totalDistance;
 };
 
-export const drawRoute = (mapInstance: any, points: [number, number][]) => {
+export const drawRoute = (mapInstance: any, coordinates: [number, number][]) => {
   const routeId = 'route';
   
   // Remove existing route if it exists
@@ -39,7 +39,7 @@ export const drawRoute = (mapInstance: any, points: [number, number][]) => {
       properties: {},
       geometry: {
         type: 'LineString',
-        coordinates: points
+        coordinates: coordinates
       }
     }
   });

@@ -24,6 +24,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const markersRef = useRef<any[]>([]);
+  const mapRef = useRef<any>(null);
 
   const getRoute = async (coordinates: [number, number][]) => {
     if (coordinates.length < 2) return null;
@@ -76,6 +77,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   };
 
   const updateRoute = async (map: any, points: [number, number][]) => {
+    console.log('updateRoute called with points:', points);
     if (points.length === 0) {
       clearMarkersAndRoute(map);
       setDistance(0);
@@ -142,24 +144,13 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       });
 
       console.log('Map instance created');
+      mapRef.current = mapInstance;
 
       // Add navigation controls
       mapInstance.addControl(
         new mapboxgl.NavigationControl(),
         'top-right'
       );
-
-      // Add click handler for route planning
-      mapInstance.on('click', async (e: any) => {
-        if (!isPlanning) return;
-        
-        const newPoint: [number, number] = [e.lngLat.lng, e.lngLat.lat];
-        const newRoutePoints = [...routePoints, newPoint];
-        setRoutePoints(newRoutePoints);
-        
-        // Update the route with the new points
-        await updateRoute(mapInstance, newRoutePoints);
-      });
 
       setMap(mapInstance);
       setShowTokenInput(false);
@@ -173,21 +164,50 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     }
   };
 
+  // Add click handler when planning state changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    console.log('Setting up click handler, isPlanning:', isPlanning);
+
+    const handleMapClick = async (e: any) => {
+      console.log('Map clicked, isPlanning:', isPlanning);
+      if (!isPlanning) return;
+      
+      const newPoint: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+      console.log('Adding new point:', newPoint);
+      const newRoutePoints = [...routePoints, newPoint];
+      setRoutePoints(newRoutePoints);
+      
+      // Update the route with the new points
+      await updateRoute(map, newRoutePoints);
+    };
+
+    if (isPlanning) {
+      map.on('click', handleMapClick);
+    } else {
+      map.off('click', handleMapClick);
+    }
+
+    return () => {
+      map.off('click', handleMapClick);
+    };
+  }, [isPlanning, routePoints, setRoutePoints]);
+
   // Update route when routePoints change externally (e.g., clear route)
   useEffect(() => {
-    const mapInstance = (window as any).currentMapInstance;
-    if (mapInstance && routePoints.length === 0) {
-      clearMarkersAndRoute(mapInstance);
+    const map = mapRef.current;
+    if (map && routePoints.length === 0) {
+      clearMarkersAndRoute(map);
       setDistance(0);
     }
   }, [routePoints]);
 
-  // Store map instance globally for access in useEffect
+  // Initialize map when token is available
   useEffect(() => {
     if (mapContainer.current && mapboxToken) {
-      initializeMap().then(() => {
-        // Store reference for cleanup operations
-      });
+      initializeMap();
     }
   }, [mapboxToken]);
 

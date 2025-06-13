@@ -1,0 +1,1 @@
+self.__REACT_LOADABLE_MANIFEST="{\"node_modules/@vis.gl/react-mapbox/dist/components/map.js -> mapbox-gl\":{\"id\":\"node_modules/@vis.gl/react-mapbox/dist/components/map.js -> mapbox-gl\",\"files\":[\"static/chunks/_app-pages-browser_node_modules_mapbox-gl_dist_mapbox-gl_js.js\"]}}"

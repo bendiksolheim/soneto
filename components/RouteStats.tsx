@@ -15,13 +15,13 @@ interface RouteStatsProps {
 }
 
 export const RouteStats: React.FC<RouteStatsProps> = ({ distance, routePoints, onClearRoute }) => {
-  const [pace, setPace] = useState([15]); // Default pace of 15 km/h
+  const [pace, setPace] = useState([6]); // Default pace of 6:00 min/km
   const [routeName, setRouteName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const { saveRoute } = useRoutes();
 
-  const currentPace = pace[0];
-  const estimatedTime = distance > 0 ? (distance / currentPace) * 60 : 0; // result in minutes
+  const currentPaceMinPerKm = pace[0];
+  const estimatedTime = distance > 0 ? distance * currentPaceMinPerKm : 0; // result in minutes
   const hasRoute = routePoints.length > 1;
 
   const handleSaveRoute = async () => {
@@ -50,18 +50,16 @@ export const RouteStats: React.FC<RouteStatsProps> = ({ distance, routePoints, o
   return (
     <div className="absolute top-1/2 left-4 transform -translate-y-1/2 z-20">
       <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg min-w-48">
-        <h3 className="font-semibold text-gray-900 mb-3">Route Stats</h3>
-
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Distance:</span>
+            <span className="text-sm text-gray-600">Distanse</span>
             <span className="font-bold text-lg text-blue-600">
               {distance > 0 ? distance.toFixed(2) : "0.00"} km
             </span>
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Est. Time:</span>
+            <span className="text-sm text-gray-600">Estimert tid</span>
             <span className="font-medium text-gray-900">
               {distance > 0 ? Math.round(estimatedTime) : "0"} min
             </span>
@@ -69,27 +67,30 @@ export const RouteStats: React.FC<RouteStatsProps> = ({ distance, routePoints, o
 
           <div className="pt-2 border-t">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-gray-600">Pace:</span>
-              <span className="font-medium text-gray-900">{currentPace} km/h</span>
+              <span className="text-sm text-gray-600">Tempo:</span>
+              <span className="font-medium text-gray-900">
+                {Math.floor(currentPaceMinPerKm)}:
+                {((currentPaceMinPerKm % 1) * 60).toFixed(0).padStart(2, "0")} min/km
+              </span>
             </div>
             <Slider
               value={pace}
               onValueChange={setPace}
-              min={5}
-              max={30}
-              step={1}
+              min={2}
+              max={12}
+              step={0.25}
               className="w-full"
             />
             <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>5 km/h</span>
-              <span>30 km/h</span>
+              <span>2:00</span>
+              <span>12:00</span>
             </div>
           </div>
 
           {hasRoute && (
             <div className="pt-2 border-t">
               <Input
-                placeholder="Enter route name..."
+                placeholder="Navn på løypen..."
                 value={routeName}
                 onChange={(e) => setRouteName(e.target.value)}
                 className="mb-2 text-sm"
@@ -107,7 +108,7 @@ export const RouteStats: React.FC<RouteStatsProps> = ({ distance, routePoints, o
                 size="sm"
               >
                 <Save className="w-4 h-4 mr-2" />
-                {isSaving ? "Saving..." : "Save Route"}
+                {isSaving ? "Saving..." : "Lagre løype"}
               </Button>
             </div>
           )}
@@ -119,7 +120,7 @@ export const RouteStats: React.FC<RouteStatsProps> = ({ distance, routePoints, o
             size="sm"
           >
             <RotateCcw className="w-4 h-4 mr-2" />
-            Clear Route
+            Start på nytt
           </Button>
         </div>
       </div>

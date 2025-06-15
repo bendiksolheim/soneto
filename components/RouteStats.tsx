@@ -5,20 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { RotateCcw, Save } from "lucide-react";
-import { useRoutes } from "@/hooks/use-routes";
 import { toast } from "sonner";
+import { StoredRoute } from "@/lib/types/route";
 
 interface RouteStatsProps {
   distance: number;
   routePoints: [number, number][];
   onClearRoute: () => void;
+  saveRoute: (routeData: { name: string; points: [number, number][] }) => Promise<StoredRoute>;
 }
 
-export const RouteStats: React.FC<RouteStatsProps> = ({ distance, routePoints, onClearRoute }) => {
+export const RouteStats: React.FC<RouteStatsProps> = ({
+  distance,
+  routePoints,
+  onClearRoute,
+  saveRoute,
+}) => {
   const [pace, setPace] = useState([6]); // Default pace of 6:00 min/km
   const [routeName, setRouteName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const { saveRoute } = useRoutes();
 
   const currentPaceMinPerKm = pace[0];
   const estimatedTime = distance > 0 ? distance * currentPaceMinPerKm : 0; // result in minutes

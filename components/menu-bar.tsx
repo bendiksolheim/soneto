@@ -9,16 +9,16 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { LogIn, MapPin, Route, Calendar, Trash2 } from "lucide-react";
-import { useRoutes } from "@/hooks/use-routes";
 import { toast } from "sonner";
+import { RouteWithCalculatedData } from "@/lib/types/route";
 
 interface MenuBarProps {
   onRouteLoad?: (routePoints: [number, number][], routeName: string) => void;
+  routes: RouteWithCalculatedData[];
+  deleteRoute: (id: string) => Promise<boolean>;
 }
 
-export function MenuBar({ onRouteLoad }: MenuBarProps) {
-  const { routes, deleteRoute } = useRoutes();
-
+export function MenuBar({ onRouteLoad, routes, deleteRoute }: MenuBarProps) {
   const handleRouteSelect = (route: any) => {
     if (onRouteLoad) {
       onRouteLoad(route.points, route.name);
@@ -46,7 +46,7 @@ export function MenuBar({ onRouteLoad }: MenuBarProps) {
           {/* Logo and Routes Section */}
           <div className="flex items-center space-x-2">
             <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-full">
-              <MapPin className="w-5 h-5 text-primary-foreground" />
+              <MapPin strokeWidth={1} className="w-5 h-5 text-primary-foreground" />
             </div>
             <div className="flex flex-col">
               <span className="text-lg font-bold text-gray-900">SoneTo</span>
@@ -59,7 +59,7 @@ export function MenuBar({ onRouteLoad }: MenuBarProps) {
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className="h-8 px-3 text-sm">
-                    <Route className="w-4 h-4 mr-2" />
+                    <Route strokeWidth={1} className="w-4 h-4 mr-2" />
                     Lagrede løyper{" "}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>

@@ -121,20 +121,25 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         <div
           className="relative cursor-pointer group"
           style={{
-            width: "20px",
-            height: "20px",
+            width: "10px",
+            height: "10px",
           }}
         >
           {/* Marker pin */}
           <div
             className={`
-            w-5 h-5 rounded-full border-2 border-white shadow-lg
-            ${index === 0 ? "bg-green-500" : "bg-red-500"}
+            ${index === 0 || index === routePoints.length - 1 ? "w-3.5 h-3.5" : "w-2.5 h-2.5"}
+            rounded-full border border-white shadow-lg
+            ${index === 0 ? "bg-green-500" : index === routePoints.length - 1 ? "bg-red-500" : "bg-blue-500"}
             group-hover:scale-110 transition-transform duration-200
             flex items-center justify-center
           `}
           >
-            <span className="text-white text-xs font-bold">{index + 1}</span>
+            {index === 0 ? (
+              <span className="text-white text-[8px] font-bold ml-0.5">▶</span>
+            ) : index === routePoints.length - 1 ? (
+              <span className="text-white text-[8px] font-bold">⚑</span>
+            ) : null}
           </div>
 
           {/* Hover tooltip */}
@@ -146,6 +151,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             pointer-events-none z-10
           "
           >
+            {index === 0 ? "Start" : index === routePoints.length - 1 ? "Finish" : "Waypoint"} •
             Click to remove • Drag to move
           </div>
         </div>

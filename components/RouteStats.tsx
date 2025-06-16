@@ -58,14 +58,14 @@ export const RouteStats: React.FC<RouteStatsProps> = ({
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Distanse</span>
-            <span className="font-bold text-lg text-blue-600">
+            <span className="font-semibold text-sm text-blue-600">
               {distance > 0 ? distance.toFixed(2) : "0.00"} km
             </span>
           </div>
 
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Estimert tid</span>
-            <span className="font-medium text-gray-900">
+            <span className="font-medium text-sm text-gray-900">
               {distance > 0 ? Math.round(estimatedTime) : "0"} min
             </span>
           </div>
@@ -73,7 +73,7 @@ export const RouteStats: React.FC<RouteStatsProps> = ({
           <div className="pt-2 border-t">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-gray-600">Tempo:</span>
-              <span className="font-medium text-gray-900">
+              <span className="font-medium text-sm text-gray-900">
                 {Math.floor(currentPaceMinPerKm)}:
                 {((currentPaceMinPerKm % 1) * 60).toFixed(0).padStart(2, "0")} min/km
               </span>

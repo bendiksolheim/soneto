@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { calculateDistance, drawRoute } from "@/utils/mapUtils";
 import Map, {
   GeolocateControl,
   MapMouseEvent,
@@ -192,8 +191,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         <Source type="geojson" data={routeGeoJson}>
           <Layer {...style} />
         </Source>
-        <NavigationControl position="top-right" />
-        <GeolocateControl position="top-right" />
+        <NavigationControl position="bottom-right" />
+        <GeolocateControl position="bottom-right" />
         {points}
       </Map>
     </div>

@@ -40,17 +40,15 @@ export function MenuBar({ onRouteLoad, routes, deleteRoute }: MenuBarProps) {
     }
   };
   return (
-    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-4xl px-4">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-full shadow-lg px-6 py-3">
+    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-2xl px-4">
+      <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-full shadow-lg px-4 py-2">
         <div className="flex items-center justify-between">
           {/* Logo and Routes Section */}
           <div className="flex items-center space-x-2">
-            <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-full">
-              <MapPin strokeWidth={1} className="w-5 h-5 text-primary-foreground" />
+            <div className="flex items-center justify-center w-6 h-6 bg-primary rounded-full">
+              <MapPin strokeWidth={1} className="w-4 h-4 text-primary-foreground" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-lg font-bold text-gray-900">SoneTo</span>
-            </div>
+            <span className="text-base font-bold text-gray-900">SoneTo</span>
           </div>
 
           {/* Routes Navigation Menu */}
@@ -58,12 +56,12 @@ export function MenuBar({ onRouteLoad, routes, deleteRoute }: MenuBarProps) {
             <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className="h-8 px-3 text-sm">
+                  <NavigationMenuTrigger className="h-7 px-2 text-sm">
                     <Route strokeWidth={1} className="w-4 h-4 mr-2" />
                     Lagrede løyper{" "}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <div className="w-80 p-2">
+                    <div className="w-72 p-2">
                       {routes.length === 0 ? (
                         <div className="p-4 text-center text-gray-500">
                           <Route className="w-8 h-8 mx-auto mb-2 text-gray-400" />

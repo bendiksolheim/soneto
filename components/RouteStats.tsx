@@ -53,80 +53,79 @@ export const RouteStats: React.FC<RouteStatsProps> = ({
   };
 
   return (
-    <div className="absolute top-1/2 left-4 transform -translate-y-1/2 z-20">
-      <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg min-w-48">
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Distanse</span>
-            <span className="font-semibold text-sm text-blue-600">
-              {distance > 0 ? distance.toFixed(2) : "0.00"} km
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Estimert tid</span>
-            <span className="font-medium text-sm text-gray-900">
-              {distance > 0 ? Math.round(estimatedTime) : "0"} min
-            </span>
-          </div>
-
-          <div className="pt-2 border-t">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-gray-600">Tempo:</span>
-              <span className="font-medium text-sm text-gray-900">
-                {Math.floor(currentPaceMinPerKm)}:
-                {((currentPaceMinPerKm % 1) * 60).toFixed(0).padStart(2, "0")} min/km
+    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 w-full max-w-4xl px-4">
+      <div className="bg-white/95 backdrop-blur-sm rounded-full shadow-lg px-6 py-3">
+        <div className="flex items-center justify-between">
+          {/* Stats Section */}
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-1">
+              <span className="text-xs text-gray-500">Distanse:</span>
+              <span className="font-semibold text-sm text-blue-600">
+                {distance > 0 ? distance.toFixed(2) : "0.00"} km
               </span>
             </div>
-            <Slider
-              value={pace}
-              onValueChange={setPace}
-              min={2}
-              max={12}
-              step={0.25}
-              className="w-full"
-            />
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>2:00</span>
-              <span>12:00</span>
+            <div className="flex items-center space-x-1">
+              <span className="text-xs text-gray-500">Tid:</span>
+              <span className="font-medium text-sm text-gray-900">
+                {distance > 0 ? Math.round(estimatedTime) : "0"} min
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-500">Tempo:</span>
+              <span className="font-medium text-sm text-gray-900">
+                {Math.floor(currentPaceMinPerKm)}:
+                {((currentPaceMinPerKm % 1) * 60).toFixed(0).padStart(2, "0")}
+              </span>
+              <div className="w-20">
+                <Slider
+                  value={pace}
+                  onValueChange={setPace}
+                  min={2}
+                  max={12}
+                  step={0.25}
+                  className="w-full"
+                />
+              </div>
             </div>
           </div>
 
-          {hasRoute && (
-            <div className="pt-2 border-t">
-              <Input
-                placeholder="Navn på løypen..."
-                value={routeName}
-                onChange={(e) => setRouteName(e.target.value)}
-                className="mb-2 text-sm"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSaveRoute();
-                  }
-                }}
-              />
-              <Button
-                onClick={handleSaveRoute}
-                disabled={!routeName.trim() || isSaving}
-                className="w-full mb-2 bg-blue-600 hover:bg-blue-700 text-white"
-                size="sm"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {isSaving ? "Saving..." : "Lagre løype"}
-              </Button>
-            </div>
-          )}
-
-          <Button
-            onClick={onClearRoute}
-            variant="outline"
-            className="w-full bg-white/90 backdrop-blur-sm border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm transition-all duration-200"
-            size="sm"
-          >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Start på nytt
-          </Button>
+          {/* Actions Section */}
+          <div className="flex items-center space-x-2">
+            {hasRoute && (
+              <>
+                <Input
+                  placeholder="Navn på løypen..."
+                  value={routeName}
+                  onChange={(e) => setRouteName(e.target.value)}
+                  className="w-32 h-8 text-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSaveRoute();
+                    }
+                  }}
+                />
+                <Button
+                  onClick={handleSaveRoute}
+                  disabled={!routeName.trim() || isSaving}
+                  className="bg-blue-600 hover:bg-blue-700 text-white h-8"
+                  size="sm"
+                >
+                  <Save className="w-3 h-3 mr-1" />
+                  {isSaving ? "Lagrer..." : "Lagre"}
+                </Button>
+              </>
+            )}
+            <Button
+              onClick={onClearRoute}
+              variant="outline"
+              className="bg-white/90 backdrop-blur-sm border-gray-300 text-gray-700 hover:bg-gray-50 h-8"
+              size="sm"
+            >
+              <RotateCcw className="w-3 h-3 mr-1" />
+              Reset
+            </Button>
+          </div>
         </div>
       </div>
     </div>

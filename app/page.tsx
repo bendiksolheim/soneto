@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { Map } from "@/components/Map";
 import { MenuBar } from "@/components/menu-bar";
 import { RouteStats } from "@/components/RouteStats";
-import { Help } from "@/components/Help";
 import { calculateDistance } from "@/utils/mapUtils";
 import { useRoutes } from "@/hooks/use-routes";
 
@@ -46,8 +45,6 @@ export default function HomePage() {
           onClearRoute={handleClearRoute}
           saveRoute={saveRoute}
         />
-
-        <Help />
       </div>
     </>
   );

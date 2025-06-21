@@ -8,8 +8,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Route Runner Mapper Pro",
-  description: "Plan your perfect running routes",
+  title: "Soneto.no",
+  description: "Planlegg løperuter",
 };
 
 export default function RootLayout({

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { toast } from "sonner";
+import { ElevationProfile } from "./ElevationProfile";
 import Map, {
   GeolocateControl,
   MapMouseEvent,
@@ -10,6 +11,8 @@ import Map, {
   Source,
   Layer,
   LineLayerSpecification,
+  HillshadeLayerSpecification,
+  MapRef,
 } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -32,11 +35,17 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     null,
   );
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
+
+  const [elevationData, setElevationData] = useState<{ [key: string]: number }>({});
+  const [routeElevationProfile, setRouteElevationProfile] = useState<
+    Array<{ distance: number; elevation: number; coordinate: [number, number] }>
+  >([]);
   const [viewState, setViewState] = useState({
     latitude: 59.9139,
     longitude: 10.7522,
     zoom: 10,
   });
+  const mapRef = useRef<MapRef>(null);
 
   // Update route when routePoints change
   useEffect(() => {
@@ -58,6 +67,102 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
     updateRoute();
   }, [routePoints, mapboxToken, setDistance]);
+
+  // Query elevation for route points and generate elevation profile
+  useEffect(() => {
+    if (mapRef.current) {
+      const queryElevations = () => {
+        // Query elevation for route points
+        if (routePoints.length > 0) {
+          const newElevationData: { [key: string]: number } = {};
+
+          routePoints.forEach((point, index) => {
+            const elevation = mapRef.current?.queryTerrainElevation(point);
+            if (elevation !== null && elevation !== undefined) {
+              newElevationData[`${point[0]},${point[1]}`] = Math.round(elevation);
+            }
+          });
+
+          setElevationData(newElevationData);
+        }
+
+        // Generate elevation profile along the route
+        if (route && route.coordinates.length > 0) {
+          const profileData: Array<{
+            distance: number;
+            elevation: number;
+            coordinate: [number, number];
+          }> = [];
+
+          // Always sample 50 points regardless of route complexity
+          const targetSampleCount = 50;
+          const totalCoords = route.coordinates.length;
+
+          // Calculate cumulative distances first to enable distance-based sampling
+          const coordinatesWithDistance: Array<{ coord: [number, number]; distance: number }> = [];
+          let runningDistance = 0;
+
+          coordinatesWithDistance.push({ coord: route.coordinates[0], distance: 0 });
+
+          for (let i = 1; i < totalCoords; i++) {
+            const prevCoord = route.coordinates[i - 1];
+            const currentCoord = route.coordinates[i];
+            const segmentDistance = calculateDistance(prevCoord, currentCoord);
+            runningDistance += segmentDistance;
+            coordinatesWithDistance.push({ coord: currentCoord, distance: runningDistance });
+          }
+
+          const totalDistance = runningDistance;
+          const distanceInterval = totalDistance / (targetSampleCount - 1);
+
+          // Sample points at regular distance intervals
+          for (let i = 0; i < targetSampleCount; i++) {
+            const targetDistance = i * distanceInterval;
+
+            // Find the closest coordinate to this distance
+            let closestIndex = 0;
+            let minDiff = Math.abs(coordinatesWithDistance[0].distance - targetDistance);
+
+            for (let j = 1; j < coordinatesWithDistance.length; j++) {
+              const diff = Math.abs(coordinatesWithDistance[j].distance - targetDistance);
+              if (diff < minDiff) {
+                minDiff = diff;
+                closestIndex = j;
+              }
+            }
+
+            const coordinate = coordinatesWithDistance[closestIndex].coord;
+
+            // Skip if we already sampled this exact coordinate
+            const coordKey = `${coordinate[0]},${coordinate[1]}`;
+            const alreadySampled = profileData.some(
+              (p) => `${p.coordinate[0]},${p.coordinate[1]}` === coordKey,
+            );
+
+            if (!alreadySampled) {
+              const elevation = mapRef.current?.queryTerrainElevation(coordinate);
+
+              if (elevation !== null && elevation !== undefined) {
+                profileData.push({
+                  distance: targetDistance,
+                  elevation: elevation,
+                  coordinate: coordinate,
+                });
+              }
+            }
+          }
+
+          setRouteElevationProfile(profileData);
+        } else {
+          setRouteElevationProfile([]);
+        }
+      };
+
+      // Delay to ensure terrain is loaded
+      const timeoutId = setTimeout(queryElevations, 1000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [routePoints, route]);
 
   // Get user's current location on component mount
   useEffect(() => {
@@ -152,11 +257,16 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           >
             {index === 0 ? "Start" : index === routePoints.length - 1 ? "Finish" : "Waypoint"} •
             Click to remove • Drag to move
+            {elevationData[`${point[0]},${point[1]}`] && (
+              <div className="mt-1 text-green-400 font-bold">
+                {elevationData[`${point[0]},${point[1]}`]}m
+              </div>
+            )}
           </div>
         </div>
       </Marker>
     ));
-  }, [routePoints]);
+  }, [routePoints, elevationData]);
 
   const routeGeoJson: GeoJSON.GeoJSON = useMemo(() => {
     return {
@@ -169,6 +279,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     };
   }, [route]);
 
+  // Terrain source data
+  const terrainSource = {
+    type: "raster-dem" as const,
+    url: "mapbox://mapbox.terrain-rgb",
+    tileSize: 512,
+    maxzoom: 14,
+  };
+
   return (
     <div className="w-full h-full relative">
       {isCalculatingRoute && (
@@ -179,7 +297,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           </div>
         </div>
       )}
+
       <Map
+        ref={mapRef}
         mapboxAccessToken={mapboxToken}
         mapStyle="mapbox://styles/mapbox/streets-v12"
         {...viewState}
@@ -187,7 +307,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         maxZoom={20}
         minZoom={3}
         onClick={onClick}
+        terrain={{ source: "terrain-source", exaggeration: 1.2 }}
       >
+        {/* Terrain source */}
+        <Source id="terrain-source" {...terrainSource} />
+
+        {/* Hillshade layer for visual elevation */}
+        <Layer {...hillshadeStyle} source="terrain-source" />
+
         <Source type="geojson" data={routeGeoJson}>
           <Layer {...style} />
         </Source>
@@ -195,6 +322,13 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         <GeolocateControl position="bottom-right" />
         {points}
       </Map>
+
+      {/* Elevation Profile */}
+      <ElevationProfile
+        elevationData={routeElevationProfile}
+        totalDistance={route?.distance || 0}
+        isVisible={routeElevationProfile.length > 0}
+      />
     </div>
   );
 };
@@ -210,6 +344,17 @@ const style: Omit<LineLayerSpecification, "source"> = {
     "line-color": "#ef4444",
     "line-width": 4,
     "line-opacity": 0.8,
+  },
+};
+
+const hillshadeStyle: Omit<HillshadeLayerSpecification, "source"> = {
+  id: "hillshade",
+  type: "hillshade",
+  paint: {
+    "hillshade-accent-color": "#5a5a5a",
+    "hillshade-shadow-color": "#000000",
+    "hillshade-illumination-direction": 335,
+    "hillshade-exaggeration": 0.6,
   },
 };
 
@@ -308,4 +453,19 @@ async function getMegaRoute(
   console.log(`Route calculation completed: ${totalDistance.toFixed(2)}km total distance`);
 
   return { coordinates: allCoordinates, distance: totalDistance };
+}
+
+// Helper function to calculate distance between two coordinates (Haversine formula)
+function calculateDistance(coord1: [number, number], coord2: [number, number]): number {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = ((coord2[1] - coord1[1]) * Math.PI) / 180;
+  const dLon = ((coord2[0] - coord1[0]) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((coord1[1] * Math.PI) / 180) *
+      Math.cos((coord2[1] * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }

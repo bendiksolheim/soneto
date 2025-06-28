@@ -4,9 +4,7 @@ import React, { useEffect, useMemo, useState, useRef } from "react";
 import { toast } from "sonner";
 import { ElevationProfile } from "./ElevationProfile";
 import Map, {
-  GeolocateControl,
   MapMouseEvent,
-  NavigationControl,
   Marker,
   Source,
   Layer,
@@ -318,8 +316,6 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         <Source type="geojson" data={routeGeoJson}>
           <Layer {...style} />
         </Source>
-        <NavigationControl position="bottom-right" />
-        <GeolocateControl position="bottom-right" />
         {points}
       </Map>
 

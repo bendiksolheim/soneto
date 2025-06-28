@@ -48,7 +48,7 @@ export function MenuBar({ onRouteLoad, routes, deleteRoute }: MenuBarProps) {
             <div className="flex items-center justify-center w-6 h-6 bg-primary rounded-full">
               <MapPin strokeWidth={1} className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="text-base font-bold text-gray-900">SoneTo</span>
+            <span className="text-base font-bold text-gray-900">Sone To</span>
           </div>
 
           {/* Routes Navigation Menu */}

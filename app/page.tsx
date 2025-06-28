@@ -11,6 +11,7 @@ export default function HomePage() {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
   const [distance, setDistance] = useState(0);
+  const [pace, setPace] = useState(6);
   const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
   const { routes, saveRoute, deleteRoute } = useRoutes();
 
@@ -29,7 +30,13 @@ export default function HomePage() {
 
   return (
     <>
-      <MenuBar onRouteLoad={handleRouteLoad} routes={routes} deleteRoute={deleteRoute} />
+      <MenuBar
+        pace={pace}
+        distance={distance}
+        onRouteLoad={handleRouteLoad}
+        routes={routes}
+        deleteRoute={deleteRoute}
+      />
       <div className="relative w-full h-screen overflow-hidden">
         <Map
           mapboxToken={mapboxToken}
@@ -37,13 +44,6 @@ export default function HomePage() {
           routePoints={routePoints}
           setRoutePoints={setRoutePoints}
           setDistance={setDistance}
-        />
-
-        <RouteStats
-          distance={distance}
-          routePoints={routePoints}
-          onClearRoute={handleClearRoute}
-          saveRoute={saveRoute}
         />
       </div>
     </>

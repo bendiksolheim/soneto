@@ -8,17 +8,21 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { LogIn, MapPin, Route, Calendar, Trash2 } from "lucide-react";
+import { MapPin, Route, Calendar, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { RouteWithCalculatedData } from "@/lib/types/route";
+import { useMemo } from "react";
 
 interface MenuBarProps {
   onRouteLoad?: (routePoints: [number, number][], routeName: string) => void;
   routes: RouteWithCalculatedData[];
   deleteRoute: (id: string) => Promise<boolean>;
+  distance: number;
+  pace: number;
 }
 
-export function MenuBar({ onRouteLoad, routes, deleteRoute }: MenuBarProps) {
+export function MenuBar(props: MenuBarProps) {
+  const { onRouteLoad, routes, deleteRoute, distance, pace } = props;
   const handleRouteSelect = (route: any) => {
     if (onRouteLoad) {
       onRouteLoad(route.points, route.name);
@@ -39,6 +43,11 @@ export function MenuBar({ onRouteLoad, routes, deleteRoute }: MenuBarProps) {
       }
     }
   };
+
+  const time = useMemo(() => {
+    return Number(distance * pace).toFixed(0);
+  }, [distance, pace]);
+
   return (
     <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-2xl px-4">
       <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-full shadow-lg px-4 py-2">
@@ -51,6 +60,12 @@ export function MenuBar({ onRouteLoad, routes, deleteRoute }: MenuBarProps) {
             <span className="text-base font-bold text-gray-900">Sone To</span>
           </div>
 
+          <div>
+            <span className="text-sm">
+              {distance.toFixed(2)} km | {time} min
+            </span>
+          </div>
+
           {/* Routes Navigation Menu */}
           <div className="flex items-center">
             <NavigationMenu>
@@ -58,7 +73,7 @@ export function MenuBar({ onRouteLoad, routes, deleteRoute }: MenuBarProps) {
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className="h-7 px-2 text-sm">
                     <Route strokeWidth={1} className="w-4 h-4 mr-2" />
-                    Lagrede løyper{" "}
+                    <span className="font-normal text-sm">Lagrede løyper </span>
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <div className="w-72 p-2">

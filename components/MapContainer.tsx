@@ -93,7 +93,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           }> = [];
 
           // Sample every 20 meters along the route
-          const sampleIntervalMeters = 20;
+          const sampleIntervalMeters = 30;
           const totalDistanceMeters = route.distance * 1000; // Convert to meters
           const numSamples = Math.floor(totalDistanceMeters / sampleIntervalMeters) + 1;
 

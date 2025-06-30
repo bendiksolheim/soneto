@@ -80,8 +80,8 @@ export function MenuBar(props: MenuBarProps) {
                       {routes.length === 0 ? (
                         <div className="p-4 text-center text-gray-500">
                           <Route className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                          <p className="text-sm">No saved routes yet</p>
-                          <p className="text-xs mt-1">Create and save a route to see it here</p>
+                          <p className="text-sm">Kommer!</p>
+                          <p className="text-xs mt-1">Vi jobber med muligheten til å lagre ruter</p>
                         </div>
                       ) : (
                         <div className="space-y-1 max-h-60 overflow-y-auto">

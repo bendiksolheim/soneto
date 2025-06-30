@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Area, AreaChart, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 interface ElevationProfileProps {
   elevationData: Array<{ distance: number; elevation: number; coordinate: [number, number] }>;
@@ -22,33 +22,53 @@ export function ElevationProfile(props: ElevationProfileProps): JSX.Element {
   }));
 
   return (
-    <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-4 z-10">
-      <div className="mb-3">
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">Høydeprofil</h3>
-      </div>
-
-      <AreaChart data={chartData} width={348} height={128}>
-        <XAxis
-          dataKey="distance"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          tickFormatter={(value) => `${value}km`}
-        />
-        <YAxis
-          domain={["dataMin - 5", "dataMax + 5"]}
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          tickFormatter={(value) => `${value}m`}
-        />
-        <Area dataKey="elevation" fill="#8884d8" stroke="#8884d8" strokeWidth={2} />
-      </AreaChart>
-
-      <div className="flex justify-between text-xs text-gray-500 mt-1">
-        <span>0km</span>
-        <span>{totalDistance.toFixed(1)}km</span>
-      </div>
+    <div className="absolute bottom-4 left-8 right-8 bg-white rounded-2xl shadow-lg  z-10 overflow-hidden">
+      <ResponsiveContainer width="100%" height={96}>
+        <AreaChart
+          margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+          data={chartData}
+          width={348}
+          height={96}
+        >
+          <XAxis
+            dataKey="distance"
+            visibility="hidden"
+            height={0}
+            tickLine={false}
+            axisLine={false}
+            tickMargin={0}
+            interval={6}
+            tickFormatter={(value) => `${value}km`}
+          />
+          <YAxis
+            domain={["dataMin - 5", "dataMax + 5"]}
+            visibility="hidden"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={0}
+            width={0}
+          />
+          <Tooltip
+            content={({ active, payload, label }) => {
+              const isVisible = active && payload && payload.length;
+              return (
+                <div
+                  className="bg-white rounded-lg shadow-lg p-2"
+                  style={{ visibility: isVisible ? "visible" : "hidden" }}
+                >
+                  {isVisible && (
+                    <>
+                      <p>{`Distance: ${label}km`}</p>
+                      <p>{`Elevation: ${payload[0].value}m`}</p>
+                    </>
+                  )}
+                </div>
+              );
+            }}
+          />
+          <Area dataKey="elevation" fill="#8884d8" stroke="#8884d8" strokeWidth={2} />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
 }

@@ -22,13 +22,7 @@ interface RouteStatsProps {
   saveRoute: (routeData: { name: string; points: [number, number][] }) => Promise<StoredRoute>;
 }
 
-export const RouteStats: React.FC<RouteStatsProps> = ({
-  distance,
-  routePoints,
-  onClearRoute,
-  saveRoute,
-}) => {
-  const [pace, setPace] = useState([6]); // Default pace of 6:00 min/km
+export const RouteStats: React.FC<RouteStatsProps> = ({ routePoints, onClearRoute, saveRoute }) => {
   const [routeName, setRouteName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -49,8 +43,6 @@ export const RouteStats: React.FC<RouteStatsProps> = ({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const currentPaceMinPerKm = pace[0];
-  const estimatedTime = distance > 0 ? distance * currentPaceMinPerKm : 0; // result in minutes
   const hasRoute = routePoints.length > 1;
 
   const handleSaveRoute = async () => {
@@ -80,39 +72,6 @@ export const RouteStats: React.FC<RouteStatsProps> = ({
     <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 w-full max-w-4xl px-4">
       <div className="bg-white/95 backdrop-blur-sm rounded-full shadow-lg px-6 py-3">
         <div className="flex items-center justify-between">
-          {/* Stats Section */}
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-1">
-              <span className="text-xs text-gray-500">Distanse:</span>
-              <span className="font-semibold text-sm text-blue-600">
-                {distance > 0 ? distance.toFixed(2) : "0.00"} km
-              </span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <span className="text-xs text-gray-500">Tid:</span>
-              <span className="font-medium text-sm text-gray-900">
-                {distance > 0 ? Math.round(estimatedTime) : "0"} min
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-gray-500">Tempo:</span>
-              <span className="font-medium text-sm text-gray-900">
-                {Math.floor(currentPaceMinPerKm)}:
-                {((currentPaceMinPerKm % 1) * 60).toFixed(0).padStart(2, "0")}
-              </span>
-              <div className="w-20">
-                <Slider
-                  value={pace}
-                  onValueChange={setPace}
-                  min={2}
-                  max={12}
-                  step={0.25}
-                  className="w-full"
-                />
-              </div>
-            </div>
-          </div>
-
           {/* Actions Section */}
           <div className="flex items-center space-x-2">
             {hasRoute && (

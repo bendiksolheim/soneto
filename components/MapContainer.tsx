@@ -92,59 +92,26 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             coordinate: [number, number];
           }> = [];
 
-          // Always sample 50 points regardless of route complexity
-          const targetSampleCount = 50;
-          const totalCoords = route.coordinates.length;
+          // Sample every 20 meters along the route
+          const sampleIntervalMeters = 20;
+          const totalDistanceMeters = route.distance * 1000; // Convert to meters
+          const numSamples = Math.floor(totalDistanceMeters / sampleIntervalMeters) + 1;
 
-          // Calculate cumulative distances first to enable distance-based sampling
-          const coordinatesWithDistance: Array<{ coord: [number, number]; distance: number }> = [];
-          let runningDistance = 0;
-
-          coordinatesWithDistance.push({ coord: route.coordinates[0], distance: 0 });
-
-          for (let i = 1; i < totalCoords; i++) {
-            const prevCoord = route.coordinates[i - 1];
-            const currentCoord = route.coordinates[i];
-            const segmentDistance = calculateDistance(prevCoord, currentCoord);
-            runningDistance += segmentDistance;
-            coordinatesWithDistance.push({ coord: currentCoord, distance: runningDistance });
-          }
-
-          const totalDistance = runningDistance;
-          const distanceInterval = totalDistance / (targetSampleCount - 1);
-
-          // Sample points at regular distance intervals
-          for (let i = 0; i < targetSampleCount; i++) {
-            const targetDistance = i * distanceInterval;
-
-            // Find the closest coordinate to this distance
-            let closestIndex = 0;
-            let minDiff = Math.abs(coordinatesWithDistance[0].distance - targetDistance);
-
-            for (let j = 1; j < coordinatesWithDistance.length; j++) {
-              const diff = Math.abs(coordinatesWithDistance[j].distance - targetDistance);
-              if (diff < minDiff) {
-                minDiff = diff;
-                closestIndex = j;
-              }
-            }
-
-            const coordinate = coordinatesWithDistance[closestIndex].coord;
-
-            // Skip if we already sampled this exact coordinate
-            const coordKey = `${coordinate[0]},${coordinate[1]}`;
-            const alreadySampled = profileData.some(
-              (p) => `${p.coordinate[0]},${p.coordinate[1]}` === coordKey,
+          for (let i = 0; i < numSamples; i++) {
+            const targetDistanceMeters = i * sampleIntervalMeters;
+            const interpolatedPoint = interpolatePointAtDistance(
+              route.coordinates,
+              targetDistanceMeters,
             );
 
-            if (!alreadySampled) {
-              const elevation = mapRef.current?.queryTerrainElevation(coordinate);
+            if (interpolatedPoint) {
+              const elevation = mapRef.current?.queryTerrainElevation(interpolatedPoint);
 
               if (elevation !== null && elevation !== undefined) {
                 profileData.push({
-                  distance: targetDistance,
+                  distance: targetDistanceMeters / 1000, // Convert back to km
                   elevation: elevation,
-                  coordinate: coordinate,
+                  coordinate: interpolatedPoint,
                 });
               }
             }
@@ -397,29 +364,20 @@ async function getMegaRoute(
   const maxWaypoints = 25;
   const numSegments = Math.ceil((coordinates.length - 1) / (maxWaypoints - 1));
 
-  console.log(`Splitting ${coordinates.length} waypoints into ${numSegments} segments`);
-
   // Split into chunks with overlap to ensure continuity
   for (let i = 0; i < coordinates.length - 1; i += maxWaypoints - 1) {
     const endIndex = Math.min(i + maxWaypoints, coordinates.length);
     const chunk = coordinates.slice(i, endIndex);
     const segmentNumber = Math.floor(i / (maxWaypoints - 1)) + 1;
 
-    console.log(
-      `Processing segment ${segmentNumber}/${numSegments} with ${chunk.length} waypoints`,
-    );
-
     try {
       const segment = await getRoute(chunk, mapboxToken);
       if (segment) {
         segments.push(segment);
-        console.log(`Segment ${segmentNumber} completed: ${segment.distance.toFixed(2)}km`);
       } else {
-        console.error(`Failed to get route for segment ${segmentNumber}`);
         return null;
       }
     } catch (error) {
-      console.error(`Error processing segment ${segmentNumber}:`, error);
       return null;
     }
 
@@ -446,9 +404,48 @@ async function getMegaRoute(
     totalDistance += segment.distance;
   });
 
-  console.log(`Route calculation completed: ${totalDistance.toFixed(2)}km total distance`);
-
   return { coordinates: allCoordinates, distance: totalDistance };
+}
+
+// Helper function to interpolate a point at a specific distance along the route
+function interpolatePointAtDistance(
+  coordinates: [number, number][],
+  targetDistanceMeters: number,
+): [number, number] | null {
+  if (coordinates.length < 2) return null;
+
+  // Handle the start of the route (distance 0)
+  if (targetDistanceMeters <= 0) {
+    return coordinates[0];
+  }
+
+  let cumulativeDistance = 0;
+
+  for (let i = 0; i < coordinates.length - 1; i++) {
+    const segmentDistance = calculateDistance(coordinates[i], coordinates[i + 1]) * 1000; // Convert to meters
+
+    // Check if target distance is within this segment
+    if (targetDistanceMeters <= cumulativeDistance + segmentDistance) {
+      // The target point is within this segment
+      const remainingDistance = targetDistanceMeters - cumulativeDistance;
+
+      // Handle case where segment distance is very small or zero
+      if (segmentDistance < 0.001) {
+        return coordinates[i];
+      }
+
+      const ratio = remainingDistance / segmentDistance;
+
+      // Linear interpolation between the two points
+      const lng = coordinates[i][0] + (coordinates[i + 1][0] - coordinates[i][0]) * ratio;
+      const lat = coordinates[i][1] + (coordinates[i + 1][1] - coordinates[i][1]) * ratio;
+
+      return [lng, lat];
+    }
+
+    cumulativeDistance += segmentDistance;
+  }
+  return coordinates[coordinates.length - 1];
 }
 
 // Helper function to calculate distance between two coordinates (Haversine formula)

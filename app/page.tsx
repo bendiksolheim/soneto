@@ -11,7 +11,7 @@ export default function HomePage() {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
   const [distance, setDistance] = useState(0);
-  const [pace, setPace] = useState(6);
+  const [paceInSeconds, setPace] = useState(360); //
   const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
   const { routes, saveRoute, deleteRoute } = useRoutes();
 
@@ -31,11 +31,12 @@ export default function HomePage() {
   return (
     <>
       <MenuBar
-        pace={pace}
+        paceInSeconds={paceInSeconds}
         distance={distance}
         onRouteLoad={handleRouteLoad}
         routes={routes}
         deleteRoute={deleteRoute}
+        onPaceChange={setPace}
       />
       <div className="relative w-full h-screen overflow-hidden">
         <Map

@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -8,21 +9,25 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { MapPin, Route, Calendar, Trash2 } from "lucide-react";
+import { MapPin, Route, Calendar, Trash2, MoveVertical } from "lucide-react";
 import { toast } from "sonner";
 import { RouteWithCalculatedData } from "@/lib/types/route";
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 
 interface MenuBarProps {
   onRouteLoad?: (routePoints: [number, number][], routeName: string) => void;
   routes: RouteWithCalculatedData[];
   deleteRoute: (id: string) => Promise<boolean>;
   distance: number;
-  pace: number;
+  paceInSeconds: number;
+  onPaceChange: (pace: number) => void;
 }
 
 export function MenuBar(props: MenuBarProps) {
-  const { onRouteLoad, routes, deleteRoute, distance, pace } = props;
+  const { onRouteLoad, routes, deleteRoute, distance, paceInSeconds, onPaceChange } = props;
+  const [isPacePopupOpen, setIsPacePopupOpen] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const handleRouteSelect = (route: any) => {
     if (onRouteLoad) {
       onRouteLoad(route.points, route.name);
@@ -45,8 +50,40 @@ export function MenuBar(props: MenuBarProps) {
   };
 
   const time = useMemo(() => {
-    return Number(distance * pace).toFixed(0);
-  }, [distance, pace]);
+    return Number((distance * paceInSeconds) / 60).toFixed(0);
+  }, [distance, paceInSeconds]);
+
+  const handlePaceChange = (value: number[]) => {
+    onPaceChange(value[0]);
+  };
+
+  const formatPace = (pace: number) => {
+    const minutes = Math.floor(pace / 60);
+    const seconds = Math.round(pace - minutes * 60);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  // Close popup when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        popupRef.current &&
+        !popupRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setIsPacePopupOpen(false);
+      }
+    };
+
+    if (isPacePopupOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isPacePopupOpen]);
 
   return (
     <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-2xl px-4">
@@ -60,10 +97,47 @@ export function MenuBar(props: MenuBarProps) {
             <span className="text-base font-bold text-gray-900">Sone To</span>
           </div>
 
-          <div>
+          <div className="flex items-center space-x-0 relative">
             <span className="text-sm">
-              {distance.toFixed(2)} km | {time} min
+              {distance.toFixed(2)} km |{" "}
+              <span title={`Basert på ${formatPace(paceInSeconds)} min/km`}>{time} min</span>
             </span>
+            <Button
+              ref={buttonRef}
+              variant="ghost"
+              size="sm"
+              className="h-5 w-5 ml-0 p-0 hover:bg-gray-100 rounded"
+              onClick={() => setIsPacePopupOpen(!isPacePopupOpen)}
+            >
+              <MoveVertical className="w-3 h-3 text-black" />
+            </Button>
+
+            {isPacePopupOpen && (
+              <div
+                ref={popupRef}
+                className="absolute top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-4 w-64 z-50"
+              >
+                <div className="space-y-3">
+                  <div className="text-center">
+                    <div className="text-sm text-gray-500">{formatPace(paceInSeconds)} min/km</div>
+                  </div>
+                  <div className="px-1">
+                    <Slider
+                      value={[paceInSeconds]}
+                      onValueChange={handlePaceChange}
+                      max={720}
+                      min={120}
+                      step={10}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400 mt-1">
+                      <span>2:00</span>
+                      <span>12:00</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Routes Navigation Menu */}

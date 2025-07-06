@@ -6,14 +6,15 @@ import { MenuBar } from "@/components/menu-bar";
 import { RouteStats } from "@/components/RouteStats";
 import { calculateDistance } from "@/utils/mapUtils";
 import { useRoutes } from "@/hooks/use-routes";
+import { usePace } from "@/hooks/use-pace";
 
 export default function HomePage() {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
   const [distance, setDistance] = useState(0);
-  const [paceInSeconds, setPace] = useState(360); //
   const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
   const { routes, saveRoute, deleteRoute } = useRoutes();
+  const { pace: paceInSeconds, setPace } = usePace();
 
   const handleClearRoute = () => {
     setRoutePoints([]);

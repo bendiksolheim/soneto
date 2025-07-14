@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { Map } from "@/components/Map";
 import { MenuBar } from "@/components/menu-bar";
-import { RouteStats } from "@/components/RouteStats";
 import { calculateDistance } from "@/utils/mapUtils";
 import { useRoutes } from "@/hooks/use-routes";
 import { usePace } from "@/hooks/use-pace";

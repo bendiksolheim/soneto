@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { toast } from "sonner";
 import { ElevationProfile } from "./ElevationProfile";
+import { RouteActions } from "./RouteActions";
 import Map, {
   MapMouseEvent,
   Marker,
@@ -177,6 +178,22 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     setRoutePoints(newRoutePoints);
   };
 
+  const handleSaveRoute = () => {
+    // TODO: Implement save route functionality
+    toast.info("Save route functionality coming soon!");
+  };
+
+  const handleExportGPX = () => {
+    // TODO: Implement GPX export functionality
+    toast.info("GPX export functionality coming soon!");
+  };
+
+  const handleResetRoute = () => {
+    setRoutePoints([]);
+    setDistance(0);
+    toast.success("Route cleared");
+  };
+
   const points = useMemo(() => {
     return routePoints.map((point, index) => (
       <Marker
@@ -291,6 +308,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         elevationData={routeElevationProfile}
         totalDistance={route?.distance || 0}
         isVisible={routeElevationProfile.length > 0}
+      />
+
+      {/* Route Actions */}
+      <RouteActions
+        onSaveRoute={handleSaveRoute}
+        onExportGPX={handleExportGPX}
+        onResetRoute={handleResetRoute}
+        isVisible={routePoints.length > 0}
       />
     </div>
   );

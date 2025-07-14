@@ -22,7 +22,7 @@ export function ElevationProfile(props: ElevationProfileProps): JSX.Element {
   }));
 
   return (
-    <div className="absolute bottom-4 left-8 right-8 bg-white rounded-2xl shadow-lg  z-10 overflow-hidden">
+    <div className="absolute bottom-4 left-8 right-52 bg-white rounded-2xl shadow-lg  z-10 overflow-hidden">
       <ResponsiveContainer width="100%" height={96}>
         <AreaChart
           margin={{ top: 0, right: 0, left: 0, bottom: 0 }}

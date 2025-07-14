@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState, useRef } from "react";
 import { toast } from "sonner";
 import { ElevationProfile } from "./ElevationProfile";
 import { RouteActions } from "./RouteActions";
+import { MapPin, RotateCcw } from "lucide-react";
 import Map, {
   MapMouseEvent,
   Marker,
@@ -42,8 +43,10 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const [viewState, setViewState] = useState({
     latitude: 59.9139,
     longitude: 10.7522,
-    zoom: 10,
+    zoom: 15,
   });
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [isLocatingUser, setIsLocatingUser] = useState(false);
   const mapRef = useRef<MapRef>(null);
 
   // Update route when routePoints change
@@ -130,20 +133,28 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     }
   }, [routePoints, route]);
 
-  // Get user's current location on component mount
-  useEffect(() => {
+  // Function to get user's current location
+  const getUserLocation = () => {
     if (navigator.geolocation) {
+      setIsLocatingUser(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          const userCoords: [number, number] = [
+            position.coords.longitude,
+            position.coords.latitude,
+          ];
+          setUserLocation(userCoords);
           setViewState({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-            zoom: 13,
+            zoom: viewState.zoom,
           });
+          setIsLocatingUser(false);
         },
         (error) => {
           console.warn("Could not get user location:", error);
-          // Keep default location if geolocation fails
+          toast.error("Could not get your location");
+          setIsLocatingUser(false);
         },
         {
           enableHighAccuracy: true,
@@ -152,6 +163,11 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         },
       );
     }
+  };
+
+  // Get user's current location on component mount
+  useEffect(() => {
+    getUserLocation();
   }, []);
 
   const onClick = async (e: MapMouseEvent) => {
@@ -250,6 +266,32 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     ));
   }, [routePoints, elevationData]);
 
+  // User location marker
+  const userLocationMarker = useMemo(() => {
+    if (!userLocation) return null;
+
+    return (
+      <Marker key="user-location" longitude={userLocation[0]} latitude={userLocation[1]}>
+        <div className="relative flex items-center justify-center group cursor-pointer">
+          {/* Pulsing background circle */}
+          <div className="absolute w-8 h-8 bg-blue-400 rounded-full opacity-20 animate-ping"></div>
+          <div className="absolute w-6 h-6 bg-blue-500 rounded-full opacity-30"></div>
+
+          {/* Main location indicator */}
+          <div className="relative w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg">
+            <div className="absolute inset-0.5 bg-white rounded-full"></div>
+            <div className="absolute inset-1 bg-blue-600 rounded-full"></div>
+          </div>
+
+          {/* Tooltip */}
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black text-white text-xs rounded px-2 py-1 whitespace-nowrap pointer-events-none z-10">
+            Your Current Location
+          </div>
+        </div>
+      </Marker>
+    );
+  }, [userLocation]);
+
   const routeGeoJson: GeoJSON.GeoJSON = useMemo(() => {
     return {
       type: "Feature",
@@ -301,6 +343,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           <Layer {...style} />
         </Source>
         {points}
+        {userLocationMarker}
       </Map>
 
       {/* Elevation Profile */}
@@ -317,6 +360,16 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         onResetRoute={handleResetRoute}
         isVisible={routePoints.length > 0}
       />
+
+      {/* User Location Button */}
+      <button
+        onClick={getUserLocation}
+        disabled={isLocatingUser}
+        className="absolute top-4 right-4 z-10 bg-white hover:bg-gray-50 text-gray-700 p-2 rounded-lg shadow-lg border border-gray-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        title="Get my location"
+      >
+        <RotateCcw className={`w-5 h-5 ${isLocatingUser ? "animate-spin" : ""}`} />
+      </button>
     </div>
   );
 };

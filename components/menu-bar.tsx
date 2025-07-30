@@ -13,9 +13,10 @@ import { MapPin, Route, Calendar, Trash2, MoveVertical } from "lucide-react";
 import { toast } from "sonner";
 import { RouteWithCalculatedData } from "@/lib/types/route";
 import { useMemo, useState, useRef, useEffect } from "react";
+import { Point } from "@/lib/map/point";
 
 interface MenuBarProps {
-  onRouteLoad?: (routePoints: [number, number][], routeName: string) => void;
+  onRouteLoad?: (routePoints: Array<Point>, routeName: string) => void;
   routes: RouteWithCalculatedData[];
   deleteRoute: (id: string) => Promise<boolean>;
   distance: number;

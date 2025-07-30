@@ -19,7 +19,7 @@ export function RouteActions(props: RouteActionsProps): JSX.Element | null {
   }
 
   return (
-    <div className="absolute bottom-4 right-8 bg-white rounded-2xl shadow-lg z-10 overflow-hidden">
+    <div className="absolute bottom-auto right-8 bg-white rounded-2xl shadow-lg z-10 overflow-hidden">
       <div className="flex flex-col items-start space-y-1 p-2">
         <Button
           size="xs"

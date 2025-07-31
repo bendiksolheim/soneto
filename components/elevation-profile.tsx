@@ -1,7 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import React from "react";
-import { Area, AreaChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 interface ElevationProfileProps {
   elevationData: Array<{ distance: number; elevation: number; coordinate: [number, number] }>;
@@ -10,10 +11,7 @@ interface ElevationProfileProps {
 }
 
 export function ElevationProfile(props: ElevationProfileProps): JSX.Element {
-  const { elevationData, totalDistance, isVisible } = props;
-  if (!isVisible || elevationData.length === 0) {
-    return null;
-  }
+  const { elevationData, isVisible } = props;
 
   // Format data for the chart
   const chartData = elevationData.map((point) => ({
@@ -22,7 +20,12 @@ export function ElevationProfile(props: ElevationProfileProps): JSX.Element {
   }));
 
   return (
-    <div className="absolute bottom-4 left-4 right-4 bg-white rounded-2xl shadow-lg  z-10 overflow-hidden">
+    <div
+      className={cn(
+        "absolute bottom-4 left-4 right-4 bg-white rounded-2xl shadow-lg z-10 overflow-hidden transition-[bottom]",
+        { "-bottom-32": !isVisible, "bottom-4": isVisible },
+      )}
+    >
       <ResponsiveContainer width="100%" height={64}>
         <AreaChart
           margin={{ top: 0, right: 0, left: 0, bottom: 0 }}

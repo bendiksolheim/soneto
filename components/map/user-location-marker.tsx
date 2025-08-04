@@ -31,7 +31,6 @@ export function UserLocationMarker(props: UserLocationMarkerProps): JSX.Element 
 
           {/* Main location indicator */}
           <div className="relative w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg">
-            <div className="absolute inset-0.5 bg-white rounded-full"></div>
             <div className="absolute inset-1 bg-blue-600 rounded-full"></div>
           </div>
 

@@ -4,9 +4,21 @@ import React, { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Save, Download, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 
 interface RouteActionsProps {
-  onSaveRoute: () => void;
+  onSaveRoute: (name: string) => void;
   onExportGPX: () => void;
   onResetRoute: () => void;
   isVisible: boolean;
@@ -14,6 +26,8 @@ interface RouteActionsProps {
 
 export function RouteActions(props: RouteActionsProps): JSX.Element | null {
   const { onSaveRoute, onExportGPX, onResetRoute, isVisible } = props;
+  const [saveOpen, setSaveOpen] = React.useState(false);
+  const [routeName, setRouteName] = React.useState("");
 
   return (
     <div
@@ -23,13 +37,53 @@ export function RouteActions(props: RouteActionsProps): JSX.Element | null {
       })}
     >
       <div className="flex flex-col items-start space-y-1 p-2">
-        <ActionButton title="Lagre løype" onClick={onSaveRoute}>
-          <Save />
-        </ActionButton>
+        <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
+          <DialogTrigger asChild>
+            <ActionButton title="Lagre løype">
+              <Save />
+            </ActionButton>
+          </DialogTrigger>
+          <DialogContent>
+            <form
+              onSubmit={(e) => {
+                onSaveRoute(routeName);
+                e.preventDefault();
+                setSaveOpen(false);
+              }}
+            >
+              <DialogHeader>
+                <DialogTitle>Lagre løypen</DialogTitle>
+                <DialogDescription>
+                  Løypen lagres lokalt i denne nettleseren, og er ikke tilgjengelig fra noen andre
+                  enheter.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4">
+                <div className="grid gap-3">
+                  <Label htmlFor="route-name">Navn på løype</Label>
+                  <Input
+                    value={routeName}
+                    onChange={(e) => setRouteName(e.target.value)}
+                    id="route-name"
+                    placeholder="Navn på løype"
+                  ></Input>
+                </div>
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button>Avbryt</Button>
+                </DialogClose>
+                <Button type="submit" disabled={routeName.length === 0}>
+                  Lagre
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
         <ActionButton title="Eksporter GPX" onClick={onExportGPX}>
           <Download />
         </ActionButton>
-        <ActionButton title="Start på nytt" onClick={onResetRoute}>
+        <ActionButton title="Slett alle punktene" onClick={onResetRoute}>
           <Trash2 />
         </ActionButton>
       </div>
@@ -39,7 +93,7 @@ export function RouteActions(props: RouteActionsProps): JSX.Element | null {
 
 type ActionButtonProps = React.PropsWithChildren<{
   title: string;
-  onClick: () => void;
+  onClick?: () => void;
 }>;
 
 function ActionButton({ title, onClick, children }: ActionButtonProps): ReactNode {

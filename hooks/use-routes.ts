@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { StoredRoute, RouteWithCalculatedData } from "@/lib/types/route";
 import { RouteStorageService } from "@/lib/services/route-storage";
+import { Point } from "@/lib/map/point";
 
 interface UseRoutesReturn {
   routes: RouteWithCalculatedData[];
@@ -10,11 +11,11 @@ interface UseRoutesReturn {
   error: string | null;
   saveRoute: (routeData: {
     name: string;
-    points: [number, number][];
+    points: Array<Point>;
   }) => Promise<StoredRoute>;
   updateRoute: (
     id: string,
-    updates: { name?: string; points?: [number, number][] },
+    updates: { name?: string; points?: Array<Point> },
   ) => Promise<StoredRoute | null>;
   deleteRoute: (id: string) => Promise<boolean>;
   clearAllRoutes: () => Promise<void>;
@@ -51,7 +52,7 @@ export function useRoutes(): UseRoutesReturn {
 
   // Save a new route
   const saveRoute = useCallback(
-    async (routeData: { name: string; points: [number, number][] }) => {
+    async (routeData: { name: string; points: Array<Point> }) => {
       try {
         setError(null);
         const newRoute = RouteStorageService.saveRoute(routeData);
@@ -78,10 +79,7 @@ export function useRoutes(): UseRoutesReturn {
 
   // Update an existing route
   const updateRoute = useCallback(
-    async (
-      id: string,
-      updates: { name?: string; points?: [number, number][] },
-    ) => {
+    async (id: string, updates: { name?: string; points?: Array<Point> }) => {
       try {
         setError(null);
         const updatedRoute = RouteStorageService.updateRoute(id, updates);

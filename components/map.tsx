@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import MapboxMap, {
   MapMouseEvent,
   Source,
@@ -32,11 +32,6 @@ export function Map({
   directions,
   setElevation,
 }: MapContainerProps) {
-  const [location, setLocation] = useState({
-    latitude: 59.9139,
-    longitude: 10.7522,
-  });
-  const [zoom, setZoom] = useState(3);
   const mapRef = useRef<MapRef>(null);
 
   // Query elevation for route points and generate elevation profile
@@ -56,10 +51,11 @@ export function Map({
       ref={mapRef}
       mapboxAccessToken={mapboxToken}
       mapStyle="mapbox://styles/mapbox/streets-v12"
-      zoom={zoom}
-      latitude={location.latitude}
-      longitude={location.longitude}
-      onMove={(evt) => setLocation((currentLocation) => ({ ...currentLocation, ...evt.viewState }))}
+      initialViewState={{
+        latitude: 59.9139,
+        longitude: 10.7522,
+        zoom: 3,
+      }}
       maxZoom={20}
       minZoom={3}
       onClick={onClick}
@@ -75,8 +71,11 @@ export function Map({
       <Markers route={routePoints} setRoute={setRoutePoints} />
       <UserLocationMarker
         onLocationFound={(location) => {
-          setZoom(15);
-          setLocation(location);
+          mapRef.current.jumpTo({
+            center: [location.longitude, location.latitude],
+            zoom: 15,
+          });
+          // setZoom(15);
         }}
       />
     </MapboxMap>

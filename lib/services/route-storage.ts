@@ -6,6 +6,7 @@ import {
   DEFAULT_ROUTE_STORAGE,
   calculateRouteDistance,
 } from "@/lib/types/route";
+import { Point } from "../map/point";
 
 export class RouteStorageService {
   // Get all routes from localStorage
@@ -59,7 +60,7 @@ export class RouteStorageService {
   // Save a new route
   static saveRoute(routeData: {
     name: string;
-    points: [number, number][];
+    points: Array<Point>;
   }): StoredRoute {
     const newRoute: StoredRoute = {
       id: crypto.randomUUID(),

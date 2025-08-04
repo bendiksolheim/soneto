@@ -1,7 +1,9 @@
+import { Point } from "../map/point";
+
 export interface StoredRoute {
   id: string; // Unique identifier (UUID)
   name: string; // User-friendly route name
-  points: [number, number][]; // [longitude, latitude] coordinates
+  points: Array<Point>; // [longitude, latitude] coordinates
   createdAt: string; // ISO string timestamp
 }
 
@@ -11,12 +13,9 @@ export interface RouteStorage {
 }
 
 // Helper function to calculate distance between two coordinates using Haversine formula
-function getDistanceBetweenPoints(
-  point1: [number, number],
-  point2: [number, number],
-): number {
-  const [lon1, lat1] = point1;
-  const [lon2, lat2] = point2;
+function getDistanceBetweenPoints(point1: Point, point2: Point): number {
+  const { latitude: lat1, longitude: lon1 } = point1;
+  const { latitude: lat2, longitude: lon2 } = point2;
 
   const R = 6371; // Earth's radius in kilometers
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -34,7 +33,7 @@ function getDistanceBetweenPoints(
 }
 
 // Calculate total route distance from points array
-export function calculateRouteDistance(points: [number, number][]): number {
+export function calculateRouteDistance(points: Array<Point>): number {
   if (points.length < 2) return 0;
 
   let totalDistance = 0;

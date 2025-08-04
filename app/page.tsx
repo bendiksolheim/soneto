@@ -9,6 +9,8 @@ import { Map } from "@/components/map";
 import { RouteActions } from "@/components/route-actions";
 import { Point } from "@/lib/map/point";
 import { ElevationProfile } from "@/components/elevation-profile";
+import { directionsToGeoJson } from "@/lib/map/directions-to-geojson";
+import { exportGpx } from "@/utils/gpx";
 
 export default function HomePage() {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
@@ -70,8 +72,13 @@ export default function HomePage() {
           isVisible={elevation.length > 0}
         />
         <RouteActions
-          onSaveRoute={() => {}}
-          onExportGPX={() => {}}
+          onSaveRoute={(name) => {
+            saveRoute({ name, points: routePoints });
+          }}
+          onExportGPX={() => {
+            const geojson = directionsToGeoJson(directions);
+            exportGpx(geojson);
+          }}
           onResetRoute={handleClearRoute}
           isVisible={routePoints.length > 0}
         />

@@ -32,7 +32,6 @@ export function MenuBar(props: MenuBarProps) {
   const handleRouteSelect = (route: any) => {
     if (onRouteLoad) {
       onRouteLoad(route.points, route.name);
-      toast.success(`Loaded route: ${route.name}`);
     } else {
       toast.info(`Loading route: ${route.name}`);
     }

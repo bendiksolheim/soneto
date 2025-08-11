@@ -29,7 +29,7 @@ export function MenuBar(props: MenuBarProps) {
   const [isPacePopupOpen, setIsPacePopupOpen] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const handleRouteSelect = (route: any) => {
+  const handleRouteSelect = (route: RouteWithCalculatedData) => {
     if (onRouteLoad) {
       onRouteLoad(route.points, route.name);
     } else {
@@ -43,7 +43,7 @@ export function MenuBar(props: MenuBarProps) {
       try {
         await deleteRoute(routeId);
         toast.success("Route deleted successfully");
-      } catch (error) {
+      } catch {
         toast.error("Failed to delete route");
       }
     }

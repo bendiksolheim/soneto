@@ -17,7 +17,7 @@ export function UserLocationMarker(props: UserLocationMarkerProps): JSX.Element 
       setLocation(position.coords);
       props.onLocationFound(position.coords);
     });
-  }, []);
+  }, [props]);
 
   if (location === null) {
     return null;

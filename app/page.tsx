@@ -38,13 +38,13 @@ export default function HomePage() {
       }
     }
     updateDirections();
-  }, [routePoints]);
+  }, [routePoints, mapboxToken]);
 
   const handleClearRoute = () => {
     setRoutePoints([]);
   };
 
-  const handleRouteLoad = (routePoints: Array<Point>, routeName: string) => {
+  const handleRouteLoad = (routePoints: Array<Point>) => {
     setRoutePoints(routePoints);
   };
 

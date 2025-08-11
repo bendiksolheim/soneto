@@ -38,7 +38,7 @@ export function Map({
   useEffect(() => {
     const elevationData = generateElevationData(mapRef.current, directions);
     setElevation(elevationData);
-  }, [directions]);
+  }, [directions, setElevation]);
 
   const onClick = async (e: MapMouseEvent) => {
     const newPoint: Point = { latitude: e.lngLat.lat, longitude: e.lngLat.lng };

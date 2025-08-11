@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { RouteMarker } from "./route-marker";
 import { Point } from "@/lib/map/point";
+import { MarkerDragEvent, MarkerEvent } from "react-map-gl/mapbox";
 
 type RouteProps = {
   route: Array<Point>;
@@ -8,7 +9,7 @@ type RouteProps = {
 };
 
 export function Markers(props: RouteProps): ReactNode {
-  const handleMarkerClick = (indexToRemove: number, e: any) => {
+  const handleMarkerClick = (indexToRemove: number, e: MarkerEvent<MouseEvent>) => {
     // Prevent the map's onClick from firing
     e.originalEvent?.stopPropagation();
 
@@ -17,7 +18,7 @@ export function Markers(props: RouteProps): ReactNode {
     props.setRoute(newRoutePoints);
   };
 
-  const handleMarkerDrag = (index: number, event: any) => {
+  const handleMarkerDrag = (index: number, event: MarkerDragEvent) => {
     const { lng, lat } = event.lngLat;
     const newRoutePoints = [...props.route];
     newRoutePoints[index] = { latitude: lat, longitude: lng };

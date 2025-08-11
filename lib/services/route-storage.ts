@@ -3,7 +3,6 @@ import {
   RouteStorage,
   RouteWithCalculatedData,
   ROUTES_STORAGE_KEY,
-  DEFAULT_ROUTE_STORAGE,
   calculateRouteDistance,
 } from "@/lib/types/route";
 import { Point } from "../map/point";

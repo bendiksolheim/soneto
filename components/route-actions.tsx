@@ -36,7 +36,7 @@ export function RouteActions(props: RouteActionsProps): JSX.Element | null {
         "right-4": isVisible,
       })}
     >
-      <div className="flex flex-col items-start space-y-1 p-2">
+      <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-full shadow-lg flex flex-col items-start space-y-1 p-2">
         <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
           <DialogTrigger asChild>
             <ActionButton title="Lagre løype">
@@ -101,7 +101,7 @@ function ActionButton({ title, onClick, children }: ActionButtonProps): ReactNod
     <Button
       size="icon"
       onClick={onClick}
-      className="bg-white rounded-full shadow-lg size-8"
+      className="rounded-full size-8"
       variant="ghost"
       title={title}
     >

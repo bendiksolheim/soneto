@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Marker } from "react-map-gl/mapbox";
 
 type UserLocationMarkerProps = {
@@ -11,13 +11,19 @@ type Location = {
 };
 
 export function UserLocationMarker(props: UserLocationMarkerProps): JSX.Element {
+  const { onLocationFound } = props;
   const [location, setLocation] = useState<Location | null>(null);
+  const hasFoundLocation = useRef(false);
+
   useEffect(() => {
+    if (hasFoundLocation.current) return;
+
     getUserLocation((position) => {
       setLocation(position.coords);
-      props.onLocationFound(position.coords);
+      onLocationFound(position.coords);
+      hasFoundLocation.current = true;
     });
-  }, [props]);
+  }, [onLocationFound]);
 
   if (location === null) {
     return null;

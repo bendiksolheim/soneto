@@ -41,9 +41,19 @@ export function Map({
   }, [directions, setElevation]);
 
   const onClick = async (e: MapMouseEvent) => {
-    const newPoint: Point = { latitude: e.lngLat.lat, longitude: e.lngLat.lng };
-    const newRoutePoints = [...routePoints, newPoint];
-    setRoutePoints(newRoutePoints);
+    // Use unproject to get more accurate coordinates with terrain enabled
+    const map = mapRef.current;
+    if (map) {
+      const point = map.unproject(e.point);
+      const newPoint: Point = { latitude: point.lat, longitude: point.lng };
+      const newRoutePoints = [...routePoints, newPoint];
+      setRoutePoints(newRoutePoints);
+    } else {
+      // Fallback to original method
+      const newPoint: Point = { latitude: e.lngLat.lat, longitude: e.lngLat.lng };
+      const newRoutePoints = [...routePoints, newPoint];
+      setRoutePoints(newRoutePoints);
+    }
   };
 
   return (
@@ -59,7 +69,7 @@ export function Map({
       maxZoom={20}
       minZoom={3}
       onClick={onClick}
-      terrain={{ source: "terrain-source", exaggeration: 1.2 }}
+      terrain={{ source: "terrain-source", exaggeration: 0.5 }}
     >
       {/* Terrain source */}
       <Source id="terrain-source" {...terrainSource} />

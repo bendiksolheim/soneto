@@ -36,7 +36,7 @@ export function directions(
   const coordinatesString = coordinates
     .map((coord) => `${coord.longitude},${coord.latitude}`)
     .join(";");
-  const query = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinatesString}?overview=full&geometries=geojson&access_token=${token}`;
+  const query = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinatesString}?overview=full&geometries=geojson&exclude=ferry&access_token=${token}`;
   try {
     return fetch(query).then((res) => res.json());
   } catch (error) {

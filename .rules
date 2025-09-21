@@ -29,6 +29,7 @@ changes along the route. The route can be saved, and exported as a GPX file.
 - Write code in a functional style, using .map and .filter over loops
 - Prefer immutable data structures and pure functions
 - Write code in small increments, and avoid unnecessary premature abstractions
+- When unsure about implementation details, requirements, or user preferences, ask questions instead of making assumptions
 - Verify the code by running `tsc` and `npm run lint`
 - NEVER run `npm run build` under any circumstance - this command is strictly forbidden
 

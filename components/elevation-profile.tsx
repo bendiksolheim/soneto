@@ -1,8 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import React from "react";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { VictoryArea, VictoryChart, VictoryAxis, VictoryTheme } from "victory";
 
 interface ElevationProfileProps {
   elevationData: Array<{ distance: number; elevation: number; coordinate: [number, number] }>;
@@ -13,65 +12,19 @@ interface ElevationProfileProps {
 export function ElevationProfile(props: ElevationProfileProps): JSX.Element {
   const { elevationData, isVisible } = props;
 
-  // Format data for the chart
+  // Format data for Victory
   const chartData = elevationData.map((point) => ({
-    distance: Number(point.distance.toFixed(2)),
-    elevation: Math.round(point.elevation),
+    x: Number(point.distance.toFixed(2)),
+    y: Math.round(point.elevation),
   }));
 
+  if (!isVisible || chartData.length === 0) {
+    return <div className="w-full h-full" />;
+  }
+
   return (
-    <div
-      className={cn(
-        "absolute bottom-4 left-4 right-4 bg-white rounded-2xl shadow-lg z-10 overflow-hidden transition-[bottom]",
-        { "-bottom-32": !isVisible, "bottom-4": isVisible },
-      )}
-    >
-      <ResponsiveContainer width="100%" height={64}>
-        <AreaChart
-          margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
-          data={chartData}
-          width={348}
-          height={96}
-        >
-          <XAxis
-            dataKey="distance"
-            visibility="hidden"
-            height={0}
-            tickLine={false}
-            axisLine={false}
-            tickMargin={0}
-            interval={6}
-            tickFormatter={(value) => `${value}km`}
-          />
-          <YAxis
-            domain={["dataMin - 5", "dataMax + 5"]}
-            visibility="hidden"
-            tickLine={false}
-            axisLine={false}
-            tickMargin={0}
-            width={0}
-          />
-          <Tooltip
-            content={({ active, payload, label }) => {
-              const isVisible = active && payload && payload.length;
-              return (
-                <div
-                  className="bg-white rounded-lg shadow-lg p-2"
-                  style={{ visibility: isVisible ? "visible" : "hidden" }}
-                >
-                  {isVisible && (
-                    <>
-                      <p>{`Distance: ${label}km`}</p>
-                      <p>{`Elevation: ${payload[0].value}m`}</p>
-                    </>
-                  )}
-                </div>
-              );
-            }}
-          />
-          <Area dataKey="elevation" fill="#8884d8" stroke="#8884d8" strokeWidth={2} />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
+    <VictoryChart theme={VictoryTheme.clean}>
+      <VictoryArea data={chartData} />
+    </VictoryChart>
   );
 }

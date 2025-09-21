@@ -1,16 +1,16 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { MenuBar } from "@/components/menu-bar";
 import { useRoutes } from "@/hooks/use-routes";
 import { usePace } from "@/hooks/use-pace";
 import { directions, Directions } from "@/lib/mapbox";
 import { Map } from "@/components/map";
-import { RouteActions } from "@/components/route-actions";
 import { Point } from "@/lib/map/point";
-import { ElevationProfile } from "@/components/elevation-profile";
+import { CapabilitiesPanel } from "@/components/capabilities-panel";
 import { directionsToGeoJson } from "@/lib/map/directions-to-geojson";
 import { exportGpx } from "@/utils/gpx";
+import { Button } from "@/components/ui/button";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 export default function HomePage() {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
@@ -20,6 +20,7 @@ export default function HomePage() {
   const [elevation, setElevation] = useState<
     Array<{ distance: number; elevation: number; coordinate: [number, number] }>
   >([]);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const distance = useMemo(() => {
     return directions.reduce((acc, direction) => acc + direction.routes[0].distance / 1000, 0);
@@ -49,29 +50,32 @@ export default function HomePage() {
   };
 
   return (
-    <>
-      <MenuBar
-        paceInSeconds={paceInSeconds}
-        distance={distance}
-        onRouteLoad={handleRouteLoad}
-        routes={routes}
-        deleteRoute={deleteRoute}
-        onPaceChange={setPace}
+    <div className="relative h-screen overflow-hidden">
+      {/* Full-width Map */}
+      <Map
+        mapboxToken={mapboxToken}
+        routePoints={routePoints}
+        setRoutePoints={setRoutePoints}
+        directions={directions}
+        setElevation={setElevation}
+        sidebarOpen={sidebarOpen}
       />
-      <div className="relative w-full h-screen overflow-hidden">
-        <Map
-          mapboxToken={mapboxToken}
+
+      {/* Overlay Capabilities Panel */}
+      <div 
+        className={`absolute top-0 left-0 h-full z-40 transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <CapabilitiesPanel
           routePoints={routePoints}
-          setRoutePoints={setRoutePoints}
-          directions={directions}
-          setElevation={setElevation}
-        />
-        <ElevationProfile
+          distance={distance}
           elevationData={elevation}
-          totalDistance={directions.length > 0 ? directions[0].routes[0].distance : 0}
-          isVisible={elevation.length > 0}
-        />
-        <RouteActions
+          paceInSeconds={paceInSeconds}
+          onPaceChange={setPace}
+          routes={routes}
+          onRouteLoad={handleRouteLoad}
+          deleteRoute={deleteRoute}
           onSaveRoute={(name) => {
             saveRoute({ name, points: routePoints });
           }}
@@ -80,10 +84,27 @@ export default function HomePage() {
             exportGpx(geojson);
           }}
           onResetRoute={handleClearRoute}
-          isVisible={routePoints.length > 0}
         />
       </div>
-    </>
+
+      {/* Toggle Button */}
+      <Button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        variant="outline"
+        size="icon"
+        className={`fixed top-4 z-50 bg-white border-gray-300 shadow-lg hover:bg-gray-50 transition-all duration-300 ease-in-out ${
+          sidebarOpen 
+            ? 'left-[384px] -translate-x-1/2' 
+            : 'left-4'
+        }`}
+      >
+        {sidebarOpen ? (
+          <PanelLeftClose className="h-4 w-4" />
+        ) : (
+          <PanelLeftOpen className="h-4 w-4" />
+        )}
+      </Button>
+    </div>
   );
 }
 

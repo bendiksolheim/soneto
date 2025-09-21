@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.mapbox.com)",
+      "Bash(tsc)",
+      "Bash(npm run lint)",
+      "WebSearch",
+      "Bash(tsc --noEmit)",
+      "WebFetch(domain:airbnb.io)",
+      "WebFetch(domain:codesandbox.io)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

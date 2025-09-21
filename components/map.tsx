@@ -23,6 +23,7 @@ interface MapContainerProps {
   setElevation: (
     elevation: Array<{ distance: number; elevation: number; coordinate: [number, number] }>,
   ) => void;
+  sidebarOpen?: boolean;
 }
 
 export function Map({
@@ -31,6 +32,7 @@ export function Map({
   setRoutePoints,
   directions,
   setElevation,
+  sidebarOpen = false,
 }: MapContainerProps) {
   const mapRef = useRef<MapRef>(null);
 
@@ -70,6 +72,7 @@ export function Map({
       minZoom={3}
       onClick={onClick}
       terrain={{ source: "terrain-source", exaggeration: 0.5 }}
+      padding={sidebarOpen ? { left: 384 } : undefined}
     >
       {/* Terrain source */}
       <Source id="terrain-source" {...terrainSource} />

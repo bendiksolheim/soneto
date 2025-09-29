@@ -33,20 +33,24 @@ interface CapabilitiesPanelProps {
   routePoints: Array<Point>;
   distance: number;
   elevationData: Array<{ distance: number; elevation: number; coordinate: [number, number] }>;
-  
+
   // Pace controls
   paceInSeconds: number;
   onPaceChange: (pace: number) => void;
-  
+
   // Route management
   routes: RouteWithCalculatedData[];
   onRouteLoad: (routePoints: Array<Point>, routeName: string) => void;
   deleteRoute: (id: string) => Promise<boolean>;
-  
+
   // Actions
   onSaveRoute: (name: string) => void;
   onExportGPX: () => void;
   onResetRoute: () => void;
+
+  // Hover interaction
+  hoveredElevationIndex: number | null;
+  onElevationHover: (index: number | null) => void;
 }
 
 export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
@@ -62,6 +66,8 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
     onSaveRoute,
     onExportGPX,
     onResetRoute,
+    hoveredElevationIndex,
+    onElevationHover,
   } = props;
 
   const [isPacePopupOpen, setIsPacePopupOpen] = useState(false);
@@ -266,6 +272,8 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
                 elevationData={elevationData}
                 totalDistance={distance}
                 isVisible={true}
+                hoveredIndex={hoveredElevationIndex}
+                onHover={onElevationHover}
               />
             </div>
           ) : (

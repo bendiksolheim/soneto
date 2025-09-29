@@ -1,16 +1,18 @@
 "use client";
 
 import React from "react";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 interface ElevationProfileProps {
   elevationData: Array<{ distance: number; elevation: number; coordinate: [number, number] }>;
   totalDistance: number;
   isVisible: boolean;
+  hoveredIndex: number | null;
+  onHover: (index: number | null) => void;
 }
 
 export function ElevationProfile(props: ElevationProfileProps): JSX.Element {
-  const { elevationData, isVisible } = props;
+  const { elevationData, isVisible, hoveredIndex, onHover } = props;
 
   // Format data for the chart
   const chartData = elevationData.map((point) => ({
@@ -32,9 +34,28 @@ export function ElevationProfile(props: ElevationProfileProps): JSX.Element {
   }
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full relative">
+      {hoveredIndex !== null && chartData[hoveredIndex] && (
+        <div className="absolute top-0 right-0 bg-purple-600 text-white text-xs px-2 py-1 rounded shadow-lg z-10">
+          {chartData[hoveredIndex].elevation}m
+        </div>
+      )}
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart margin={{ top: 5, right: 0, left: 0, bottom: 20 }} data={chartData}>
+        <AreaChart
+          margin={{ top: 5, right: 0, left: 0, bottom: 20 }}
+          data={chartData}
+          onMouseMove={(state) => {
+            if (state && state.isTooltipActive && state.activeTooltipIndex !== undefined) {
+              // Only update if the index actually changed to avoid conflicts
+              if (hoveredIndex !== state.activeTooltipIndex) {
+                onHover(state.activeTooltipIndex);
+              }
+            }
+          }}
+          onMouseLeave={() => {
+            onHover(null);
+          }}
+        >
           <XAxis
             dataKey="distance"
             axisLine={false}
@@ -77,6 +98,19 @@ export function ElevationProfile(props: ElevationProfileProps): JSX.Element {
             stroke="#8884d8"
             strokeWidth={2}
           />
+
+          {/* Hover indicator dot */}
+          {hoveredIndex !== null && chartData[hoveredIndex] && (
+            <ReferenceDot
+              x={chartData[hoveredIndex].distance}
+              y={chartData[hoveredIndex].elevation}
+              r={6}
+              fill="#8b5cf6"
+              stroke="#ffffff"
+              strokeWidth={2}
+              isFront={true}
+            />
+          )}
         </AreaChart>
       </ResponsiveContainer>
     </div>

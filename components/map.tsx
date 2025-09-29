@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import MapboxMap, {
   MapMouseEvent,
   Source,
@@ -14,6 +14,7 @@ import { UserLocationMarker } from "./map/user-location-marker";
 import { Markers } from "./map/markers";
 import { Route } from "./map/route";
 import { Point } from "@/lib/map/point";
+import { HoverMarker } from "./map/hover-marker";
 
 interface MapContainerProps {
   mapboxToken: string;
@@ -24,6 +25,8 @@ interface MapContainerProps {
     elevation: Array<{ distance: number; elevation: number; coordinate: [number, number] }>,
   ) => void;
   sidebarOpen?: boolean;
+  hoveredElevationIndex: number | null;
+  onElevationHover: (index: number | null) => void;
 }
 
 export function Map({
@@ -33,14 +36,25 @@ export function Map({
   directions,
   setElevation,
   sidebarOpen = false,
+  hoveredElevationIndex,
+  onElevationHover,
 }: MapContainerProps) {
   const mapRef = useRef<MapRef>(null);
+  const [elevationData, setElevationDataState] = useState<
+    Array<{ distance: number; elevation: number; coordinate: [number, number] }>
+  >([]);
 
   // Query elevation for route points and generate elevation profile
   useEffect(() => {
-    const elevationData = generateElevationData(mapRef.current, directions);
-    setElevation(elevationData);
+    const data = generateElevationData(mapRef.current, directions);
+    setElevationDataState(data);
+    setElevation(data);
   }, [directions, setElevation]);
+
+  const hoveredCoordinate =
+    hoveredElevationIndex !== null && elevationData[hoveredElevationIndex]
+      ? elevationData[hoveredElevationIndex].coordinate
+      : null;
 
   const onClick = async (e: MapMouseEvent) => {
     // Use unproject to get more accurate coordinates with terrain enabled
@@ -73,6 +87,22 @@ export function Map({
       onClick={onClick}
       terrain={{ source: "terrain-source", exaggeration: 0.5 }}
       padding={sidebarOpen ? { left: 384 } : undefined}
+      onMouseMove={(e: MapMouseEvent) => {
+        const features = e.target.queryRenderedFeatures(e.point, {
+          layers: ['route-layer'],
+        });
+
+        if (features.length > 0) {
+          const nearestIndex = findNearestElevationPoint(e.lngLat, elevationData);
+          if (nearestIndex !== null) {
+            onElevationHover(nearestIndex);
+          }
+        } else if (hoveredElevationIndex !== null) {
+          // Clear hover if not over route
+          onElevationHover(null);
+        }
+      }}
+      interactiveLayerIds={['route-layer']}
     >
       {/* Terrain source */}
       <Source id="terrain-source" {...terrainSource} />
@@ -91,6 +121,7 @@ export function Map({
           // setZoom(15);
         }}
       />
+      {hoveredCoordinate && <HoverMarker coordinate={hoveredCoordinate} />}
     </MapboxMap>
   );
 }
@@ -211,4 +242,33 @@ function calculateDistance(coord1: [number, number], coord2: [number, number]): 
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
+}
+
+// Find the nearest elevation data point to a given coordinate
+// Note: Hover performance is acceptable with current 30m sampling.
+// If routes exceed 100km and performance degrades, consider:
+// 1. Throttling onMouseMove events
+// 2. Increasing sample interval for very long routes
+// 3. Using spatial indexing for nearest point lookup
+function findNearestElevationPoint(
+  lngLat: { lng: number; lat: number },
+  elevationData: Array<{ distance: number; elevation: number; coordinate: [number, number] }>,
+): number | null {
+  if (elevationData.length === 0) return null;
+
+  let nearestIndex = 0;
+  let minDistance = Number.MAX_VALUE;
+
+  for (let i = 0; i < elevationData.length; i++) {
+    const [lng, lat] = elevationData[i].coordinate;
+    const distance = calculateDistance([lng, lat], [lngLat.lng, lngLat.lat]);
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearestIndex = i;
+    }
+  }
+
+  // Only return if within reasonable proximity (100 meters)
+  return minDistance < 0.1 ? nearestIndex : null;
 }

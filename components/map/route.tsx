@@ -18,7 +18,7 @@ export function Route(props: RouteProps): ReactNode {
 }
 
 const style: Omit<LineLayerSpecification, "source"> = {
-  id: "data",
+  id: "route-layer",
   type: "line",
   layout: {
     "line-join": "round",

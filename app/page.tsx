@@ -20,6 +20,7 @@ export default function HomePage() {
   const [elevation, setElevation] = useState<
     Array<{ distance: number; elevation: number; coordinate: [number, number] }>
   >([]);
+  const [hoveredElevationIndex, setHoveredElevationIndex] = useState<number | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const distance = useMemo(() => {
@@ -59,6 +60,8 @@ export default function HomePage() {
         directions={directions}
         setElevation={setElevation}
         sidebarOpen={sidebarOpen}
+        hoveredElevationIndex={hoveredElevationIndex}
+        onElevationHover={setHoveredElevationIndex}
       />
 
       {/* Overlay Capabilities Panel */}
@@ -84,6 +87,8 @@ export default function HomePage() {
             exportGpx(geojson);
           }}
           onResetRoute={handleClearRoute}
+          hoveredElevationIndex={hoveredElevationIndex}
+          onElevationHover={setHoveredElevationIndex}
         />
       </div>
 

@@ -16,13 +16,7 @@ import {
 } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import {
-  Tooltip,
-  TooltipArrow,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 interface RouteActionsProps {
   onSaveRoute: (name: string) => void;
@@ -114,7 +108,6 @@ function ActionButton({ title, onClick, children }: ActionButtonProps): ReactNod
         </Button>
       </TooltipTrigger>
       <TooltipContent side="left">
-        <TooltipArrow />
         <p>{title}</p>
       </TooltipContent>
     </Tooltip>

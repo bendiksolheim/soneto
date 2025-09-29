@@ -1,7 +1,15 @@
 "use client";
 
 import React from "react";
-import { Area, AreaChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  ReferenceDot,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 interface ElevationProfileProps {
   elevationData: Array<{ distance: number; elevation: number; coordinate: [number, number] }>;
@@ -48,7 +56,11 @@ export function ElevationProfile(props: ElevationProfileProps): JSX.Element {
             if (state && state.isTooltipActive && state.activeTooltipIndex !== undefined) {
               // Only update if the index actually changed to avoid conflicts
               if (hoveredIndex !== state.activeTooltipIndex) {
-                onHover(state.activeTooltipIndex);
+                const index =
+                  typeof state.activeTooltipIndex === "number"
+                    ? state.activeTooltipIndex
+                    : parseInt(state.activeTooltipIndex);
+                onHover(index);
               }
             }
           }}
@@ -108,7 +120,6 @@ export function ElevationProfile(props: ElevationProfileProps): JSX.Element {
               fill="#8b5cf6"
               stroke="#ffffff"
               strokeWidth={2}
-              isFront={true}
             />
           )}
         </AreaChart>

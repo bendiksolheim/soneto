@@ -1,41 +1,43 @@
 # Project: Soneto
 
 ## Project Description
+
 A web application for runners to plan their routes ahead of running. It features a map where you
-place markers along the intended route. A height curve is generated to visualize the elevation
+place markers along the intended route. An elevation graph is generated to visualize the elevation
 changes along the route. The route can be saved, and exported as a GPX file.
 
 ## Tech Stack
+
+- Node.js v22+
 - Next.js with React and Tailwind CSS
 - Mapbox
+- Recharts for data visualizations
 
 ## Code Conventions
+
 - We use Prettier for code formatting.
-- React components are written in functional components using hooks. We prefer regular functions accepting props and returning React.ReactNode over consts with React.FC
-- 2 space indentation
+- React components are written in functional components using hooks. Use regular functions accepting props and returning React.ReactNode over consts with React.FC
 - camelCase for variable names
 - PascalCase for component names
 - lower case for file names, with dashes between words
 
 ## Project Structure
+
 - /app – Next.js app with pages and layouts
 - /components – React components used throughout the app
 - /hooks – custom React hooks
 - /lib – business logic and utility functions
 
 ## Instructions for Claude
+
 - Follow the code conventions already present in the project
 - Prioritize readability over performance
 - Write code in a functional style, using .map and .filter over loops
 - Prefer immutable data structures and pure functions
-- Write code in small increments, and avoid unnecessary premature abstractions
 - When unsure about implementation details, requirements, or user preferences, ask questions instead of making assumptions
-- Verify the code by running `tsc` and `npm run lint`
-- NEVER run `npm run build` under any circumstance - this command is strictly forbidden
 
-## Enviroment setup
-- Node.js v22+
-- npm scripts:
-  - `npm run dev`: Start the development server
-  - `npm run build`: Build the production version of the app
-  - `npm run lint`: Run ESLint to check code style
+## Development commands
+
+- `pnpm dev`: Start the development server
+- `pnpm build`: Build the production version of the app
+- `pnpm lint`: Run ESLint to check code style

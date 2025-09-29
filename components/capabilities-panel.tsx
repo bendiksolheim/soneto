@@ -261,7 +261,7 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
             <span className="text-sm font-medium text-gray-700">Høydeprofil</span>
           </div>
           {elevationData.length > 0 ? (
-            <div className="h-24">
+            <div className="h-40">
               <ElevationProfile
                 elevationData={elevationData}
                 totalDistance={distance}
@@ -269,7 +269,7 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
               />
             </div>
           ) : (
-            <div className="h-24 flex items-center justify-center text-sm text-gray-500 bg-gray-50 rounded-lg">
+            <div className="h-40 flex items-center justify-center text-sm text-gray-500 bg-gray-50 rounded-lg">
               Legg til punkter for å se høydeprofil
             </div>
           )}

@@ -1,15 +1,17 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Area,
   AreaChart,
+  ReferenceArea,
   ReferenceDot,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { findSteepSegments, getSlopeColor, getSlopeOpacity } from "@/lib/elevation/slope";
 
 interface ElevationProfileProps {
   elevationData: Array<{ distance: number; elevation: number; coordinate: [number, number] }>;
@@ -27,6 +29,12 @@ export function ElevationProfile(props: ElevationProfileProps): JSX.Element {
     distance: Number(point.distance.toFixed(2)),
     elevation: Math.round(point.elevation),
   }));
+
+  // Calculate steep segments for visualization
+  const steepSegments = useMemo(
+    () => findSteepSegments(elevationData, 6, 0.03),
+    [elevationData]
+  );
 
   if (!isVisible || chartData.length === 0) {
     return <div className="w-full h-full" />;
@@ -110,6 +118,25 @@ export function ElevationProfile(props: ElevationProfileProps): JSX.Element {
             stroke="#8884d8"
             strokeWidth={2}
           />
+
+          {/* Steep segment overlays */}
+          {steepSegments.map((segment, index) => {
+            const color = getSlopeColor(segment.avgSlope);
+            if (!color) return null;
+
+            return (
+              <ReferenceArea
+                key={`steep-${index}`}
+                x1={segment.x1}
+                x2={segment.x2}
+                fill={color}
+                fillOpacity={getSlopeOpacity(segment.avgSlope)}
+                stroke={color}
+                strokeOpacity={0.8}
+                strokeWidth={1}
+              />
+            );
+          })}
 
           {/* Hover indicator dot */}
           {hoveredIndex !== null && chartData[hoveredIndex] && (

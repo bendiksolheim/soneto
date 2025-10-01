@@ -12,6 +12,8 @@ import { exportGpx } from "@/utils/gpx";
 import { Button } from "@/components/ui/button";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
+const DRAFT_ROUTE_STORAGE_KEY = "draft-route";
+
 export default function HomePage() {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
@@ -29,6 +31,38 @@ export default function HomePage() {
   const { routes, saveRoute, deleteRoute } = useRoutes();
   const { pace: paceInSeconds, setPace } = usePace();
 
+  // Restore draft route from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedRoute = localStorage.getItem(DRAFT_ROUTE_STORAGE_KEY);
+      if (savedRoute) {
+        const points = JSON.parse(savedRoute);
+        // Validate it's an array
+        if (Array.isArray(points)) {
+          setRoutePoints(points);
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to restore draft route from localStorage:", error);
+      // Clean up invalid data
+      localStorage.removeItem(DRAFT_ROUTE_STORAGE_KEY);
+    }
+  }, []); // Empty deps - runs once on mount
+
+  // Save draft route to localStorage whenever routePoints changes
+  useEffect(() => {
+    try {
+      if (routePoints.length > 0) {
+        localStorage.setItem(DRAFT_ROUTE_STORAGE_KEY, JSON.stringify(routePoints));
+      } else {
+        // Remove from storage when route is cleared
+        localStorage.removeItem(DRAFT_ROUTE_STORAGE_KEY);
+      }
+    } catch (error) {
+      console.warn("Failed to save draft route to localStorage:", error);
+    }
+  }, [routePoints]);
+
   useEffect(() => {
     async function updateDirections() {
       if (routePoints.length >= 2) {
@@ -44,6 +78,11 @@ export default function HomePage() {
 
   const handleClearRoute = () => {
     setRoutePoints([]);
+    try {
+      localStorage.removeItem(DRAFT_ROUTE_STORAGE_KEY);
+    } catch (error) {
+      console.warn("Failed to clear draft route from localStorage:", error);
+    }
   };
 
   const handleRouteLoad = (routePoints: Array<Point>) => {

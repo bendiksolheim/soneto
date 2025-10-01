@@ -43,13 +43,17 @@ export function Map({
   const [elevationData, setElevationDataState] = useState<
     Array<{ distance: number; elevation: number; coordinate: [number, number] }>
   >([]);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Query elevation for route points and generate elevation profile
   useEffect(() => {
+    // Only generate elevation data if map is loaded
+    if (!mapLoaded) return;
+
     const data = generateElevationData(mapRef.current, directions);
     setElevationDataState(data);
     setElevation(data);
-  }, [directions, setElevation]);
+  }, [directions, setElevation, mapLoaded]);
 
   const hoveredCoordinate =
     hoveredElevationIndex !== null && elevationData[hoveredElevationIndex]
@@ -85,6 +89,7 @@ export function Map({
       maxZoom={20}
       minZoom={3}
       onClick={onClick}
+      onLoad={() => setMapLoaded(true)}
       terrain={{ source: "terrain-source", exaggeration: 0.5 }}
       padding={sidebarOpen ? { left: 384 } : undefined}
       onMouseMove={(e: MapMouseEvent) => {
@@ -146,10 +151,14 @@ const hillshadeStyle: Omit<HillshadeLayerSpecification, "source"> = {
 };
 
 function generateElevationData(
-  mapRef: MapRef,
+  mapRef: MapRef | null,
   directions: Array<Directions>,
 ): Array<{ distance: number; elevation: number; coordinate: [number, number] }> {
   // Generate elevation profile along the route
+  if (!mapRef || !directions || directions.length < 1) {
+    return [];
+  }
+
   if (directions && directions.length >= 1) {
     const profileData: Array<{
       distance: number;

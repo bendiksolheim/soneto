@@ -11,6 +11,7 @@ import { directionsToGeoJson } from "@/lib/map/directions-to-geojson";
 import { exportGpx } from "@/utils/gpx";
 import { Button } from "@/components/ui/button";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { extractRouteFromUrl } from "@/lib/route-url";
 
 const DRAFT_ROUTE_STORAGE_KEY = "draft-route";
 
@@ -31,8 +32,24 @@ export default function HomePage() {
   const { routes, saveRoute, deleteRoute } = useRoutes();
   const { pace: paceInSeconds, setPace } = usePace();
 
-  // Restore draft route from localStorage on mount
+  // Restore draft route from localStorage on mount or load shared route from URL
   useEffect(() => {
+    // First, check for shared route in URL
+    const sharedRoute = extractRouteFromUrl(window.location.search);
+
+    if (sharedRoute) {
+      console.log('Loading shared route from URL:', sharedRoute.length, 'points');
+      setRoutePoints(sharedRoute);
+
+      // Clear URL parameter after loading (keeps URL clean)
+      if (window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      return; // Don't load draft route if shared route exists
+    }
+
+    // Otherwise, restore draft route from localStorage
     try {
       const savedRoute = localStorage.getItem(DRAFT_ROUTE_STORAGE_KEY);
       if (savedRoute) {

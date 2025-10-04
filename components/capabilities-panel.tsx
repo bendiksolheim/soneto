@@ -22,11 +22,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { MapPin, Route, Calendar, Trash2, MoveVertical, Save, Download } from "lucide-react";
+import { MapPin, Route, Calendar, Trash2, MoveVertical, Save, Download, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { RouteWithCalculatedData } from "@/lib/types/route";
 import { Point } from "@/lib/map/point";
 import { ElevationProfile } from "./elevation-profile";
+import { generateShareUrl } from "@/lib/route-url";
 
 interface CapabilitiesPanelProps {
   // Route data
@@ -103,6 +104,26 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
       } catch {
         toast.error("Failed to delete route");
       }
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      const shareUrl = generateShareUrl(routePoints);
+
+      // Copy to clipboard using modern Clipboard API
+      await navigator.clipboard.writeText(shareUrl);
+
+      toast.success("Delbar lenke kopiert til utklippstavlen", {
+        description: "Send lenken til andre for å dele løypen",
+      });
+    } catch (error) {
+      console.error('Failed to copy share URL:', error);
+
+      // Fallback toast message if clipboard fails
+      toast.error("Kunne ikke kopiere til utklippstavlen", {
+        description: "Prøv igjen eller bruk en annen nettleser",
+      });
     }
   };
 
@@ -334,6 +355,17 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
               </form>
             </DialogContent>
           </Dialog>
+
+          {/* Share Route */}
+          <Button
+            className="w-full justify-start"
+            variant="outline"
+            onClick={handleShare}
+            disabled={routePoints.length < 2}
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            Del løype
+          </Button>
 
           {/* Export GPX */}
           <Button className="w-full justify-start" variant="outline" onClick={onExportGPX} disabled={routePoints.length === 0}>

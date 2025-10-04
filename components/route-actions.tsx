@@ -37,7 +37,7 @@ export function RouteActions(props: RouteActionsProps): JSX.Element | null {
         "right-4": isVisible,
       })}
     >
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-full shadow-lg flex flex-col items-start space-y-1 p-2">
+      <div className="bg-white/95 backdrop-blur-xs border border-gray-200 rounded-full shadow-lg flex flex-col items-start space-y-1 p-2">
         <TooltipProvider>
           <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
             <DialogTrigger asChild>

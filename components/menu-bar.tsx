@@ -87,7 +87,7 @@ export function MenuBar(props: MenuBarProps) {
 
   return (
     <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-2xl px-4">
-      <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-full shadow-lg px-4 py-2">
+      <div className="bg-white/95 backdrop-blur-xs border border-gray-200 rounded-full shadow-lg px-4 py-2">
         <div className="flex items-center justify-between">
           {/* Logo and Routes Section */}
           <div className="flex items-center space-x-2">
@@ -167,7 +167,7 @@ export function MenuBar(props: MenuBarProps) {
                             >
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center space-x-2">
-                                  <Route className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                                  <Route className="w-4 h-4 text-blue-600 shrink-0" />
                                   <div className="min-w-0 flex-1">
                                     <p className="text-sm font-medium text-gray-900 truncate">
                                       {route.name}

@@ -250,7 +250,7 @@ The project uses `border border-input` pattern extensively. In v4, `border` alon
 
 #### 7.4: Review Ring Usage
 
-The project uses `ring-ring` pattern. In v4, bare `ring` uses `currentColor` with 1px width.
+The project uses `ring-ring` pattern. In v4, bare `ring-3` uses `currentColor` with 1px width.
 
 **Action:** Since we use `ring-ring`, this should not be affected. Verify visually.
 

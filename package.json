@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@dwayneparton/geojson-to-gpx": "^0.2.0",
@@ -35,16 +40,26 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.2",
     "@tailwindcss/postcss": "^4.1.14",
     "@tailwindcss/typography": "^0.5.19",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.0.1",
+    "@testing-library/user-event": "^14.5.2",
     "@types/node": "^22.18.8",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@types/react-map-gl": "^6.1.7",
+    "@vitejs/plugin-react": "^5.0.4",
+    "@vitest/coverage-v8": "^2.1.1",
+    "@vitest/ui": "^2.1.1",
     "eslint": "^9.37.0",
     "eslint-config-next": "^15.5.4",
+    "happy-dom": "^15.11.7",
+    "msw": "^2.6.5",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.14",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.1"
   }
 }

@@ -6,7 +6,7 @@ repository: soneto
 topic: "Slope steepness visualization for elevation graphs using ReferenceArea overlays"
 tags: [plan, elevation-profile, recharts, visualization, slope, gradient]
 status: ready
-related_research: thoughts/shared/research/2025-09-30-slope-steepness-visualization-techniques.md
+related_research: planning/2025-09-30-slope-steepness-visualization/research.md
 ---
 
 # Slope Steepness Visualization Implementation Plan
@@ -371,7 +371,7 @@ Add ReferenceArea overlays in the AreaChart component, after the Area component 
 
 ## References
 
-- Research document: `thoughts/shared/research/2025-09-30-slope-steepness-visualization-techniques.md`
+- Research document: `planning/2025-09-30-slope-steepness-visualization/research.md`
 - Current elevation profile: `components/elevation-profile.tsx`
 - Elevation data generation: `components/map.tsx:148-189`
 - Recharts documentation: https://recharts.org/en-US/api/ReferenceArea

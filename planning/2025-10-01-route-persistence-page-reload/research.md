@@ -484,9 +484,9 @@ function decodeRouteFromURL(encoded: string): Point[] {
 
 ## Related Research
 
-- [2025-09-29-elevation-graph-width-shrinking.md](thoughts/shared/research/2025-09-29-elevation-graph-width-shrinking.md) - Elevation graph rendering
-- [2025-09-29-elevation-map-hover-interaction.md](thoughts/shared/research/2025-09-29-elevation-map-hover-interaction.md) - Bidirectional hover state
-- [2025-09-30-slope-steepness-visualization-techniques.md](thoughts/shared/research/2025-09-30-slope-steepness-visualization-techniques.md) - Elevation visualization
+- [2025-09-29-fix-elevation-graph-shrinking](planning/2025-09-29-fix-elevation-graph-shrinking/research.md) - Elevation graph rendering
+- [2025-09-29-elevation-map-hover-interaction](planning/2025-09-29-elevation-map-hover-interaction/research.md) - Bidirectional hover state
+- [2025-09-30-slope-steepness-visualization](planning/2025-09-30-slope-steepness-visualization/research.md) - Elevation visualization
 
 ## Open Questions
 

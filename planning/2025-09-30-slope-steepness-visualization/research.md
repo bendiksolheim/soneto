@@ -618,8 +618,8 @@ Combine Options 1 and 2:
 
 ## Related Research
 
-- `/Users/bendik/dev/soneto/thoughts/shared/research/2025-09-29-elevation-graph-width-shrinking.md` - Recharts XAxis domain behavior
-- `/Users/bendik/dev/soneto/thoughts/shared/research/2025-09-29-elevation-map-hover-interaction.md` - Interactive hover implementation (already completed)
+- `planning/2025-09-29-fix-elevation-graph-shrinking/research.md` - Recharts XAxis domain behavior
+- `planning/2025-09-29-elevation-map-hover-interaction/research.md` - Interactive hover implementation (already completed)
 
 ## Example Implementation Snippets
 

@@ -649,7 +649,7 @@ No data migration required. This is a pure UI enhancement with no backend or sto
 
 ## References
 
-- Original research: `thoughts/shared/research/2025-09-29-elevation-map-hover-interaction.md`
+- Original research: `planning/2025-09-29-elevation-map-hover-interaction/research.md`
 - Recharts documentation: https://recharts.org/en-US/api
 - Mapbox GL JS Events: https://docs.mapbox.com/mapbox-gl-js/api/map/#map-events
 - Current elevation generation: `components/map.tsx:117-158`

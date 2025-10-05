@@ -209,7 +209,7 @@ No migration needed:
 
 ## References
 
-- Original research: `thoughts/shared/research/2025-10-01-route-persistence-page-reload.md`
+- Original research: `planning/2025-10-01-route-persistence-page-reload/research.md`
 - Existing pattern: `hooks/use-pace.ts` (pace persistence example)
 - Storage service: `lib/services/route-storage.ts` (saved routes infrastructure)
 - State management: `app/page.tsx:19-24` (route state declarations)

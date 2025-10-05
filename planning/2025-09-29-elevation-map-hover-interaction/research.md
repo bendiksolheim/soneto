@@ -222,7 +222,7 @@ The route is rendered using Mapbox Source/Layer:
 
 ## Related Research
 
-No previous research documents found in thoughts/shared/research/
+No previous research documents found in planning/
 
 ## Open Questions
 

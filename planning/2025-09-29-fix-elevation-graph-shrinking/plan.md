@@ -19,7 +19,7 @@ The elevation profile component (`components/elevation-profile.tsx`) uses Rechar
 ### Key Discovery:
 - **Root cause**: `components/elevation-profile.tsx:44` - `domain={[0, Math.ceil(maxDistance)]}`
 - **Behavior**: When route grows from 0.99km to 1.01km, domain expands from `[0, 1]` to `[0, 2]`, compressing data to ~50% width
-- **Research**: Full analysis in `thoughts/shared/research/2025-09-29-elevation-graph-width-shrinking.md`
+- **Research**: Full analysis in `planning/2025-09-29-fix-elevation-graph-shrinking/research.md`
 
 ## Desired End State
 
@@ -94,6 +94,6 @@ No performance impact. Recharts auto-scaling is the default behavior and is high
 
 ## References
 
-- Research document: `thoughts/shared/research/2025-09-29-elevation-graph-width-shrinking.md`
+- Research document: `planning/2025-09-29-fix-elevation-graph-shrinking/research.md`
 - Affected component: `components/elevation-profile.tsx:44`
 - Recharts documentation: https://recharts.org/en-US/api/XAxis

@@ -1,7 +1,7 @@
 ---
 date: 2025-10-04
 status: pending
-related_research: thoughts/shared/research/2025-10-03-route-sharing-url-encoding.md
+related_research: planning/2025-10-03-route-sharing-url-encoding/research.md
 feature: route-sharing
 tags: [implementation-plan, url-encoding, polyline, route-sharing, compression]
 ---
@@ -672,9 +672,9 @@ if (process.env.NODE_ENV === 'development') {
 
 ## References
 
-- **Original research**: `thoughts/shared/research/2025-10-03-route-sharing-url-encoding.md`
+- **Original research**: `planning/2025-10-03-route-sharing-url-encoding/research.md`
 - **Related research**:
-  - `thoughts/shared/research/2025-10-01-route-persistence-page-reload.md` (persistence patterns)
+  - `planning/2025-10-01-route-persistence-page-reload/research.md` (persistence patterns)
 - **Similar implementations**:
   - Google Maps: Uses polyline encoding for directions URLs
   - Strava: Uses polyline encoding for route sharing

@@ -1,73 +1,54 @@
-# Welcome to your Lovable project
+# Soneto
 
-## Project info
+A web application for runners to plan their routes ahead of running. Place markers on a map to design your route, visualize elevation changes, and export your planned route as a GPX file.
 
-**URL**: https://lovable.dev/projects/31bb82df-f821-46dd-93bf-619c4d6c48cb
+## Tech Stack
 
-## How can I edit this code?
+- Next.js with React and Tailwind CSS
+- Mapbox for interactive maps
+- Recharts for elevation visualizations
+- Node.js v22+
 
-There are several ways of editing your application.
+## Getting Started
 
-**Use Lovable**
+### Prerequisites
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/31bb82df-f821-46dd-93bf-619c4d6c48cb) and start prompting.
+- Node.js v22 or higher
+- pnpm (or npm/yarn)
+- A Mapbox API key
 
-Changes made via Lovable will be committed automatically to this repo.
+### Installation
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. Clone the repository:
+```bash
+git clone git@github.com:bendiksolheim/soneto.git
+cd soneto
 ```
 
-**Edit a file directly in GitHub**
+2. Install dependencies:
+```bash
+pnpm install
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+3. Set up environment variables:
 
-**Use GitHub Codespaces**
+Create a `.env.local` file in the root directory and add your Mapbox access token:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```env
+NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_token_here
+```
 
-## What technologies are used for this project?
+To get a Mapbox access token, follow the [Mapbox documentation on creating access tokens](https://docs.mapbox.com/help/getting-started/access-tokens/).
 
-This project is built with:
+4. Start the development server:
+```bash
+pnpm dev
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+The application will be available at `http://localhost:3000`.
 
-## How can I deploy this project?
+## Development
 
-Simply open [Lovable](https://lovable.dev/projects/31bb82df-f821-46dd-93bf-619c4d6c48cb) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- `pnpm dev` - Start the development server
+- `pnpm build` - Build the production version
+- `pnpm lint` - Run ESLint to check code style

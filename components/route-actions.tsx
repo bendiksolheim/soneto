@@ -4,18 +4,7 @@ import React, { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Save, Download, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "./ui/dialog";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
+import { SaveRouteDialog } from "@/components/save-route-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 interface RouteActionsProps {
@@ -28,7 +17,6 @@ interface RouteActionsProps {
 export function RouteActions(props: RouteActionsProps): JSX.Element | null {
   const { onSaveRoute, onExportGPX, onResetRoute, isVisible } = props;
   const [saveOpen, setSaveOpen] = React.useState(false);
-  const [routeName, setRouteName] = React.useState("");
 
   return (
     <div
@@ -39,49 +27,16 @@ export function RouteActions(props: RouteActionsProps): JSX.Element | null {
     >
       <div className="bg-white/95 backdrop-blur-xs border border-gray-200 rounded-full shadow-lg flex flex-col items-start space-y-1 p-2">
         <TooltipProvider>
-          <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
-            <DialogTrigger asChild>
+          <SaveRouteDialog
+            open={saveOpen}
+            onOpenChange={setSaveOpen}
+            onSaveRoute={onSaveRoute}
+            trigger={
               <ActionButton title="Lagre løype">
                 <Save />
               </ActionButton>
-            </DialogTrigger>
-            <DialogContent>
-              <form
-                onSubmit={(e) => {
-                  onSaveRoute(routeName);
-                  e.preventDefault();
-                  setSaveOpen(false);
-                }}
-              >
-                <DialogHeader>
-                  <DialogTitle>Lagre løypen</DialogTitle>
-                  <DialogDescription>
-                    Løypen lagres lokalt i denne nettleseren, og er ikke tilgjengelig fra noen andre
-                    enheter.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4">
-                  <div className="grid gap-3">
-                    <Label htmlFor="route-name">Navn på løype</Label>
-                    <Input
-                      value={routeName}
-                      onChange={(e) => setRouteName(e.target.value)}
-                      id="route-name"
-                      placeholder="Navn på løype"
-                    ></Input>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button>Avbryt</Button>
-                  </DialogClose>
-                  <Button type="submit" disabled={routeName.length === 0}>
-                    Lagre
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+            }
+          />
           <ActionButton title="Eksporter GPX" onClick={onExportGPX}>
             <Download />
           </ActionButton>

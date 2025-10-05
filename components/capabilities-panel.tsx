@@ -3,8 +3,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -12,16 +10,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { SaveRouteDialog } from "@/components/save-route-dialog";
 import { MapPin, Route, Calendar, Trash2, MoveVertical, Save, Download, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { RouteWithCalculatedData } from "@/lib/types/route";
@@ -73,7 +62,6 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
 
   const [isPacePopupOpen, setIsPacePopupOpen] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
-  const [routeName, setRouteName] = useState("");
   const popupRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -312,49 +300,17 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
       <div className="p-4">
         <div className="space-y-2">
           {/* Save Route */}
-          <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
-            <DialogTrigger asChild>
+          <SaveRouteDialog
+            open={saveOpen}
+            onOpenChange={setSaveOpen}
+            onSaveRoute={onSaveRoute}
+            trigger={
               <Button className="w-full justify-start" variant="outline" disabled={routePoints.length === 0}>
                 <Save className="w-4 h-4 mr-2" />
                 Lagre løype
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <form
-                onSubmit={(e) => {
-                  onSaveRoute(routeName);
-                  e.preventDefault();
-                  setSaveOpen(false);
-                }}
-              >
-                <DialogHeader>
-                  <DialogTitle>Lagre løype</DialogTitle>
-                  <DialogDescription>
-                    Løypen lagres lokalt i denne nettleseren og er ikke tilgjengelig fra andre enheter.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4">
-                  <div className="grid gap-3">
-                    <Label htmlFor="route-name">Navn på løype</Label>
-                    <Input
-                      value={routeName}
-                      onChange={(e) => setRouteName(e.target.value)}
-                      id="route-name"
-                      placeholder="Skriv inn navn på løype"
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="outline">Avbryt</Button>
-                  </DialogClose>
-                  <Button type="submit" disabled={routeName.length === 0}>
-                    Lagre
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+            }
+          />
 
           {/* Share Route */}
           <Button

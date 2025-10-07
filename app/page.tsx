@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRoutes } from "@/hooks/use-routes";
-import { usePace } from "@/hooks/use-pace";
 import { directions, Directions } from "@/lib/mapbox";
 import { Map } from "@/components/map";
 import { Point } from "@/lib/map/point";
@@ -30,7 +29,6 @@ export default function HomePage() {
     return directions.reduce((acc, direction) => acc + direction.routes[0].distance / 1000, 0);
   }, [directions]);
   const { routes, saveRoute, deleteRoute } = useRoutes();
-  const { pace: paceInSeconds, setPace } = usePace();
 
   // Restore draft route from localStorage on mount or load shared route from URL
   useEffect(() => {
@@ -38,7 +36,7 @@ export default function HomePage() {
     const sharedRoute = extractRouteFromUrl(window.location.search);
 
     if (sharedRoute) {
-      console.log('Loading shared route from URL:', sharedRoute.length, 'points');
+      console.log("Loading shared route from URL:", sharedRoute.length, "points");
       setRoutePoints(sharedRoute);
 
       // Clear URL parameter after loading (keeps URL clean)
@@ -121,17 +119,15 @@ export default function HomePage() {
       />
 
       {/* Overlay Capabilities Panel */}
-      <div 
+      <div
         className={`absolute top-0 left-0 h-full z-40 transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <CapabilitiesPanel
           routePoints={routePoints}
           distance={distance}
           elevationData={elevation}
-          paceInSeconds={paceInSeconds}
-          onPaceChange={setPace}
           routes={routes}
           onRouteLoad={handleRouteLoad}
           deleteRoute={deleteRoute}
@@ -154,9 +150,7 @@ export default function HomePage() {
         variant="outline"
         size="icon"
         className={`fixed top-4 z-50 bg-white border-gray-300 shadow-lg hover:bg-gray-50 transition-all duration-300 ease-in-out ${
-          sidebarOpen 
-            ? 'left-[384px] -translate-x-1/2' 
-            : 'left-4'
+          sidebarOpen ? "left-[384px] -translate-x-1/2" : "left-4"
         }`}
       >
         {sidebarOpen ? (

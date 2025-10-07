@@ -11,22 +11,28 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { SaveRouteDialog } from "@/components/save-route-dialog";
-import { MapPin, Route, Calendar, Trash2, MoveVertical, Save, Download, Share2 } from "lucide-react";
+import {
+  MapPin,
+  Route,
+  Calendar,
+  Trash2,
+  MoveVertical,
+  Save,
+  Download,
+  Share2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { RouteWithCalculatedData } from "@/lib/types/route";
 import { Point } from "@/lib/map/point";
 import { ElevationProfile } from "./elevation-profile";
 import { generateShareUrl } from "@/lib/route-url";
+import { usePace } from "@/hooks/use-pace";
 
 interface CapabilitiesPanelProps {
   // Route data
   routePoints: Array<Point>;
   distance: number;
   elevationData: Array<{ distance: number; elevation: number; coordinate: [number, number] }>;
-
-  // Pace controls
-  paceInSeconds: number;
-  onPaceChange: (pace: number) => void;
 
   // Route management
   routes: RouteWithCalculatedData[];
@@ -48,8 +54,6 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
     routePoints,
     distance,
     elevationData,
-    paceInSeconds,
-    onPaceChange,
     routes,
     onRouteLoad,
     deleteRoute,
@@ -60,6 +64,7 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
     onElevationHover,
   } = props;
 
+  const { pace: paceInSeconds, setPace } = usePace();
   const [isPacePopupOpen, setIsPacePopupOpen] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -76,7 +81,7 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
   };
 
   const handlePaceChange = (value: number[]) => {
-    onPaceChange(value[0]);
+    setPace(value[0]);
   };
 
   const handleRouteSelect = (route: RouteWithCalculatedData) => {
@@ -106,7 +111,7 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
         description: "Send lenken til andre for å dele løypen",
       });
     } catch (error) {
-      console.error('Failed to copy share URL:', error);
+      console.error("Failed to copy share URL:", error);
 
       // Fallback toast message if clipboard fails
       toast.error("Kunne ikke kopiere til utklippstavlen", {
@@ -140,7 +145,7 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
   return (
     <div className="w-96 min-w-96 h-full bg-white border-r border-gray-200 flex flex-col lg:w-96 md:w-80 sm:w-72">
       {/* Header */}
-      <div className="p-4 border-b border-gray-100">
+      <div className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-full">
@@ -148,7 +153,7 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
             </div>
             <span className="text-xl font-bold text-gray-900">Soneto</span>
           </div>
-          
+
           {/* Saved Routes */}
           <NavigationMenu>
             <NavigationMenuList>
@@ -186,7 +191,7 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
                                     <div className="flex items-center space-x-1">
                                       <Calendar className="w-3 h-3 text-gray-400" />
                                       <span className="text-xs text-gray-500">
-                                        {new Date(route.createdAt).toLocaleDateString('nb-NO')}
+                                        {new Date(route.createdAt).toLocaleDateString("nb-NO")}
                                       </span>
                                     </div>
                                   </div>
@@ -214,18 +219,15 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
       </div>
 
       {/* Route Info */}
-      <div className="p-4 border-b border-gray-100">
+      <div className="px-4 pt-4">
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">Løypeinfo</span>
-          </div>
-          
           <div className="flex items-center justify-between relative">
-            <div className="text-lg font-semibold">
-              {distance.toFixed(2)} km
-            </div>
+            <div className="text-lg font-semibold">{distance.toFixed(2)} km</div>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600" title={`Basert på ${formatPace(paceInSeconds)} min/km`}>
+              <span
+                className="text-sm text-gray-600"
+                title={`Basert på ${formatPace(paceInSeconds)} min/km`}
+              >
                 {time} min
               </span>
               <Button
@@ -270,27 +272,22 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
       </div>
 
       {/* Elevation Profile */}
-      <div className="p-4">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">Høydeprofil</span>
+      <div className="px-4">
+        {elevationData.length > 0 ? (
+          <div className="h-40 -p-4">
+            <ElevationProfile
+              elevationData={elevationData}
+              totalDistance={distance}
+              isVisible={true}
+              hoveredIndex={hoveredElevationIndex}
+              onHover={onElevationHover}
+            />
           </div>
-          {elevationData.length > 0 ? (
-            <div className="h-40">
-              <ElevationProfile
-                elevationData={elevationData}
-                totalDistance={distance}
-                isVisible={true}
-                hoveredIndex={hoveredElevationIndex}
-                onHover={onElevationHover}
-              />
-            </div>
-          ) : (
-            <div className="h-40 flex items-center justify-center text-sm text-gray-500 bg-gray-50 rounded-lg">
-              Legg til punkter for å se høydeprofil
-            </div>
-          )}
-        </div>
+        ) : (
+          <div className="h-40 flex items-center justify-center text-sm text-gray-500 bg-gray-50 rounded-lg">
+            Legg til punkter for å se høydeprofil
+          </div>
+        )}
       </div>
 
       {/* Spacer to push actions to bottom */}
@@ -305,7 +302,11 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
             onOpenChange={setSaveOpen}
             onSaveRoute={onSaveRoute}
             trigger={
-              <Button className="w-full justify-start" variant="outline" disabled={routePoints.length === 0}>
+              <Button
+                className="w-full justify-start"
+                variant="outline"
+                disabled={routePoints.length === 0}
+              >
                 <Save className="w-4 h-4 mr-2" />
                 Lagre løype
               </Button>
@@ -324,15 +325,20 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
           </Button>
 
           {/* Export GPX */}
-          <Button className="w-full justify-start" variant="outline" onClick={onExportGPX} disabled={routePoints.length === 0}>
+          <Button
+            className="w-full justify-start"
+            variant="outline"
+            onClick={onExportGPX}
+            disabled={routePoints.length === 0}
+          >
             <Download className="w-4 h-4 mr-2" />
             Eksporter GPX
           </Button>
 
           {/* Reset Route */}
-          <Button 
-            className="w-full justify-start" 
-            variant="destructive" 
+          <Button
+            className="w-full justify-start"
+            variant="destructive"
             onClick={onResetRoute}
             disabled={routePoints.length === 0}
           >

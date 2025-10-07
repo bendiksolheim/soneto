@@ -31,10 +31,7 @@ export function ElevationProfile(props: ElevationProfileProps): JSX.Element {
   }));
 
   // Calculate steep segments for visualization
-  const steepSegments = useMemo(
-    () => findSteepSegments(elevationData, 6, 0.03),
-    [elevationData]
-  );
+  const steepSegments = useMemo(() => findSteepSegments(elevationData, 6, 0.03), [elevationData]);
 
   if (!isVisible || chartData.length === 0) {
     return <div className="w-full h-full" />;
@@ -50,107 +47,95 @@ export function ElevationProfile(props: ElevationProfileProps): JSX.Element {
   }
 
   return (
-    <div className="w-full h-full relative">
+    <AreaChart
+      margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+      data={chartData}
+      onMouseMove={(state) => {
+        if (state && state.isTooltipActive && state.activeTooltipIndex !== undefined) {
+          // Only update if the index actually changed to avoid conflicts
+          if (hoveredIndex !== state.activeTooltipIndex) {
+            const index =
+              typeof state.activeTooltipIndex === "number"
+                ? state.activeTooltipIndex
+                : parseInt(state.activeTooltipIndex);
+            onHover(index);
+          }
+        }
+      }}
+      onMouseLeave={() => {
+        onHover(null);
+      }}
+      width={350}
+      height={150}
+    >
+      <XAxis
+        dataKey="distance"
+        axisLine={false}
+        tickLine={false}
+        tick={{ fontSize: 10, fill: "#666" }}
+        ticks={customTicks}
+        type="number"
+        tickFormatter={(value) => `${value}km`}
+      />
+      <YAxis
+        domain={["dataMin - 5", "dataMax + 2"]}
+        axisLine={false}
+        tickLine={false}
+        tick={{ fontSize: 10, fill: "#666" }}
+        width={0}
+        tickFormatter={(value) => `${value}m`}
+        hide={true}
+      />
+      <Tooltip
+        content={({ active, payload, label }) => {
+          const isVisible = active && payload && payload.length;
+          return (
+            <div
+              className="bg-white rounded-lg shadow-lg p-2 border"
+              style={{ visibility: isVisible ? "visible" : "hidden" }}
+            >
+              {isVisible && (
+                <>
+                  <p className="text-xs">{`Distanse: ${label}km`}</p>
+                  <p className="text-xs">{`Høyde: ${payload[0].value}m`}</p>
+                </>
+              )}
+            </div>
+          );
+        }}
+      />
+      <Area dataKey="elevation" fill="#8884d8" fillOpacity={0.3} stroke="#8884d8" strokeWidth={2} />
+
+      {/* Steep segment overlays */}
+      {steepSegments.map((segment, index) => {
+        const color = getSlopeColor(segment.avgSlope);
+        if (!color) return null;
+
+        return (
+          <ReferenceArea
+            key={`steep-${index}`}
+            x1={segment.x1}
+            x2={segment.x2}
+            fill={color}
+            fillOpacity={getSlopeOpacity(segment.avgSlope)}
+            stroke={color}
+            strokeOpacity={0.8}
+            strokeWidth={1}
+          />
+        );
+      })}
+
+      {/* Hover indicator dot */}
       {hoveredIndex !== null && chartData[hoveredIndex] && (
-        <div className="absolute top-0 right-0 bg-purple-600 text-white text-xs px-2 py-1 rounded shadow-lg z-10">
-          {chartData[hoveredIndex].elevation}m
-        </div>
+        <ReferenceDot
+          x={chartData[hoveredIndex].distance}
+          y={chartData[hoveredIndex].elevation}
+          r={6}
+          fill="#8b5cf6"
+          stroke="#ffffff"
+          strokeWidth={2}
+        />
       )}
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
-          margin={{ top: 5, right: 0, left: 0, bottom: 20 }}
-          data={chartData}
-          onMouseMove={(state) => {
-            if (state && state.isTooltipActive && state.activeTooltipIndex !== undefined) {
-              // Only update if the index actually changed to avoid conflicts
-              if (hoveredIndex !== state.activeTooltipIndex) {
-                const index =
-                  typeof state.activeTooltipIndex === "number"
-                    ? state.activeTooltipIndex
-                    : parseInt(state.activeTooltipIndex);
-                onHover(index);
-              }
-            }
-          }}
-          onMouseLeave={() => {
-            onHover(null);
-          }}
-        >
-          <XAxis
-            dataKey="distance"
-            axisLine={false}
-            tickLine={false}
-            tick={{ fontSize: 10, fill: "#666" }}
-            ticks={customTicks}
-            type="number"
-            tickFormatter={(value) => `${value}km`}
-          />
-          <YAxis
-            domain={["dataMin - 5", "dataMax + 5"]}
-            axisLine={false}
-            tickLine={false}
-            tick={{ fontSize: 10, fill: "#666" }}
-            width={0}
-            tickFormatter={(value) => `${value}m`}
-          />
-          <Tooltip
-            content={({ active, payload, label }) => {
-              const isVisible = active && payload && payload.length;
-              return (
-                <div
-                  className="bg-white rounded-lg shadow-lg p-2 border"
-                  style={{ visibility: isVisible ? "visible" : "hidden" }}
-                >
-                  {isVisible && (
-                    <>
-                      <p className="text-xs">{`Distanse: ${label}km`}</p>
-                      <p className="text-xs">{`Høyde: ${payload[0].value}m`}</p>
-                    </>
-                  )}
-                </div>
-              );
-            }}
-          />
-          <Area
-            dataKey="elevation"
-            fill="#8884d8"
-            fillOpacity={0.3}
-            stroke="#8884d8"
-            strokeWidth={2}
-          />
-
-          {/* Steep segment overlays */}
-          {steepSegments.map((segment, index) => {
-            const color = getSlopeColor(segment.avgSlope);
-            if (!color) return null;
-
-            return (
-              <ReferenceArea
-                key={`steep-${index}`}
-                x1={segment.x1}
-                x2={segment.x2}
-                fill={color}
-                fillOpacity={getSlopeOpacity(segment.avgSlope)}
-                stroke={color}
-                strokeOpacity={0.8}
-                strokeWidth={1}
-              />
-            );
-          })}
-
-          {/* Hover indicator dot */}
-          {hoveredIndex !== null && chartData[hoveredIndex] && (
-            <ReferenceDot
-              x={chartData[hoveredIndex].distance}
-              y={chartData[hoveredIndex].elevation}
-              r={6}
-              fill="#8b5cf6"
-              stroke="#ffffff"
-              strokeWidth={2}
-            />
-          )}
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
+    </AreaChart>
   );
 }

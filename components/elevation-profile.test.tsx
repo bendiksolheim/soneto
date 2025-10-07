@@ -21,8 +21,8 @@ describe('ElevationProfile', () => {
       />
     )
 
-    // Check that ResponsiveContainer is rendered
-    expect(container.querySelector('.recharts-responsive-container')).toBeTruthy()
+    // Check that AreaChart is rendered
+    expect(container.querySelector('.recharts-wrapper')).toBeTruthy()
   })
 
   it('does not render chart when not visible', () => {
@@ -37,7 +37,7 @@ describe('ElevationProfile', () => {
     )
 
     // Should render empty div
-    expect(container.querySelector('.recharts-responsive-container')).toBeNull()
+    expect(container.querySelector('.recharts-wrapper')).toBeNull()
   })
 
   it('handles empty elevation data', () => {
@@ -66,7 +66,7 @@ describe('ElevationProfile', () => {
       />
     )
 
-    // Should show elevation value
-    expect(container.textContent).toContain('100m')
+    // Should render ReferenceDot for hover indicator
+    expect(container.querySelector('.recharts-reference-dot')).toBeTruthy()
   })
 })

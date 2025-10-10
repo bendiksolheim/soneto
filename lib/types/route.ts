@@ -2,6 +2,7 @@ import { Point } from "../map/point";
 
 export interface StoredRoute {
   id: string; // Unique identifier (UUID)
+  user_id?: string; // Optional for backward compatibility
   name: string; // User-friendly route name
   points: Array<Point>; // [longitude, latitude] coordinates
   createdAt: string; // ISO string timestamp

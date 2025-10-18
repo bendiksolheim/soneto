@@ -50,5 +50,6 @@ The application will be available at `http://localhost:3000`.
 ## Development
 
 - `pnpm dev` - Start the development server
+- `pnpm supabase` - Start local Supabase instance
 - `pnpm build` - Build the production version
 - `pnpm lint` - Run ESLint to check code style

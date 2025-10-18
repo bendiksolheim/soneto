@@ -20,6 +20,7 @@ import {
   Save,
   Download,
   Share2,
+  LogIn,
 } from "lucide-react";
 import { toast } from "sonner";
 import { RouteWithCalculatedData } from "@/lib/types/route";
@@ -27,6 +28,9 @@ import { Point } from "@/lib/map/point";
 import { ElevationProfile } from "./elevation-profile";
 import { generateShareUrl } from "@/lib/route-url";
 import { usePace } from "@/hooks/use-pace";
+import { AuthDialog } from "@/components/auth/auth-dialog";
+import { UserMenu } from "@/components/auth/user-menu";
+import { useAuth } from "@/hooks/use-auth";
 
 interface CapabilitiesPanelProps {
   // Route data
@@ -67,6 +71,8 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
   const { pace: paceInSeconds, setPace } = usePace();
   const [isPacePopupOpen, setIsPacePopupOpen] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const { user } = useAuth();
   const popupRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -154,67 +160,83 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
             <span className="text-xl font-bold text-gray-900">Soneto</span>
           </div>
 
-          {/* Saved Routes */}
-          <NavigationMenu>
-            <NavigationMenuList>
-              <NavigationMenuItem>
-                <NavigationMenuTrigger>
-                  <Route className="w-4 h-4" />
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <div className="w-80 p-2">
-                    {routes.length === 0 ? (
-                      <div className="p-4 text-center text-gray-500">
-                        <Route className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                        <p className="text-sm">Ingen lagrede løyper</p>
-                        <p className="text-xs mt-1">Lagre din første løype for å se den her</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-1 max-h-60 overflow-y-auto">
-                        {routes.map((route) => (
-                          <div
-                            key={route.id}
-                            onClick={() => handleRouteSelect(route)}
-                            className="flex items-center justify-between p-3 rounded-md hover:bg-accent cursor-pointer group"
-                          >
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center space-x-2">
-                                <Route className="w-4 h-4 text-blue-600 shrink-0" />
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium text-gray-900 truncate">
-                                    {route.name}
-                                  </p>
-                                  <div className="flex items-center space-x-3 mt-1">
-                                    <span className="text-xs text-gray-500">
-                                      {route.distance.toFixed(1)} km
-                                    </span>
-                                    <div className="flex items-center space-x-1">
-                                      <Calendar className="w-3 h-3 text-gray-400" />
+          <div className="flex items-center space-x-2">
+            {/* Auth UI */}
+            {!user && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-sm opacity-0"
+                onClick={() => setAuthDialogOpen(true)}
+              >
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            )}
+            <UserMenu />
+
+            {/* Saved Routes */}
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger>
+                    <Route className="w-4 h-4" />
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <div className="w-80 p-2">
+                      {routes.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500">
+                          <Route className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                          <p className="text-sm">Ingen lagrede løyper</p>
+                          <p className="text-xs mt-1">Lagre din første løype for å se den her</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-1 max-h-60 overflow-y-auto">
+                          {routes.map((route) => (
+                            <div
+                              key={route.id}
+                              onClick={() => handleRouteSelect(route)}
+                              className="flex items-center justify-between p-3 rounded-md hover:bg-accent cursor-pointer group"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center space-x-2">
+                                  <Route className="w-4 h-4 text-blue-600 shrink-0" />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                      {route.name}
+                                    </p>
+                                    <div className="flex items-center space-x-3 mt-1">
                                       <span className="text-xs text-gray-500">
-                                        {new Date(route.createdAt).toLocaleDateString("nb-NO")}
+                                        {route.distance.toFixed(1)} km
                                       </span>
+                                      <div className="flex items-center space-x-1">
+                                        <Calendar className="w-3 h-3 text-gray-400" />
+                                        <span className="text-xs text-gray-500">
+                                          {new Date(route.createdAt).toLocaleDateString("nb-NO")}
+                                        </span>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
                               </div>
+                              <Button
+                                onClick={(e) => handleRouteDelete(e, route.id, route.name)}
+                                variant="ghost"
+                                size="sm"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
                             </div>
-                            <Button
-                              onClick={(e) => handleRouteDelete(e, route.id, route.name)}
-                              variant="ghost"
-                              size="sm"
-                              className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+          </div>
         </div>
       </div>
 
@@ -347,6 +369,9 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
           </Button>
         </div>
       </div>
+
+      {/* Auth Dialog */}
+      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
     </div>
   );
 }

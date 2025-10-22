@@ -31,6 +31,7 @@ import { usePace } from "@/hooks/use-pace";
 import { AuthDialog } from "@/components/auth/auth-dialog";
 import { UserMenu } from "@/components/auth/user-menu";
 import { useAuth } from "@/hooks/use-auth";
+import { Logo } from "@/components/logo";
 
 interface CapabilitiesPanelProps {
   // Route data
@@ -154,10 +155,7 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
       <div className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-full">
-              <MapPin strokeWidth={1} className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">Soneto</span>
+            <Logo width={150} />
           </div>
 
           <div className="flex items-center space-x-2">

@@ -155,7 +155,7 @@ export function CapabilitiesPanel(props: CapabilitiesPanelProps) {
       <div className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Logo width={150} />
+            <Logo width={160} />
           </div>
 
           <div className="flex items-center space-x-2">

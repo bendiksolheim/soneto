@@ -10,7 +10,7 @@ type Location = {
   longitude: number;
 };
 
-export function UserLocationMarker(props: UserLocationMarkerProps): JSX.Element {
+export function UserLocationMarker(props: UserLocationMarkerProps): React.ReactElement {
   const { onLocationFound } = props;
   const [location, setLocation] = useState<Location | null>(null);
   const hasFoundLocation = useRef(false);

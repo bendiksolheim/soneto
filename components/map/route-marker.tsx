@@ -9,7 +9,7 @@ type RouteMarkerProps = {
   onDrag: (event: MarkerDragEvent) => void;
 };
 
-export function RouteMarker(props: RouteMarkerProps): JSX.Element {
+export function RouteMarker(props: RouteMarkerProps): React.ReactElement {
   const { index, point, numberOfPoints, onClick, onDrag } = props;
   return (
     <Marker

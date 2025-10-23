@@ -14,7 +14,7 @@ interface RouteActionsProps {
   isVisible: boolean;
 }
 
-export function RouteActions(props: RouteActionsProps): JSX.Element | null {
+export function RouteActions(props: RouteActionsProps): React.ReactElement {
   const { onSaveRoute, onExportGPX, onResetRoute, isVisible } = props;
   const [saveOpen, setSaveOpen] = React.useState(false);
 

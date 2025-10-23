@@ -21,7 +21,7 @@ interface ElevationProfileProps {
   onHover: (index: number | null) => void;
 }
 
-export function ElevationProfile(props: ElevationProfileProps): JSX.Element {
+export function ElevationProfile(props: ElevationProfileProps): React.ReactElement {
   const { elevationData, isVisible, hoveredIndex, onHover } = props;
 
   // Format data for the chart

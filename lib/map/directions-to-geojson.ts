@@ -1,5 +1,6 @@
-import { mergeDirections } from "@/utils/mapUtils";
+import { mergeDirections } from "./mapUtils";
 import { Directions } from "../mapbox";
+import { Point } from "./point";
 
 export function directionsToGeoJson(
   directions: Array<Directions>,
@@ -11,6 +12,21 @@ export function directionsToGeoJson(
     geometry: {
       type: "LineString",
       coordinates,
+    },
+  };
+}
+
+export function pointsToGeoJson(points: Array<Point>): GeoJSON.GeoJSON {
+  const coordinates: [number, number][] = points.map((point) => [
+    point.longitude,
+    point.latitude,
+  ]);
+  return {
+    type: "Feature",
+    properties: {},
+    geometry: {
+      type: "LineString",
+      coordinates: coordinates,
     },
   };
 }

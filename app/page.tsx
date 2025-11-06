@@ -1,16 +1,12 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useRoutes } from "@/hooks/use-routes";
-import { directions, Directions } from "@/lib/mapbox";
+import { Frame } from "@/components/frame";
 import { Map } from "@/components/map";
+import { Share } from "@/components/share";
 import { Point } from "@/lib/map/point";
-import { CapabilitiesPanel } from "@/components/capabilities-panel";
-import { directionsToGeoJson } from "@/lib/map/directions-to-geojson";
-import { exportGpx } from "@/utils/gpx";
-import { Button } from "@/components/ui/button";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { directions, Directions } from "@/lib/mapbox";
 import { extractRouteFromUrl } from "@/lib/route-url";
+import { useEffect, useMemo, useState } from "react";
 
 const DRAFT_ROUTE_STORAGE_KEY = "draft-route";
 
@@ -23,12 +19,10 @@ export default function HomePage() {
     Array<{ distance: number; elevation: number; coordinate: [number, number] }>
   >([]);
   const [hoveredElevationIndex, setHoveredElevationIndex] = useState<number | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const distance = useMemo(() => {
     return directions.reduce((acc, direction) => acc + direction.routes[0].distance / 1000, 0);
   }, [directions]);
-  const { routes, saveRoute, deleteRoute } = useRoutes();
 
   // Restore draft route from localStorage on mount or load shared route from URL
   useEffect(() => {
@@ -81,7 +75,6 @@ export default function HomePage() {
   useEffect(() => {
     async function updateDirections() {
       if (routePoints.length >= 2) {
-        console.log("Fetching new directions..");
         const direction = await getRoute(routePoints, mapboxToken);
         setDirections(direction);
       } else {
@@ -91,7 +84,7 @@ export default function HomePage() {
     updateDirections();
   }, [routePoints, mapboxToken]);
 
-  const handleClearRoute = () => {
+  const handleClearPoints = () => {
     setRoutePoints([]);
     try {
       localStorage.removeItem(DRAFT_ROUTE_STORAGE_KEY);
@@ -105,61 +98,26 @@ export default function HomePage() {
   };
 
   return (
-    <div className="relative h-screen overflow-hidden">
-      {/* Full-width Map */}
+    <Frame
+      distance={distance}
+      elevation={elevation}
+      points={routePoints}
+      onClearPoints={handleClearPoints}
+      onRouteLoad={handleRouteLoad}
+    >
       <Map
         mapboxToken={mapboxToken}
         routePoints={routePoints}
         setRoutePoints={setRoutePoints}
         directions={directions}
         setElevation={setElevation}
-        sidebarOpen={sidebarOpen}
         hoveredElevationIndex={hoveredElevationIndex}
         onElevationHover={setHoveredElevationIndex}
       />
-
-      {/* Overlay Capabilities Panel */}
-      <div
-        className={`absolute top-0 left-0 h-full z-40 transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <CapabilitiesPanel
-          routePoints={routePoints}
-          distance={distance}
-          elevationData={elevation}
-          routes={routes}
-          onRouteLoad={handleRouteLoad}
-          deleteRoute={deleteRoute}
-          onSaveRoute={(name) => {
-            saveRoute({ name, points: routePoints });
-          }}
-          onExportGPX={() => {
-            const geojson = directionsToGeoJson(directions);
-            exportGpx(geojson);
-          }}
-          onResetRoute={handleClearRoute}
-          hoveredElevationIndex={hoveredElevationIndex}
-          onElevationHover={setHoveredElevationIndex}
-        />
+      <div className="absolute bottom-2 left-[50%] transform-[translate(-50%, 0)]">
+        <Share points={routePoints} directions={directions} />
       </div>
-
-      {/* Toggle Button */}
-      <Button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        variant="outline"
-        size="icon"
-        className={`fixed top-4 z-50 bg-white border-gray-300 shadow-lg hover:bg-gray-50 transition-all duration-300 ease-in-out ${
-          sidebarOpen ? "left-[384px] -translate-x-1/2" : "left-4"
-        }`}
-      >
-        {sidebarOpen ? (
-          <PanelLeftClose className="h-4 w-4" />
-        ) : (
-          <PanelLeftOpen className="h-4 w-4" />
-        )}
-      </Button>
-    </div>
+    </Frame>
   );
 }
 

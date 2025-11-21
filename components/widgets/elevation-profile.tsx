@@ -21,7 +21,7 @@ export function ElevationProfile(props: ElevationProfileProps): React.ReactEleme
   }));
 
   // Calculate steep segments for visualization
-  const steepSegments = useMemo(() => findSteepSegments(elevationData, 6, 0.03), [elevationData]);
+  const steepSegments = findSteepSegments(elevationData, 6, 0.03);
 
   if (chartData.length === 0) {
     return <div className="w-full h-full" />;

@@ -54,8 +54,6 @@ type RouteStatsCardProps = {
 function RouteStatsCard(props: RouteStatsCardProps): React.ReactElement {
   const { pace: paceInSeconds, setPace } = usePace();
   const [isPacePopupOpen, setIsPacePopupOpen] = useState(false);
-  const popupRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handlePaceChange = (event: ChangeEvent<HTMLInputElement>) => {
     setPace(Number(event.target.value));
@@ -67,39 +65,13 @@ function RouteStatsCard(props: RouteStatsCardProps): React.ReactElement {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        popupRef.current &&
-        !popupRef.current.contains(event.target as Node) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(event.target as Node)
-      ) {
-        setIsPacePopupOpen(false);
-      }
-    };
-
-    if (isPacePopupOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isPacePopupOpen]);
-
   return (
     <Card
       title="Løypedetaljer"
       className="min-w-64"
       actions={
         <>
-          <Button
-            ref={buttonRef}
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsPacePopupOpen(!isPacePopupOpen)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => setIsPacePopupOpen(!isPacePopupOpen)}>
             <AdjustmentsHorizontalIcon size={16} />
           </Button>
           {isPacePopupOpen && (

@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
 import React from "react";
 
 type ButtonProps = React.PropsWithChildren<{
@@ -7,7 +6,6 @@ type ButtonProps = React.PropsWithChildren<{
   className?: string;
   onClick?: () => void;
   variant?: keyof typeof variants;
-  ref?: React.Ref<HTMLButtonElement>;
   soft?: boolean;
   circle?: boolean;
   square?: boolean;
@@ -27,7 +25,6 @@ export function Button(props: ButtonProps) {
     <button
       className={cn("btn", variant, size, soft, circle, square, active, disabled, props.className)}
       onClick={props.onClick}
-      ref={props.ref}
       type="button"
     >
       {props.children}

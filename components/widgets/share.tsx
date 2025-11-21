@@ -1,5 +1,5 @@
 import { ArrowDownCircleIcon, ShareIcon } from "@/icons";
-import { Button } from "./base";
+import { Button } from "@/components/base";
 import { Point } from "@/lib/map/point";
 import { generateShareUrl } from "@/lib/route-url";
 import { toast } from "sonner";

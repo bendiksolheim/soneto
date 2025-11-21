@@ -2,7 +2,7 @@
 
 import { Frame } from "@/components/frame";
 import { Map } from "@/components/map";
-import { Share } from "@/components/share";
+import { Share } from "@/components/widgets/share";
 import { Point } from "@/lib/map/point";
 import { directions, Directions } from "@/lib/mapbox";
 import { extractRouteFromUrl } from "@/lib/route-url";

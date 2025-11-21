@@ -1,9 +1,9 @@
 import { LineChartArea } from "@/icons/line-chart-area";
 import { Button, Card, Modal } from "./base";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { ElevationProfile } from "./elevation-profile";
+import { ElevationProfile } from "./widgets/elevation-profile";
 import { AdjustmentsHorizontalIcon, CalculatorIcon } from "@/icons";
-import { RouteStats } from "./route-stats";
+import { RouteStats } from "./widgets/route-stats";
 import { usePace } from "@/hooks/use-pace";
 
 type MapFeatureProps = {

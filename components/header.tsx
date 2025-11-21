@@ -3,14 +3,19 @@
 import { Button } from "@/components/base";
 import { useAuth } from "@/hooks/use-auth";
 import { useRoutes } from "@/hooks/use-routes";
-import { ArrowRightCircleIcon, FolderPlusIcon, UserCircleIcon, XCircleIcon } from "@/icons";
+import {
+  ArrowRightCircleIcon,
+  FolderIcon,
+  FolderPlusIcon,
+  UserCircleIcon,
+  XCircleIcon,
+} from "@/icons";
 import { Point } from "@/lib/map/point";
 import { RouteWithCalculatedData } from "@/lib/types/route";
-import { useState } from "react";
-import { UserMenu } from "./auth/user-menu";
-import { LoginDialog } from "./login-dialog";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 import { Dropdown, Menu } from "./base";
+import { LoginDialog } from "./login-dialog";
 
 type HeaderProps = {
   points: Array<Point>;
@@ -110,7 +115,7 @@ function ListRoutesDropdown({
   return (
     <div className="dropdown dropdown-center content-center">
       <div tabIndex={0} role="button" className="btn btn-sm join-item">
-        <FolderPlusIcon size={16} />
+        <FolderIcon size={16} />
         Mine løyper
       </div>
       <div

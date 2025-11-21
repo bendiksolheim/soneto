@@ -1,6 +1,5 @@
-import React from "react";
-import { describe, it, expect, vi } from "vitest";
-import { render } from "../test/utils/test-utils";
+import { describe, it, expect } from "vitest";
+import { render } from "../../test/utils/test-utils";
 import { ElevationProfile } from "./elevation-profile";
 
 describe("ElevationProfile", () => {

@@ -15,18 +15,3 @@ export function directionsToGeoJson(
     },
   };
 }
-
-export function pointsToGeoJson(points: Array<Point>): GeoJSON.GeoJSON {
-  const coordinates: [number, number][] = points.map((point) => [
-    point.longitude,
-    point.latitude,
-  ]);
-  return {
-    type: "Feature",
-    properties: {},
-    geometry: {
-      type: "LineString",
-      coordinates: coordinates,
-    },
-  };
-}

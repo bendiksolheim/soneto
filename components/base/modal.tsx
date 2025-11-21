@@ -1,11 +1,13 @@
+import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
 
 type ModalProps = React.PropsWithChildren<{
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  className?: string;
 }>;
 
-export function Modal({ isOpen, setIsOpen, children }: ModalProps): React.ReactElement {
+export function Modal({ isOpen, setIsOpen, className, children }: ModalProps): React.ReactElement {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -17,7 +19,7 @@ export function Modal({ isOpen, setIsOpen, children }: ModalProps): React.ReactE
   }, [isOpen]);
 
   return (
-    <dialog ref={ref} className="modal" onCancel={() => setIsOpen(false)}>
+    <dialog ref={ref} className={cn("modal", className)} onCancel={() => setIsOpen(false)}>
       <div className="modal-box">
         <form method="dialog">
           {/* if there is a button in form, it will close the modal */}

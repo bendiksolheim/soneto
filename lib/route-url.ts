@@ -1,5 +1,5 @@
-import { compressRoute, decompressRoute } from './route-compression';
-import { Point } from './map/point';
+import { compressRoute, decompressRoute } from "./route-compression";
+import { Point } from "./map/point";
 
 /**
  * Generate shareable URL for a route
@@ -12,11 +12,9 @@ import { Point } from './map/point';
  * const url = generateShareUrl(routePoints);
  * // Returns: "https://soneto.app?route=_p~iF~ps|U..."
  */
-export function generateShareUrl(
-  points: Point[],
-  baseUrl?: string
-): string {
-  const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin : '');
+export function generateShareUrl(points: Point[], baseUrl?: string): string {
+  const base =
+    baseUrl || (typeof window !== "undefined" ? window.location.origin : "");
   const encoded = compressRoute(points);
 
   if (!encoded) {
@@ -39,13 +37,14 @@ export function generateShareUrl(
  * }
  */
 export function extractRouteFromUrl(
-  searchParams: string | URLSearchParams
+  searchParams: string | URLSearchParams,
 ): Point[] | null {
-  const params = typeof searchParams === 'string'
-    ? new URLSearchParams(searchParams)
-    : searchParams;
+  const params =
+    typeof searchParams === "string"
+      ? new URLSearchParams(searchParams)
+      : searchParams;
 
-  const routeParam = params.get('route');
+  const routeParam = params.get("route");
 
   if (!routeParam) {
     return null;
@@ -54,18 +53,4 @@ export function extractRouteFromUrl(
   const points = decompressRoute(routeParam);
 
   return points.length > 0 ? points : null;
-}
-
-/**
- * Get URL length for a route (useful for validation)
- *
- * @param points - Route waypoints
- * @param baseUrl - Base URL (defaults to current origin)
- * @returns URL length in characters
- */
-export function getShareUrlLength(
-  points: Point[],
-  baseUrl?: string
-): number {
-  return generateShareUrl(points, baseUrl).length;
 }

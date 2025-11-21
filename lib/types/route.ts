@@ -52,9 +52,3 @@ export interface RouteWithCalculatedData extends StoredRoute {
 
 // Storage configuration
 export const ROUTES_STORAGE_KEY = "route-runner-routes";
-
-// Default empty storage
-export const DEFAULT_ROUTE_STORAGE: RouteStorage = {
-  routes: [],
-  lastModified: new Date().toISOString(),
-};

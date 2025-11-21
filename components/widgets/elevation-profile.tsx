@@ -1,28 +1,18 @@
 "use client";
 
-import React, { useMemo } from "react";
-import {
-  Area,
-  AreaChart,
-  ReferenceArea,
-  ReferenceDot,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { findSteepSegments, getSlopeColor, getSlopeOpacity } from "@/lib/elevation/slope";
+import React, { useMemo, useState } from "react";
+import { Area, AreaChart, ReferenceArea, ReferenceDot, Tooltip, XAxis, YAxis } from "recharts";
 
 interface ElevationProfileProps {
   elevationData: Array<{ distance: number; elevation: number; coordinate: [number, number] }>;
   totalDistance: number;
-  isVisible: boolean;
-  hoveredIndex: number | null;
-  onHover: (index: number | null) => void;
 }
 
 export function ElevationProfile(props: ElevationProfileProps): React.ReactElement {
-  const { elevationData, isVisible, hoveredIndex, onHover } = props;
+  const { elevationData } = props;
+
+  const [hoveredIndex, onHover] = useState<number | null>(null);
 
   // Format data for the chart
   const chartData = elevationData.map((point) => ({
@@ -33,7 +23,7 @@ export function ElevationProfile(props: ElevationProfileProps): React.ReactEleme
   // Calculate steep segments for visualization
   const steepSegments = useMemo(() => findSteepSegments(elevationData, 6, 0.03), [elevationData]);
 
-  if (!isVisible || chartData.length === 0) {
+  if (chartData.length === 0) {
     return <div className="w-full h-full" />;
   }
 

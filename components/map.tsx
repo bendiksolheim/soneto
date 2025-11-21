@@ -1,20 +1,20 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import MapboxMap, {
-  MapMouseEvent,
-  Source,
-  Layer,
-  HillshadeLayerSpecification,
-  MapRef,
-} from "react-map-gl/mapbox";
-import "mapbox-gl/dist/mapbox-gl.css";
+import { Point } from "@/lib/map/point";
 import { Directions } from "@/lib/mapbox";
-import { UserLocationMarker } from "./map/user-location-marker";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { useEffect, useRef, useState } from "react";
+import MapboxMap, {
+  HillshadeLayerSpecification,
+  Layer,
+  MapMouseEvent,
+  MapRef,
+  Source,
+} from "react-map-gl/mapbox";
+import { HoverMarker } from "./map/hover-marker";
 import { Markers } from "./map/markers";
 import { Route } from "./map/route";
-import { Point } from "@/lib/map/point";
-import { HoverMarker } from "./map/hover-marker";
+import { UserLocationMarker } from "./map/user-location-marker";
 
 interface MapContainerProps {
   mapboxToken: string;
@@ -24,7 +24,6 @@ interface MapContainerProps {
   setElevation: (
     elevation: Array<{ distance: number; elevation: number; coordinate: [number, number] }>,
   ) => void;
-  sidebarOpen?: boolean;
   hoveredElevationIndex: number | null;
   onElevationHover: (index: number | null) => void;
 }
@@ -35,7 +34,6 @@ export function Map({
   setRoutePoints,
   directions,
   setElevation,
-  sidebarOpen = false,
   hoveredElevationIndex,
   onElevationHover,
 }: MapContainerProps) {
@@ -91,10 +89,9 @@ export function Map({
       onClick={onClick}
       onLoad={() => setMapLoaded(true)}
       terrain={{ source: "terrain-source", exaggeration: 0.5 }}
-      padding={sidebarOpen ? { left: 384 } : undefined}
       onMouseMove={(e: MapMouseEvent) => {
         const features = e.target.queryRenderedFeatures(e.point, {
-          layers: ['route-layer'],
+          layers: ["route-layer"],
         });
 
         if (features.length > 0) {
@@ -107,7 +104,7 @@ export function Map({
           onElevationHover(null);
         }
       }}
-      interactiveLayerIds={['route-layer']}
+      interactiveLayerIds={["route-layer"]}
     >
       {/* Terrain source */}
       <Source id="terrain-source" {...terrainSource} />

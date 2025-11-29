@@ -15,7 +15,7 @@ type FrameProps = React.PropsWithChildren<{
 
 export function Frame(props: FrameProps): React.ReactElement {
   return (
-    <div className="flex flex-col w-full h-full px-4 pb-4">
+    <div className="flex flex-col w-full h-full px-2 md:px-4 pb-2 md:pb-4">
       <Header
         points={props.points}
         onClearPoints={props.onClearPoints}

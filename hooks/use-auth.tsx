@@ -13,20 +13,25 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+type AuthProviderProps = React.PropsWithChildren<{
+  user: User | null;
+}>;
+
+export function AuthProvider(props: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(props.user);
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!props.user);
 
   useEffect(() => {
     const supabase = createClient();
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
+    // If we don't have an initial user from the server, fetch it
+    if (!props.user) {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        setUser(user);
+        setIsLoading(false);
+      });
+    }
 
     // Listen for auth changes
     const {
@@ -38,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [props.user]);
 
   const signOut = async () => {
     const supabase = createClient();
@@ -49,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, session, isLoading, signOut }}>
-      {children}
+      {props.children}
     </AuthContext.Provider>
   );
 }

@@ -38,10 +38,15 @@ export function Header({ points, onClearPoints, onRouteLoad }: HeaderProps): Rea
   );
 }
 
-function User(): React.ReactElement {
-  const { user, signOut } = useAuth();
+function User(): React.ReactElement | null {
+  const { user, isLoading, signOut } = useAuth();
   const name = user?.identities[0]?.identity_data?.full_name || "der";
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+
+  if (isLoading) {
+    return null;
+  }
+
   if (user) {
     return (
       <Dropdown

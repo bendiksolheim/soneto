@@ -119,7 +119,7 @@ function ListRoutesDropdown({
 }: ListRoutesProps): React.ReactElement {
   return (
     <div className="dropdown dropdown-center content-center">
-      <div tabIndex={0} role="button" className="btn btn-sm join-item">
+      <div tabIndex={0} role="button" className="btn btn-sm join-item whitespace-nowrap">
         <FolderIcon size={16} />
         Mine løyper
       </div>
@@ -171,7 +171,7 @@ function SaveRouteDropdown({
   const [saving, setSaving] = useState(false);
   return (
     <div className="dropdown dropdown-center content-center">
-      <div tabIndex={0} role="button" className="btn btn-sm join-item">
+      <div tabIndex={0} role="button" className="btn btn-sm join-item whitespace-nowrap">
         <FolderPlusIcon size={16} />
         Lagre løype
       </div>

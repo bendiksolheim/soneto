@@ -23,7 +23,17 @@ export function Button(props: ButtonProps) {
 
   return (
     <button
-      className={cn("btn", variant, size, soft, circle, square, active, disabled, props.className)}
+      className={cn(
+        "btn whitespace-nowrap",
+        variant,
+        size,
+        soft,
+        circle,
+        square,
+        active,
+        disabled,
+        props.className,
+      )}
       onClick={props.onClick}
       type="button"
     >

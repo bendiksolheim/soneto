@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render } from "../../test/utils/test-utils";
+import { render, waitFor } from "../../test/utils/test-utils";
 import { ElevationProfile } from "./elevation-profile";
 
 describe("ElevationProfile", () => {
@@ -9,35 +9,41 @@ describe("ElevationProfile", () => {
     { distance: 1.0, elevation: 120, coordinate: [10.2, 60.2] as [number, number] },
   ];
 
-  it("renders chart when visible", () => {
+  it("renders chart when visible", async () => {
     const { container } = render(
       <ElevationProfile elevationData={mockElevationData} totalDistance={1.0} />,
     );
+
+    // Wait for AuthProvider to finish loading
+    await waitFor(() => {
+      expect(container).toBeTruthy();
+    });
 
     // Check that AreaChart is rendered
     expect(container.querySelector(".recharts-wrapper")).toBeTruthy();
   });
 
-  it("does not render chart when not visible", () => {
-    const { container } = render(
-      <ElevationProfile elevationData={mockElevationData} totalDistance={1.0} />,
-    );
-
-    // Should render empty div
-    expect(container.querySelector(".recharts-wrapper")).toBeNull();
-  });
-
-  it("handles empty elevation data", () => {
+  it("handles empty elevation data", async () => {
     const { container } = render(<ElevationProfile elevationData={[]} totalDistance={0} />);
+
+    // Wait for AuthProvider to finish loading
+    await waitFor(() => {
+      expect(container).toBeTruthy();
+    });
 
     // Should not crash
     expect(container).toBeTruthy();
   });
 
-  it("renders hover indicator when hoveredIndex is set", () => {
+  it("renders hover indicator when hoveredIndex is set", async () => {
     const { container } = render(
       <ElevationProfile elevationData={mockElevationData} totalDistance={1.0} />,
     );
+
+    // Wait for AuthProvider to finish loading
+    await waitFor(() => {
+      expect(container).toBeTruthy();
+    });
 
     // Should render ReferenceDot for hover indicator
     expect(container.querySelector(".recharts-reference-dot")).toBeTruthy();

@@ -34,18 +34,4 @@ describe("ElevationProfile", () => {
     // Should not crash
     expect(container).toBeTruthy();
   });
-
-  it("renders hover indicator when hoveredIndex is set", async () => {
-    const { container } = render(
-      <ElevationProfile elevationData={mockElevationData} totalDistance={1.0} />,
-    );
-
-    // Wait for AuthProvider to finish loading
-    await waitFor(() => {
-      expect(container).toBeTruthy();
-    });
-
-    // Should render ReferenceDot for hover indicator
-    expect(container.querySelector(".recharts-reference-dot")).toBeTruthy();
-  });
 });

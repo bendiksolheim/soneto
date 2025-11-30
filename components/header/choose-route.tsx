@@ -1,83 +1,11 @@
 "use client";
-
-import { Button } from "@/components/base";
-import { useAuth } from "@/hooks/use-auth";
 import { useRoutes } from "@/hooks/use-routes";
-import {
-  ArrowRightCircleIcon,
-  FolderIcon,
-  FolderPlusIcon,
-  UserCircleIcon,
-  XCircleIcon,
-} from "@/icons";
+import { cn } from "@/lib/utils";
 import { Point } from "@/lib/map/point";
 import { RouteWithCalculatedData } from "@/lib/types/route";
-import { cn } from "@/lib/utils";
+import { Button, Card, Dropdown } from "../base";
+import { ArrowRightCircleIcon, FolderIcon, FolderPlusIcon, XCircleIcon } from "@/icons";
 import { useState } from "react";
-import { Card, Dropdown, Menu } from "./base";
-import { LoginDialog } from "./login-dialog";
-
-type HeaderProps = {
-  points: Array<Point>;
-  onClearPoints: () => void;
-  onRouteLoad: (route: Array<Point>) => void;
-};
-
-export function Header({ points, onClearPoints, onRouteLoad }: HeaderProps): React.ReactElement {
-  return (
-    <div className="grid grid-cols-3 h-12">
-      <div className="text-lg justify-self-start content-center">Soneto</div>
-      <ChooseRoute
-        className="justify-self-center content-center"
-        points={points}
-        onRouteLoad={onRouteLoad}
-        onClearPoints={onClearPoints}
-      />
-      <User />
-    </div>
-  );
-}
-
-function User(): React.ReactElement | null {
-  const { user, isLoading, signOut } = useAuth();
-  const name = user?.identities[0]?.identity_data?.full_name || "der";
-  const [authDialogOpen, setAuthDialogOpen] = useState(false);
-
-  if (isLoading) {
-    return null;
-  }
-
-  if (user) {
-    return (
-      <Dropdown
-        title={`Hei, ${name}!`}
-        classNames={{ dropdown: "justify-self-end content-center" }}
-        placement="end"
-      >
-        <Menu
-          items={[
-            {
-              label: "Logg ut",
-              action: () => {
-                signOut();
-              },
-            },
-          ]}
-        />
-      </Dropdown>
-    );
-  } else {
-    return (
-      <div className="content-center justify-self-end">
-        <Button onClick={() => setAuthDialogOpen(true)}>
-          <UserCircleIcon size={16} />
-          Logg inn
-        </Button>
-        <LoginDialog isOpen={authDialogOpen} setIsOpen={() => setAuthDialogOpen(false)} />
-      </div>
-    );
-  }
-}
 
 type ChooseRouteProps = {
   className?: string;
@@ -86,7 +14,7 @@ type ChooseRouteProps = {
   onClearPoints: () => void;
 };
 
-function ChooseRoute({
+export function ChooseRoute({
   className,
   points,
   onRouteLoad,

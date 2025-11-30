@@ -2,7 +2,6 @@ import { ArrowDownCircleIcon, ShareIcon } from "@/icons";
 import { Button } from "@/components/base";
 import { Point } from "@/lib/map/point";
 import { generateShareUrl } from "@/lib/route-url";
-import { toast } from "sonner";
 import { directionsToGeoJson } from "@/lib/map/directions-to-geojson";
 import { exportGpx } from "@/lib/map/gpx";
 import { Directions } from "@/lib/mapbox";
@@ -19,17 +18,8 @@ export function Share(props: ShareProps) {
 
       // Copy to clipboard using modern Clipboard API
       await navigator.clipboard.writeText(shareUrl);
-
-      toast.success("Delbar lenke kopiert til utklippstavlen", {
-        description: "Send lenken til andre for å dele løypen",
-      });
     } catch (error) {
       console.error("Failed to copy share URL:", error);
-
-      // Fallback toast message if clipboard fails
-      toast.error("Kunne ikke kopiere til utklippstavlen", {
-        description: "Prøv igjen eller bruk en annen nettleser",
-      });
     }
   };
 

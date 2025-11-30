@@ -6,7 +6,7 @@
  */
 export function calculateSlope(
   point1: { distance: number; elevation: number },
-  point2: { distance: number; elevation: number }
+  point2: { distance: number; elevation: number },
 ): number {
   const elevationChange = point2.elevation - point1.elevation; // rise (meters)
   const distanceChange = (point2.distance - point1.distance) * 1000; // run (meters)
@@ -42,7 +42,7 @@ export function getSlopeOpacity(slope: number): number {
   return 0.45;
 }
 
-export interface SteepSegment {
+interface SteepSegment {
   x1: number; // Start distance (km)
   x2: number; // End distance (km)
   avgSlope: number; // Average slope percentage
@@ -58,9 +58,13 @@ export interface SteepSegment {
  * @returns Array of steep uphill segments
  */
 export function findSteepSegments(
-  elevationData: Array<{ distance: number; elevation: number; coordinate: [number, number] }>,
+  elevationData: Array<{
+    distance: number;
+    elevation: number;
+    coordinate: [number, number];
+  }>,
   threshold: number = 6,
-  minLengthKm: number = 0.03
+  minLengthKm: number = 0.03,
 ): SteepSegment[] {
   if (elevationData.length < 2) return [];
 
@@ -97,7 +101,8 @@ export function findSteepSegments(
             x1: currentSegment.x1,
             x2,
             avgSlope:
-              currentSegment.slopes.reduce((a, b) => a + b) / currentSegment.slopes.length,
+              currentSegment.slopes.reduce((a, b) => a + b) /
+              currentSegment.slopes.length,
             maxSlope: Math.max(...currentSegment.slopes),
           });
         }
@@ -116,7 +121,9 @@ export function findSteepSegments(
       segments.push({
         x1: currentSegment.x1,
         x2,
-        avgSlope: currentSegment.slopes.reduce((a, b) => a + b) / currentSegment.slopes.length,
+        avgSlope:
+          currentSegment.slopes.reduce((a, b) => a + b) /
+          currentSegment.slopes.length,
         maxSlope: Math.max(...currentSegment.slopes),
       });
     }

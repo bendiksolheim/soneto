@@ -14,7 +14,7 @@ import { Point } from "@/lib/map/point";
 import { RouteWithCalculatedData } from "@/lib/types/route";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Dropdown, Menu } from "./base";
+import { Card, Dropdown, Menu } from "./base";
 import { LoginDialog } from "./login-dialog";
 
 type HeaderProps = {
@@ -118,106 +118,102 @@ function ListRoutesDropdown({
   onRouteDelete,
 }: ListRoutesProps): React.ReactElement {
   return (
-    <div className="dropdown dropdown-center content-center">
-      <div tabIndex={0} role="button" className="btn btn-sm join-item whitespace-nowrap">
-        <FolderIcon size={16} />
-        Mine løyper
-      </div>
-      <div
-        tabIndex={0}
-        className="dropdown-content card card-border card-sm bg-base-100 z-1 w-96 shadow-md"
-      >
-        <div className="card-body">
-          <div className="card-title">Mine lagrede løyper</div>
-          <ul>
-            {routes.map((route) => (
-              <li key={route.id} className="flex flex-row w-full p-2">
-                <div className="grow">{route.name}</div>
-                <div className="join">
-                  <Button
-                    className="text-nowrap flex join-item"
-                    onClick={() => {
-                      // @ts-ignore
-                      document.activeElement.blur();
-                      onRouteLoad(route.points);
-                    }}
-                  >
-                    <ArrowRightCircleIcon size={16} /> Last inn
-                  </Button>
-                  <Button
-                    variant="warning"
-                    className="flex join-item"
-                    onClick={() => onRouteDelete(route.id)}
-                  >
-                    <XCircleIcon size={16} />
-                    Slett
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </div>
+    <Dropdown
+      title={
+        <>
+          <FolderIcon size={16} /> Mine løyper
+        </>
+      }
+      classNames={{
+        dropdown: "content-center",
+        button: "join-item",
+        content: "w-96",
+      }}
+    >
+      <Card title="Mine lagrede løyper" className="card-border card-sm shadow-md">
+        <ul>
+          {routes.map((route) => (
+            <li key={route.id} className="flex flex-row w-full p-2">
+              <div className="grow">{route.name}</div>
+              <div className="join">
+                <Button
+                  className="text-nowrap flex join-item"
+                  onClick={() => {
+                    // @ts-ignore
+                    document.activeElement.blur();
+                    onRouteLoad(route.points);
+                  }}
+                >
+                  <ArrowRightCircleIcon size={16} /> Last inn
+                </Button>
+                <Button
+                  variant="warning"
+                  className="flex join-item"
+                  onClick={() => onRouteDelete(route.id)}
+                >
+                  <XCircleIcon size={16} />
+                  Slett
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </Dropdown>
   );
 }
 
-function SaveRouteDropdown({
-  onSave,
-}: {
-  onSave: (name: string) => Promise<unknown>;
-}): React.ReactElement {
+type SaveRouteDropdownProps = { onSave: (name: string) => Promise<unknown> };
+
+function SaveRouteDropdown({ onSave }: SaveRouteDropdownProps): React.ReactElement {
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
   return (
-    <div className="dropdown dropdown-center content-center">
-      <div tabIndex={0} role="button" className="btn btn-sm join-item whitespace-nowrap">
-        <FolderPlusIcon size={16} />
-        Lagre løype
-      </div>
-      <div tabIndex={0} className="dropdown-content">
-        <div className="card card-border card-sm bg-base-100 z-1 shadow-md">
-          <div className="card-body">
-            <div className="card-title">Lagre løype</div>
-            <div className="fieldset">
-              <legend className="fieldset-legend">Navn på løype</legend>
-              <div className="join">
-                <input
-                  type="text"
-                  className="input join-item"
-                  placeholder="Løypenavn"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-                <Button
-                  size="md"
-                  className="join-item"
-                  onClick={() => {
-                    setSaving(true);
-                    onSave(name).then(() => {
-                      setSaving(false);
-                      setName("");
-                    });
-                  }}
-                  disabled={name === ""}
-                >
-                  Lagre
-                </Button>
-              </div>
-              <p className="label">
-                Gi løypen et beskrivende navn slik at du lett finner den senere
-              </p>
-            </div>
+    <Dropdown
+      title={
+        <>
+          <FolderPlusIcon size={16} /> Lagre løype
+        </>
+      }
+      classNames={{
+        dropdown: "content-center",
+        button: "join-item",
+      }}
+    >
+      <Card title="Lagre løype" className="card-border card-sm shadow-md">
+        <div className="fieldset">
+          <legend className="fieldset-legend">Navn på løype</legend>
+          <div className="join">
+            <input
+              type="text"
+              className="input join-item"
+              placeholder="Løypenavn"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <Button
+              size="md"
+              className="join-item"
+              onClick={() => {
+                setSaving(true);
+                onSave(name).then(() => {
+                  setSaving(false);
+                  setName("");
+                });
+              }}
+              disabled={name === ""}
+            >
+              Lagre
+            </Button>
           </div>
+          <p className="label">Gi løypen et beskrivende navn slik at du lett finner den senere</p>
         </div>
-      </div>
-    </div>
+      </Card>
+    </Dropdown>
   );
 }
 
-type ClearPointsDropdownProps = {
-  onClear: () => void;
-};
+type ClearPointsDropdownProps = { onClear: () => void };
 function ClearPointsDropdown(props: ClearPointsDropdownProps): React.ReactElement {
   return (
     <div className="join-item content-center">

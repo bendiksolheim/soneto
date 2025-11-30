@@ -14,7 +14,7 @@ type DropdownProps = React.PropsWithChildren<{
 }>;
 
 export function Dropdown(props: DropdownProps): React.ReactElement {
-  const placement = placements[props.placement ?? "start"];
+  const placement = placements[props.placement ?? "center"];
   return (
     <div className={cn("dropdown", placement, props.classNames?.dropdown)}>
       <div

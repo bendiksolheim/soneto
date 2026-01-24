@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  calculateDistance,
+  generateElevationPoints,
+  interpolatePointAtDistance,
+} from "@/lib/elevation/elevation-data";
+import { createElevationLookup, fetchElevations } from "@/lib/elevation/terrain-rgb";
 import { Point } from "@/lib/map/point";
 import { Directions } from "@/lib/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -45,13 +51,50 @@ export function Map({
 
   // Query elevation for route points and generate elevation profile
   useEffect(() => {
-    // Only generate elevation data if map is loaded
-    if (!mapLoaded) return;
+    if (!directions || directions.length < 1) return;
 
-    const data = generateElevationData(mapRef.current, directions);
-    setElevationDataState(data);
-    setElevation(data);
-  }, [directions, setElevation, mapLoaded]);
+    const coordinates = directions[0].routes[0].geometry.coordinates;
+    const totalDistanceMeters = directions[0].routes[0].distance;
+    const sampleIntervalMeters = 30;
+
+    let cancelled = false;
+
+    async function fetchAndGenerateElevation() {
+      // Sample points along the route
+      const numSamples = Math.floor(totalDistanceMeters / sampleIntervalMeters) + 1;
+      const sampleCoordinates: [number, number][] = [];
+
+      for (let i = 0; i < numSamples; i++) {
+        const targetDistance = i * sampleIntervalMeters;
+        const point = interpolatePointAtDistance(coordinates, targetDistance);
+        if (point) {
+          sampleCoordinates.push(point);
+        }
+      }
+
+      // Fetch elevation data from Mapbox API
+      const elevationMap = await fetchElevations(sampleCoordinates, mapboxToken);
+
+      if (cancelled) return;
+
+      // Generate elevation points using the fetched data
+      const data = generateElevationPoints(
+        coordinates,
+        totalDistanceMeters,
+        sampleIntervalMeters,
+        createElevationLookup(elevationMap),
+      );
+
+      setElevationDataState(data);
+      setElevation(data);
+    }
+
+    fetchAndGenerateElevation();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [directions, setElevation, mapboxToken]);
 
   const hoveredCoordinate =
     hoveredElevationIndex !== null && elevationData[hoveredElevationIndex]
@@ -146,109 +189,6 @@ const hillshadeStyle: Omit<HillshadeLayerSpecification, "source"> = {
     "hillshade-exaggeration": 0.6,
   },
 };
-
-function generateElevationData(
-  mapRef: MapRef | null,
-  directions: Array<Directions>,
-): Array<{ distance: number; elevation: number; coordinate: [number, number] }> {
-  // Generate elevation profile along the route
-  if (!mapRef || !directions || directions.length < 1) {
-    return [];
-  }
-
-  if (directions && directions.length >= 1) {
-    const profileData: Array<{
-      distance: number;
-      elevation: number;
-      coordinate: [number, number];
-    }> = [];
-
-    // Sample every N meters along the route
-    const sampleIntervalMeters = 30;
-    const totalDistanceMeters = directions[0].routes[0].distance;
-    const numSamples = Math.floor(totalDistanceMeters / sampleIntervalMeters) + 1;
-
-    for (let i = 0; i < numSamples; i++) {
-      const targetDistanceMeters = i * sampleIntervalMeters;
-      const interpolatedPoint = interpolatePointAtDistance(
-        directions[0].routes[0].geometry.coordinates,
-        targetDistanceMeters,
-      );
-
-      if (interpolatedPoint) {
-        const elevation = mapRef.queryTerrainElevation(interpolatedPoint);
-
-        if (elevation !== null && elevation !== undefined) {
-          profileData.push({
-            distance: targetDistanceMeters / 1000, // Convert back to km
-            elevation: elevation,
-            coordinate: interpolatedPoint,
-          });
-        }
-      }
-    }
-
-    return profileData;
-  } else {
-    return [];
-  }
-}
-
-// Helper function to interpolate a point at a specific distance along the route
-function interpolatePointAtDistance(
-  coordinates: [number, number][],
-  targetDistanceMeters: number,
-): [number, number] | null {
-  if (coordinates.length < 2) return null;
-
-  // Handle the start of the route (distance 0)
-  if (targetDistanceMeters <= 0) {
-    return coordinates[0];
-  }
-
-  let cumulativeDistance = 0;
-
-  for (let i = 0; i < coordinates.length - 1; i++) {
-    const segmentDistance = calculateDistance(coordinates[i], coordinates[i + 1]) * 1000; // Convert to meters
-
-    // Check if target distance is within this segment
-    if (targetDistanceMeters <= cumulativeDistance + segmentDistance) {
-      // The target point is within this segment
-      const remainingDistance = targetDistanceMeters - cumulativeDistance;
-
-      // Handle case where segment distance is very small or zero
-      if (segmentDistance < 0.001) {
-        return coordinates[i];
-      }
-
-      const ratio = remainingDistance / segmentDistance;
-
-      // Linear interpolation between the two points
-      const lng = coordinates[i][0] + (coordinates[i + 1][0] - coordinates[i][0]) * ratio;
-      const lat = coordinates[i][1] + (coordinates[i + 1][1] - coordinates[i][1]) * ratio;
-
-      return [lng, lat];
-    }
-
-    cumulativeDistance += segmentDistance;
-  }
-  return coordinates[coordinates.length - 1];
-}
-
-// Helper function to calculate distance between two coordinates (Haversine formula)
-function calculateDistance(coord1: [number, number], coord2: [number, number]): number {
-  const R = 6371; // Earth's radius in kilometers
-  const dLat = ((coord2[1] - coord1[1]) * Math.PI) / 180;
-  const dLon = ((coord2[0] - coord1[0]) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((coord1[1] * Math.PI) / 180) *
-      Math.cos((coord2[1] * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
 
 // Find the nearest elevation data point to a given coordinate
 // Note: Hover performance is acceptable with current 30m sampling.

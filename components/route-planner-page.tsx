@@ -21,6 +21,7 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
     Array<{ distance: number; elevation: number; coordinate: [number, number] }>
   >([]);
   const [hoveredElevationIndex, setHoveredElevationIndex] = useState<number | null>(null);
+  const [shouldFitBounds, setShouldFitBounds] = useState(false);
   const [routePoints, setRoutePoints] = useState<Array<Point>>(() => {
     if (initialRoute && initialRoute.length > 0) {
       return initialRoute;
@@ -75,6 +76,13 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
     updateDirections();
   }, [routePoints, mapboxToken]);
 
+  // Fit bounds when initial route is loaded (from URL or localStorage)
+  useEffect(() => {
+    if (routePoints.length >= 2) {
+      setShouldFitBounds(true);
+    }
+  }, []); // Only run on mount
+
   const handleClearPoints = () => {
     setRoutePoints([]);
     try {
@@ -86,6 +94,7 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
 
   const handleRouteLoad = (routePoints: Array<Point>) => {
     setRoutePoints(routePoints);
+    setShouldFitBounds(true);
   };
 
   return (
@@ -104,6 +113,8 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
         setElevation={setElevation}
         hoveredElevationIndex={hoveredElevationIndex}
         onElevationHover={setHoveredElevationIndex}
+        shouldFitBounds={shouldFitBounds}
+        onFitBoundsComplete={() => setShouldFitBounds(false)}
       />
       <div className="absolute bottom-2 left-[50%] transform-[translate(-50%, 0)]">
         <Share points={routePoints} directions={directions} />

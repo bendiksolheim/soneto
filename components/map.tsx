@@ -8,6 +8,7 @@ import {
 import { createElevationLookup, fetchElevations } from "@/lib/elevation/terrain-rgb";
 import { Point } from "@/lib/map/point";
 import { Directions } from "@/lib/mapbox";
+import { LngLatBounds } from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef, useState } from "react";
 import MapboxMap, {
@@ -32,6 +33,8 @@ interface MapContainerProps {
   ) => void;
   hoveredElevationIndex: number | null;
   onElevationHover: (index: number | null) => void;
+  shouldFitBounds?: boolean;
+  onFitBoundsComplete?: () => void;
 }
 
 export function Map({
@@ -42,6 +45,8 @@ export function Map({
   setElevation,
   hoveredElevationIndex,
   onElevationHover,
+  shouldFitBounds,
+  onFitBoundsComplete,
 }: MapContainerProps) {
   const mapRef = useRef<MapRef>(null);
   const [elevationData, setElevationDataState] = useState<
@@ -95,6 +100,24 @@ export function Map({
       cancelled = true;
     };
   }, [directions, setElevation, mapboxToken]);
+
+  // Fit map bounds when a route is loaded
+  useEffect(() => {
+    if (shouldFitBounds && mapLoaded && routePoints.length >= 2 && mapRef.current) {
+      const bounds = new LngLatBounds();
+      routePoints.forEach((point) => {
+        bounds.extend([point.longitude, point.latitude]);
+      });
+
+      mapRef.current.fitBounds(bounds, {
+        padding: 50,
+        maxZoom: 16,
+        duration: 1000,
+      });
+
+      onFitBoundsComplete?.();
+    }
+  }, [shouldFitBounds, mapLoaded, routePoints, onFitBoundsComplete]);
 
   const hoveredCoordinate =
     hoveredElevationIndex !== null && elevationData[hoveredElevationIndex]

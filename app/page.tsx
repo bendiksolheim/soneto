@@ -1,6 +1,6 @@
-import { extractRouteFromUrl } from "@/lib/route-url";
 import RoutePlannerPage from "@/components/route-planner-page";
-import { Point } from "@/lib/map/point";
+import type { Point } from "@/lib/map/point";
+import { extractRouteFromUrl } from "@/lib/route-url";
 
 type HomePageProps = {
   searchParams: Promise<{ route?: string }>;

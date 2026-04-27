@@ -1,10 +1,10 @@
-import { ArrowDownCircleIcon, ShareIcon } from "@/icons";
 import { Button } from "@/components/base";
-import { Point } from "@/lib/map/point";
-import { generateShareUrl } from "@/lib/route-url";
+import { ArrowDownCircleIcon, ShareIcon } from "@/icons";
 import { directionsToGeoJson } from "@/lib/map/directions-to-geojson";
 import { exportGpx } from "@/lib/map/gpx";
-import { Directions } from "@/lib/mapbox";
+import type { Point } from "@/lib/map/point";
+import type { Directions } from "@/lib/mapbox";
+import { generateShareUrl } from "@/lib/route-url";
 
 type ShareProps = {
   points: Array<Point>;

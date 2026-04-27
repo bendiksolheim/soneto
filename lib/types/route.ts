@@ -1,4 +1,4 @@
-import { Point } from "../map/point";
+import type { Point } from "../map/point";
 
 export interface StoredRoute {
   id: string; // Unique identifier (UUID)

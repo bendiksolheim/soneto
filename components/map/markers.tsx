@@ -1,7 +1,7 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
+import type { MarkerDragEvent, MarkerEvent } from "react-map-gl/mapbox";
+import type { Point } from "@/lib/map/point";
 import { RouteMarker } from "./route-marker";
-import { Point } from "@/lib/map/point";
-import { MarkerDragEvent, MarkerEvent } from "react-map-gl/mapbox";
 
 type RouteProps = {
   route: Array<Point>;
@@ -27,7 +27,7 @@ export function Markers(props: RouteProps): ReactNode {
 
   return props.route.map((point, index) => (
     <RouteMarker
-      key={index}
+      key={`${point.latitude}-${point.longitude}`}
       index={index}
       point={point}
       numberOfPoints={props.route.length}

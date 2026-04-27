@@ -1,7 +1,8 @@
 import GeoJsonToGpx from "@dwayneparton/geojson-to-gpx";
 
-export function exportGpx(geojson: any) {
-  const gpx = GeoJsonToGpx(geojson);
+export function exportGpx(geojson: unknown) {
+  // biome-ignore lint/suspicious/noExplicitAny: Ignoring this for now
+  const gpx = GeoJsonToGpx(geojson as any);
   const gpxString = new XMLSerializer().serializeToString(gpx);
 
   const link = document.createElement("a");

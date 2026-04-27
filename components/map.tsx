@@ -1,21 +1,21 @@
 "use client";
 
+import { LngLatBounds } from "mapbox-gl";
 import {
   calculateDistance,
   generateElevationPoints,
   interpolatePointAtDistance,
 } from "@/lib/elevation/elevation-data";
 import { createElevationLookup, fetchElevations } from "@/lib/elevation/terrain-rgb";
-import { Point } from "@/lib/map/point";
-import { Directions } from "@/lib/mapbox";
-import { LngLatBounds } from "mapbox-gl";
+import type { Point } from "@/lib/map/point";
+import type { Directions } from "@/lib/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef, useState } from "react";
 import MapboxMap, {
-  HillshadeLayerSpecification,
+  type HillshadeLayerSpecification,
   Layer,
-  MapMouseEvent,
-  MapRef,
+  type MapMouseEvent,
+  type MapRef,
   Source,
 } from "react-map-gl/mapbox";
 import { HoverMarker } from "./map/hover-marker";
@@ -29,7 +29,11 @@ interface MapContainerProps {
   setRoutePoints: (points: Array<Point>) => void;
   directions: Array<Directions>;
   setElevation: (
-    elevation: Array<{ distance: number; elevation: number; coordinate: [number, number] }>,
+    elevation: Array<{
+      distance: number;
+      elevation: number;
+      coordinate: [number, number];
+    }>,
   ) => void;
   hoveredElevationIndex: number | null;
   onElevationHover: (index: number | null) => void;
@@ -37,7 +41,7 @@ interface MapContainerProps {
   onFitBoundsComplete?: () => void;
 }
 
-export function Map({
+export function RunMap({
   mapboxToken,
   routePoints,
   setRoutePoints,
@@ -134,7 +138,10 @@ export function Map({
       setRoutePoints(newRoutePoints);
     } else {
       // Fallback to original method
-      const newPoint: Point = { latitude: e.lngLat.lat, longitude: e.lngLat.lng };
+      const newPoint: Point = {
+        latitude: e.lngLat.lat,
+        longitude: e.lngLat.lng,
+      };
       const newRoutePoints = [...routePoints, newPoint];
       setRoutePoints(newRoutePoints);
     }
@@ -221,7 +228,11 @@ const hillshadeStyle: Omit<HillshadeLayerSpecification, "source"> = {
 // 3. Using spatial indexing for nearest point lookup
 function findNearestElevationPoint(
   lngLat: { lng: number; lat: number },
-  elevationData: Array<{ distance: number; elevation: number; coordinate: [number, number] }>,
+  elevationData: Array<{
+    distance: number;
+    elevation: number;
+    coordinate: [number, number];
+  }>,
 ): number | null {
   if (elevationData.length === 0) return null;
 

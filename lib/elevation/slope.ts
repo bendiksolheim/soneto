@@ -100,9 +100,7 @@ export function findSteepSegments(
           segments.push({
             x1: currentSegment.x1,
             x2,
-            avgSlope:
-              currentSegment.slopes.reduce((a, b) => a + b) /
-              currentSegment.slopes.length,
+            avgSlope: currentSegment.slopes.reduce((a, b) => a + b) / currentSegment.slopes.length,
             maxSlope: Math.max(...currentSegment.slopes),
           });
         }
@@ -121,9 +119,7 @@ export function findSteepSegments(
       segments.push({
         x1: currentSegment.x1,
         x2,
-        avgSlope:
-          currentSegment.slopes.reduce((a, b) => a + b) /
-          currentSegment.slopes.length,
+        avgSlope: currentSegment.slopes.reduce((a, b) => a + b) / currentSegment.slopes.length,
         maxSlope: Math.max(...currentSegment.slopes),
       });
     }

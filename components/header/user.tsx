@@ -1,8 +1,8 @@
 "use client";
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { UserCircleIcon } from "@/icons";
-import { useState } from "react";
-import { Dropdown, Menu, Button } from "../base";
+import { Button, Dropdown, Menu } from "../base";
 import { LoginDialog } from "../login-dialog";
 
 export function User(): React.ReactElement | null {
@@ -24,6 +24,7 @@ export function User(): React.ReactElement | null {
         <Menu
           items={[
             {
+              id: "logg-ut",
               label: "Logg ut",
               action: () => {
                 signOut();

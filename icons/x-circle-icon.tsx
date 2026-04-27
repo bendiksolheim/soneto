@@ -13,6 +13,8 @@ export function XCircleIcon(props: XCircleIconProps): React.ReactElement {
       viewBox="0 0 24 24"
       strokeWidth={1.5}
       stroke="currentColor"
+      role="img"
+      aria-label="X icon"
     >
       <path
         strokeLinecap="round"

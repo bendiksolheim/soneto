@@ -1,11 +1,16 @@
 "use client";
 
-import { findSteepSegments, getSlopeColor, getSlopeOpacity } from "@/lib/elevation/slope";
-import React, { useMemo, useState } from "react";
+import type React from "react";
+import { useState } from "react";
 import { Area, AreaChart, ReferenceArea, ReferenceDot, Tooltip, XAxis, YAxis } from "recharts";
+import { findSteepSegments, getSlopeColor, getSlopeOpacity } from "@/lib/elevation/slope";
 
 interface ElevationProfileProps {
-  elevationData: Array<{ distance: number; elevation: number; coordinate: [number, number] }>;
+  elevationData: Array<{
+    distance: number;
+    elevation: number;
+    coordinate: [number, number];
+  }>;
   totalDistance: number;
 }
 
@@ -41,13 +46,13 @@ export function ElevationProfile(props: ElevationProfileProps): React.ReactEleme
       margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
       data={chartData}
       onMouseMove={(state) => {
-        if (state && state.isTooltipActive && state.activeTooltipIndex !== undefined) {
+        if (state?.isTooltipActive && state.activeTooltipIndex !== undefined) {
           // Only update if the index actually changed to avoid conflicts
           if (hoveredIndex !== state.activeTooltipIndex) {
             const index =
               typeof state.activeTooltipIndex === "number"
                 ? state.activeTooltipIndex
-                : parseInt(state.activeTooltipIndex);
+                : parseInt(state.activeTooltipIndex, 10);
             onHover(index);
           }
         }
@@ -78,7 +83,7 @@ export function ElevationProfile(props: ElevationProfileProps): React.ReactEleme
       />
       <Tooltip
         content={({ active, payload, label }) => {
-          const isVisible = active && payload && payload.length;
+          const isVisible = active && payload.length;
           return (
             <div
               className="bg-white rounded-lg shadow-lg p-2 border"
@@ -97,13 +102,13 @@ export function ElevationProfile(props: ElevationProfileProps): React.ReactEleme
       <Area dataKey="elevation" fill="#8884d8" fillOpacity={0.3} stroke="#8884d8" strokeWidth={2} />
 
       {/* Steep segment overlays */}
-      {steepSegments.map((segment, index) => {
+      {steepSegments.map((segment) => {
         const color = getSlopeColor(segment.avgSlope);
         if (!color) return null;
 
         return (
           <ReferenceArea
-            key={`steep-${index}`}
+            key={`steep-${segment.x1}-${segment.x2}`}
             x1={segment.x1}
             x2={segment.x2}
             fill={color}

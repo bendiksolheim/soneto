@@ -13,6 +13,8 @@ export function FolderIcon(props: FolderIconProps): React.ReactElement {
       viewBox="0 0 24 24"
       strokeWidth={1.5}
       stroke="currentColor"
+      role="img"
+      aria-label="Folder icon"
     >
       <path
         strokeLinecap="round"

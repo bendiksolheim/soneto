@@ -1,4 +1,4 @@
-import { Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 export async function waitForMapLoad(page: Page) {
   await page.waitForSelector(".mapboxgl-canvas", { timeout: 10000 });

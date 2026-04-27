@@ -1,8 +1,8 @@
 import posthog from "posthog-js";
 
-posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
   api_host: "/ingest",
-  ui_host: process.env.NEXT_PUBLIC_POSTHOG_HOST!,
+  ui_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
   persistence: "localStorage",
   capture_pageview: "history_change",
   capture_pageleave: true, // Enable pageleave capture

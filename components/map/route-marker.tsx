@@ -1,5 +1,5 @@
-import { Point } from "@/lib/map/point";
-import { Marker, MarkerDragEvent, MarkerEvent } from "react-map-gl/mapbox";
+import { Marker, type MarkerDragEvent, type MarkerEvent } from "react-map-gl/mapbox";
+import type { Point } from "@/lib/map/point";
 
 type RouteMarkerProps = {
   index: number;

@@ -1,26 +1,26 @@
-import { http, HttpResponse } from 'msw'
+import { HttpResponse, http } from "msw";
 
 export const handlers = [
   // Mock Mapbox Directions API
-  http.get('https://api.mapbox.com/directions/v5/mapbox/walking/*', () => {
+  http.get("https://api.mapbox.com/directions/v5/mapbox/walking/*", () => {
     return HttpResponse.json({
       routes: [
         {
-          geometry: 'mock_encoded_polyline',
+          geometry: "mock_encoded_polyline",
           distance: 1000,
           duration: 600,
-          weight_name: 'pedestrian',
+          weight_name: "pedestrian",
           weight: 600,
           legs: [],
         },
       ],
       waypoints: [],
-      code: 'Ok',
-    })
+      code: "Ok",
+    });
   }),
 
   // Mock Mapbox Terrain API (for elevation data)
-  http.get('https://api.mapbox.com/v4/mapbox.terrain-rgb/*', () => {
-    return new HttpResponse(null, { status: 200 })
+  http.get("https://api.mapbox.com/v4/mapbox.terrain-rgb/*", () => {
+    return new HttpResponse(null, { status: 200 });
   }),
-]
+];

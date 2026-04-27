@@ -1,10 +1,10 @@
-import React from "react";
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
-import { useRoutes } from "./use-routes";
-import { setupLocalStorageMock } from "../test/mocks/localStorage";
-import { Point } from "@/lib/map/point";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider } from "@/hooks/use-auth";
+import type { Point } from "@/lib/map/point";
+import type { StoredRoute } from "@/lib/types/route";
+import { setupLocalStorageMock } from "../test/mocks/localStorage";
+import { useRoutes } from "./use-routes";
 
 describe("useRoutes", () => {
   let localStorageMock: ReturnType<typeof setupLocalStorageMock>;
@@ -17,9 +17,7 @@ describe("useRoutes", () => {
     localStorageMock.getItem.mockReturnValue(null);
 
     const { result } = renderHook(() => useRoutes(), {
-      wrapper: ({ children }) => (
-        <AuthProvider user={null}>{children}</AuthProvider>
-      ),
+      wrapper: ({ children }) => <AuthProvider user={null}>{children}</AuthProvider>,
     });
 
     await waitFor(() => {
@@ -49,9 +47,7 @@ describe("useRoutes", () => {
     localStorageMock.getItem.mockReturnValue(JSON.stringify(mockData));
 
     const { result } = renderHook(() => useRoutes(), {
-      wrapper: ({ children }) => (
-        <AuthProvider user={null}>{children}</AuthProvider>
-      ),
+      wrapper: ({ children }) => <AuthProvider user={null}>{children}</AuthProvider>,
     });
 
     await waitFor(() => {
@@ -65,9 +61,7 @@ describe("useRoutes", () => {
 
   it("saves new route and updates state", async () => {
     const { result } = renderHook(() => useRoutes(), {
-      wrapper: ({ children }) => (
-        <AuthProvider user={null}>{children}</AuthProvider>
-      ),
+      wrapper: ({ children }) => <AuthProvider user={null}>{children}</AuthProvider>,
     });
 
     await waitFor(() => {
@@ -82,7 +76,7 @@ describe("useRoutes", () => {
       ] as Point[],
     };
 
-    let savedRoute;
+    let savedRoute: StoredRoute;
     await act(async () => {
       savedRoute = await result.current.saveRoute(routeData);
     });
@@ -99,16 +93,14 @@ describe("useRoutes", () => {
 
   it("updates existing route", async () => {
     const { result } = renderHook(() => useRoutes(), {
-      wrapper: ({ children }) => (
-        <AuthProvider user={null}>{children}</AuthProvider>
-      ),
+      wrapper: ({ children }) => <AuthProvider user={null}>{children}</AuthProvider>,
     });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    let saved;
+    let saved: StoredRoute;
     await act(async () => {
       saved = await result.current.saveRoute({
         name: "Original",
@@ -131,16 +123,14 @@ describe("useRoutes", () => {
 
   it("deletes route and updates state", async () => {
     const { result } = renderHook(() => useRoutes(), {
-      wrapper: ({ children }) => (
-        <AuthProvider user={null}>{children}</AuthProvider>
-      ),
+      wrapper: ({ children }) => <AuthProvider user={null}>{children}</AuthProvider>,
     });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    let saved;
+    let saved: StoredRoute;
     await act(async () => {
       saved = await result.current.saveRoute({
         name: "To Delete",
@@ -169,9 +159,7 @@ describe("useRoutes", () => {
     });
 
     const { result } = renderHook(() => useRoutes(), {
-      wrapper: ({ children }) => (
-        <AuthProvider user={null}>{children}</AuthProvider>
-      ),
+      wrapper: ({ children }) => <AuthProvider user={null}>{children}</AuthProvider>,
     });
 
     await waitFor(() => {
@@ -192,6 +180,7 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
     aud: "authenticated",
     role: "authenticated",
     created_at: "2025-01-01T00:00:00.000Z",
+    // biome-ignore lint/suspicious/noExplicitAny: Dont care
   } as any; // Type as any to avoid full User type construction
 
   beforeEach(() => {
@@ -206,12 +195,11 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
     } as any);
 
     const { result } = renderHook(() => useRoutes(), {
-      wrapper: ({ children }) => (
-        <AuthProvider user={mockUser}>{children}</AuthProvider>
-      ),
+      wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
     });
 
     await waitFor(() => {
@@ -254,13 +242,13 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
         })),
         signOut: vi.fn().mockResolvedValue({ error: null }),
       },
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
       from: mockFrom as any,
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
     } as any);
 
     const { result } = renderHook(() => useRoutes(), {
-      wrapper: ({ children }) => (
-        <AuthProvider user={mockUser}>{children}</AuthProvider>
-      ),
+      wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
     });
 
     await waitFor(() => {
@@ -291,6 +279,7 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
     const { createClient } = await import("@/lib/supabase/client");
 
     // Create mock function that will be updated for save operation
+    // biome-ignore lint/suspicious/noExplicitAny: Dont care
     let mockFrom: any = vi.fn(() => ({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -306,12 +295,11 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
         signOut: vi.fn().mockResolvedValue({ error: null }),
       },
       from: mockFrom,
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
     } as any);
 
     const { result } = renderHook(() => useRoutes(), {
-      wrapper: ({ children }) => (
-        <AuthProvider user={mockUser}>{children}</AuthProvider>
-      ),
+      wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
     });
 
     await waitFor(() => {
@@ -334,9 +322,10 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
         signOut: vi.fn().mockResolvedValue({ error: null }),
       },
       from: mockFrom,
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
     } as any);
 
-    let savedRoute;
+    let savedRoute: StoredRoute;
     await act(async () => {
       savedRoute = await result.current.saveRoute({
         name: "New Cloud Route",
@@ -367,6 +356,7 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
     const { createClient } = await import("@/lib/supabase/client");
 
     // Create mock function that will be updated for update operation
+    // biome-ignore lint/suspicious/noExplicitAny: Dont care
     let mockFrom: any = vi.fn(() => ({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -382,12 +372,11 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
         signOut: vi.fn().mockResolvedValue({ error: null }),
       },
       from: mockFrom,
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
     } as any);
 
     const { result } = renderHook(() => useRoutes(), {
-      wrapper: ({ children }) => (
-        <AuthProvider user={mockUser}>{children}</AuthProvider>
-      ),
+      wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
     });
 
     await waitFor(() => {
@@ -412,10 +401,13 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
         signOut: vi.fn().mockResolvedValue({ error: null }),
       },
       from: mockFrom,
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
     } as any);
 
     await act(async () => {
-      await result.current.updateRoute("existing-123", { name: "Updated Name" });
+      await result.current.updateRoute("existing-123", {
+        name: "Updated Name",
+      });
     });
 
     await waitFor(() => {
@@ -439,6 +431,7 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
     const { createClient } = await import("@/lib/supabase/client");
 
     // Create mock function that will be updated for delete operation
+    // biome-ignore lint/suspicious/noExplicitAny: Dont care
     let mockFrom: any = vi.fn(() => ({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -454,12 +447,11 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
         signOut: vi.fn().mockResolvedValue({ error: null }),
       },
       from: mockFrom,
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
     } as any);
 
     const { result } = renderHook(() => useRoutes(), {
-      wrapper: ({ children }) => (
-        <AuthProvider user={mockUser}>{children}</AuthProvider>
-      ),
+      wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
     });
 
     await waitFor(() => {
@@ -484,6 +476,7 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
         signOut: vi.fn().mockResolvedValue({ error: null }),
       },
       from: mockFrom,
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
     } as any);
 
     await act(async () => {
@@ -506,7 +499,7 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
       eq: vi.fn().mockReturnThis(),
       order: vi.fn().mockResolvedValue({
         data: null,
-        error: { message: "Supabase error" }
+        error: { message: "Supabase error" },
       }),
     }));
 
@@ -518,13 +511,13 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
         })),
         signOut: vi.fn().mockResolvedValue({ error: null }),
       },
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
       from: mockFrom as any,
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
     } as any);
 
     const { result } = renderHook(() => useRoutes(), {
-      wrapper: ({ children }) => (
-        <AuthProvider user={mockUser}>{children}</AuthProvider>
-      ),
+      wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
     });
 
     await waitFor(() => {

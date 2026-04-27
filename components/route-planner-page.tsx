@@ -1,11 +1,11 @@
 "use client";
 
-import { Frame } from "@/components/frame";
-import { Map } from "@/components/map";
-import { Share } from "@/components/widgets/share";
-import { Point } from "@/lib/map/point";
-import { directions, Directions } from "@/lib/mapbox";
 import { useEffect, useMemo, useState } from "react";
+import { Frame } from "@/components/frame";
+import { RunMap } from "@/components/map";
+import { Share } from "@/components/widgets/share";
+import type { Point } from "@/lib/map/point";
+import { type Directions, directions } from "@/lib/mapbox";
 
 const DRAFT_ROUTE_STORAGE_KEY = "draft-route";
 
@@ -77,8 +77,10 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
   }, [routePoints, mapboxToken]);
 
   // Fit bounds when initial route is loaded (from URL or localStorage)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: dont rerun useEffect on route change
   useEffect(() => {
     if (routePoints.length >= 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShouldFitBounds(true);
     }
   }, []); // Only run on mount
@@ -105,7 +107,7 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
       onClearPoints={handleClearPoints}
       onRouteLoad={handleRouteLoad}
     >
-      <Map
+      <RunMap
         mapboxToken={mapboxToken}
         routePoints={routePoints}
         setRoutePoints={setRoutePoints}
@@ -160,7 +162,7 @@ function loadRouteFromLocalStorage(): Array<Point> | null {
           return points;
         }
       }
-    } catch (error) {
+    } catch (_error) {
       localStorage.removeItem(DRAFT_ROUTE_STORAGE_KEY);
     }
   }

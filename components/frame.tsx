@@ -1,13 +1,17 @@
 "use client";
 
-import { Point } from "@/lib/map/point";
-import React from "react";
+import type React from "react";
+import type { Point } from "@/lib/map/point";
 import { Header } from "./header";
 import { MapFeatures } from "./map-features";
 
 type FrameProps = React.PropsWithChildren<{
   distance: number;
-  elevation: Array<{ distance: number; elevation: number; coordinate: [number, number] }>;
+  elevation: Array<{
+    distance: number;
+    elevation: number;
+    coordinate: [number, number];
+  }>;
   points: Array<Point>;
   onClearPoints: () => void;
   onRouteLoad: (route: Array<Point>) => void;

@@ -1,5 +1,5 @@
-import { encode, decode } from '@mapbox/polyline';
-import { Point } from './map/point';
+import { decode, encode } from "@mapbox/polyline";
+import type { Point } from "./map/point";
 
 /**
  * Truncate coordinate to 6 decimal places (~10cm precision)
@@ -35,14 +35,14 @@ function truncatePoint(point: Point): Point {
  */
 export function compressRoute(points: Point[]): string {
   if (points.length === 0) {
-    return '';
+    return "";
   }
 
   // Step 1: Truncate to 6 decimal places for precision optimization
   const truncated = points.map(truncatePoint);
 
   // Step 2: Convert to polyline format: [lat, lng]
-  const coords = truncated.map(p => [p.latitude, p.longitude]);
+  const coords = truncated.map((p) => [p.latitude, p.longitude]);
 
   // Step 3: Encode as polyline with precision 6
   const encoded = encode(coords, 6);
@@ -76,7 +76,7 @@ export function decompressRoute(encoded: string): Point[] {
       longitude: lng,
     }));
   } catch (error) {
-    console.error('Failed to decompress route:', error);
+    console.error("Failed to decompress route:", error);
     return [];
   }
 }

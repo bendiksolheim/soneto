@@ -13,6 +13,8 @@ export function UserCircleIcon(props: UserCircleProps) {
       viewBox="0 0 24 24"
       strokeWidth={1.5}
       stroke="currentColor"
+      role="img"
+      aria-label="User icon"
     >
       <path
         strokeLinecap="round"

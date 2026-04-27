@@ -14,13 +14,13 @@ const tileCache = new Map<string, ImageData>();
 function latLngToTile(
   lat: number,
   lng: number,
-  zoom: number
+  zoom: number,
 ): { x: number; y: number; pixelX: number; pixelY: number } {
-  const n = Math.pow(2, zoom);
+  const n = 2 ** zoom;
   const tileX = Math.floor(((lng + 180) / 360) * n);
   const latRad = (lat * Math.PI) / 180;
   const tileY = Math.floor(
-    ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n
+    ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n,
   );
 
   // Calculate pixel position within tile (256x256 tiles)
@@ -51,12 +51,12 @@ async function fetchTile(
   x: number,
   y: number,
   zoom: number,
-  accessToken: string
+  accessToken: string,
 ): Promise<ImageData | null> {
   const cacheKey = `${zoom}/${x}/${y}`;
 
   if (tileCache.has(cacheKey)) {
-    return tileCache.get(cacheKey)!;
+    return tileCache.get(cacheKey);
   }
 
   const url = `https://api.mapbox.com/v4/mapbox.terrain-rgb/${zoom}/${x}/${y}.pngraw?access_token=${accessToken}`;
@@ -92,10 +92,10 @@ async function fetchTile(
 /**
  * Get elevation for a single coordinate
  */
-async function getElevationForCoord(
+async function _getElevationForCoord(
   coord: [number, number],
   zoom: number,
-  accessToken: string
+  accessToken: string,
 ): Promise<number | null> {
   const [lng, lat] = coord;
   const { x, y, pixelX, pixelY } = latLngToTile(lat, lng, zoom);
@@ -119,12 +119,15 @@ async function getElevationForCoord(
 export async function fetchElevations(
   coordinates: [number, number][],
   accessToken: string,
-  zoom: number = 14
+  zoom: number = 14,
 ): Promise<Map<string, number | null>> {
   const results = new Map<string, number | null>();
 
   // Group coordinates by tile
-  const tileGroups = new Map<string, Array<{ coord: [number, number]; pixelX: number; pixelY: number }>>();
+  const tileGroups = new Map<
+    string,
+    Array<{ coord: [number, number]; pixelX: number; pixelY: number }>
+  >();
 
   for (const coord of coordinates) {
     const [lng, lat] = coord;
@@ -134,7 +137,7 @@ export async function fetchElevations(
     if (!tileGroups.has(tileKey)) {
       tileGroups.set(tileKey, []);
     }
-    tileGroups.get(tileKey)!.push({ coord, pixelX, pixelY });
+    tileGroups.get(tileKey).push({ coord, pixelX, pixelY });
   }
 
   // Fetch tiles in parallel (limit concurrency to avoid rate limiting)
@@ -164,7 +167,7 @@ export async function fetchElevations(
 
           results.set(coordKey, decodeElevation(r, g, b));
         }
-      })
+      }),
     );
   }
 
@@ -175,7 +178,7 @@ export async function fetchElevations(
  * Create an elevation lookup function that uses pre-fetched data
  */
 export function createElevationLookup(
-  elevationMap: Map<string, number | null>
+  elevationMap: Map<string, number | null>,
 ): (coord: [number, number]) => number | null {
   return (coord: [number, number]) => {
     const key = `${coord[0]},${coord[1]}`;
@@ -186,6 +189,6 @@ export function createElevationLookup(
 /**
  * Clear the tile cache (useful for memory management on long sessions)
  */
-function clearTileCache(): void {
+function _clearTileCache(): void {
   tileCache.clear();
 }

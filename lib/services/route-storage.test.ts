@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { RouteStorageService } from "./route-storage";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { setupLocalStorageMock } from "../../test/mocks/localStorage";
-import { Point } from "../map/point";
+import type { Point } from "../map/point";
+import { RouteStorageService } from "./route-storage";
 
 describe("RouteStorageService", () => {
   let localStorageMock: ReturnType<typeof setupLocalStorageMock>;
@@ -146,9 +146,7 @@ describe("RouteStorageService", () => {
         points: Array(10000).fill({ latitude: 60, longitude: 10 }) as Point[],
       };
 
-      expect(() => RouteStorageService.saveRoute(routeData)).toThrow(
-        "Storage quota exceeded",
-      );
+      expect(() => RouteStorageService.saveRoute(routeData)).toThrow("Storage quota exceeded");
     });
   });
 });

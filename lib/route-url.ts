@@ -1,5 +1,5 @@
+import type { Point } from "./map/point";
 import { compressRoute, decompressRoute } from "./route-compression";
-import { Point } from "./map/point";
 
 /**
  * Generate shareable URL for a route
@@ -13,8 +13,7 @@ import { Point } from "./map/point";
  * // Returns: "https://soneto.app?route=_p~iF~ps|U..."
  */
 export function generateShareUrl(points: Point[], baseUrl?: string): string {
-  const base =
-    baseUrl || (typeof window !== "undefined" ? window.location.origin : "");
+  const base = baseUrl || (typeof window !== "undefined" ? window.location.origin : "");
   const encoded = compressRoute(points);
 
   if (!encoded) {
@@ -36,13 +35,9 @@ export function generateShareUrl(points: Point[], baseUrl?: string): string {
  *   setRoutePoints(points);
  * }
  */
-export function extractRouteFromUrl(
-  searchParams: string | URLSearchParams,
-): Point[] | null {
+export function extractRouteFromUrl(searchParams: string | URLSearchParams): Point[] | null {
   const params =
-    typeof searchParams === "string"
-      ? new URLSearchParams(searchParams)
-      : searchParams;
+    typeof searchParams === "string" ? new URLSearchParams(searchParams) : searchParams;
 
   const routeParam = params.get("route");
 

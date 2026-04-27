@@ -1,6 +1,6 @@
 "use client";
 
-import { Point } from "@/lib/map/point";
+import type { Point } from "@/lib/map/point";
 import { ChooseRoute } from "./choose-route";
 import { User } from "./user";
 

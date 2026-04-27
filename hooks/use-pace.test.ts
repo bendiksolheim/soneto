@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
-import { usePace } from "./use-pace";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { setupLocalStorageMock } from "../test/mocks/localStorage";
+import { usePace } from "./use-pace";
 
 describe("usePace", () => {
   let localStorageMock: ReturnType<typeof setupLocalStorageMock>;
@@ -49,10 +49,7 @@ describe("usePace", () => {
       expect(result.current.pace).toBe(300);
     });
 
-    expect(localStorageMock.setItem).toHaveBeenCalledWith(
-      "running-pace",
-      "300",
-    );
+    expect(localStorageMock.setItem).toHaveBeenCalledWith("running-pace", "300");
   });
 
   it("rejects pace below minimum (120s)", async () => {
@@ -66,10 +63,7 @@ describe("usePace", () => {
 
     // Should not update
     expect(result.current.pace).toBe(360);
-    expect(localStorageMock.setItem).not.toHaveBeenCalledWith(
-      "running-pace",
-      "60",
-    );
+    expect(localStorageMock.setItem).not.toHaveBeenCalledWith("running-pace", "60");
   });
 
   it("rejects pace above maximum (720s)", async () => {

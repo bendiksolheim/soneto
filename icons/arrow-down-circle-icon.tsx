@@ -13,6 +13,8 @@ export function ArrowDownCircleIcon(props: ArrowDownCircleProps) {
       viewBox="0 0 24 24"
       strokeWidth="1.5"
       stroke="currentColor"
+      role="img"
+      aria-label="Arrow down icon"
     >
       <path
         strokeLinecap="round"

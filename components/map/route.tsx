@@ -1,7 +1,7 @@
+import { type ReactNode, useMemo } from "react";
+import { Layer, type LineLayerSpecification, Source } from "react-map-gl/mapbox";
 import { directionsToGeoJson } from "@/lib/map/directions-to-geojson";
-import { Directions } from "@/lib/mapbox";
-import { ReactNode, useMemo } from "react";
-import { Layer, LineLayerSpecification, Source } from "react-map-gl/mapbox";
+import type { Directions } from "@/lib/mapbox";
 
 type RouteProps = {
   directions: Array<Directions>;

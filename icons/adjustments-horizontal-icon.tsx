@@ -13,6 +13,8 @@ export function AdjustmentsHorizontalIcon(props: AdjustmentsHorizontalProps): Re
       viewBox="0 0 24 24"
       strokeWidth={1.5}
       stroke="currentColor"
+      role="img"
+      aria-label="Adjustments icon"
     >
       <path
         strokeLinecap="round"

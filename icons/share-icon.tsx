@@ -13,6 +13,8 @@ export function ShareIcon(props: ShareIconType) {
       viewBox="0 0 24 24"
       strokeWidth="1.5"
       stroke="currentColor"
+      role="img"
+      aria-label="Share icon"
     >
       <path
         strokeLinecap="round"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const PACE_STORAGE_KEY = "running-pace";
 const DEFAULT_PACE = 360; // 6 minutes per km in seconds
@@ -14,9 +14,10 @@ export function usePace() {
     try {
       const savedPace = localStorage.getItem(PACE_STORAGE_KEY);
       if (savedPace) {
-        const parsedPace = parseInt(savedPace);
+        const parsedPace = parseInt(savedPace, 10);
         // Validate the pace is within reasonable bounds (2-12 minutes = 120-720 seconds)
         if (parsedPace >= 120 && parsedPace <= 720) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setPaceState(parsedPace);
         }
       }

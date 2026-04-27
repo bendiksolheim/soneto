@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
 
 type ModalProps = React.PropsWithChildren<{
   isOpen: boolean;
@@ -26,6 +26,7 @@ export function Modal({ isOpen, setIsOpen, className, children }: ModalProps): R
           <button
             className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
             onClick={() => setIsOpen(false)}
+            type="button"
           >
             ✕
           </button>
@@ -33,7 +34,9 @@ export function Modal({ isOpen, setIsOpen, className, children }: ModalProps): R
         {children}
       </div>
       <form method="dialog" className="modal-backdrop">
-        <button onClick={() => setIsOpen(false)}>close</button>
+        <button onClick={() => setIsOpen(false)} type="button">
+          close
+        </button>
       </form>
     </dialog>
   );

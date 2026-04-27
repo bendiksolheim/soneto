@@ -17,16 +17,14 @@ export function Dropdown(props: DropdownProps): React.ReactElement {
   const placement = placements[props.placement ?? "center"];
   return (
     <div className={cn("dropdown", placement, props.classNames?.dropdown)}>
-      <div
+      <button
         tabIndex={0}
-        role="button"
+        type="button"
         className={cn("btn btn-sm whitespace-nowrap", props.classNames?.button)}
       >
         {props.title}
-      </div>
-      <div tabIndex={0} className={cn("dropdown-content", props.classNames?.content)}>
-        {props.children}
-      </div>
+      </button>
+      <div className={cn("dropdown-content", props.classNames?.content)}>{props.children}</div>
     </div>
   );
 }

@@ -1,13 +1,17 @@
+import { type ChangeEvent, useState } from "react";
+import { usePace } from "@/hooks/use-pace";
+import { AdjustmentsHorizontalIcon, CalculatorIcon } from "@/icons";
 import { LineChartArea } from "@/icons/line-chart-area";
 import { Button, Card, Modal } from "./base";
-import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { ElevationProfile } from "./widgets/elevation-profile";
-import { AdjustmentsHorizontalIcon, CalculatorIcon } from "@/icons";
 import { RouteStats } from "./widgets/route-stats";
-import { usePace } from "@/hooks/use-pace";
 
 type MapFeatureProps = {
-  elevation: Array<{ distance: number; elevation: number; coordinate: [number, number] }>;
+  elevation: Array<{
+    distance: number;
+    elevation: number;
+    coordinate: [number, number];
+  }>;
   distance: number;
 };
 

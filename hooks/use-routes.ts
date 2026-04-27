@@ -1,20 +1,21 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { StoredRoute, RouteWithCalculatedData, calculateRouteDistance } from "@/lib/types/route";
-import { RouteStorageService } from "@/lib/services/route-storage";
-import { SupabaseRouteStorage } from "@/lib/services/supabase-route-storage";
-import { Point } from "@/lib/map/point";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import type { Point } from "@/lib/map/point";
+import RouteStorageService from "@/lib/services/route-storage";
+import SupabaseRouteStorage from "@/lib/services/supabase-route-storage";
+import {
+  calculateRouteDistance,
+  type RouteWithCalculatedData,
+  type StoredRoute,
+} from "@/lib/types/route";
 
 interface UseRoutesReturn {
   routes: RouteWithCalculatedData[];
   isLoading: boolean;
   error: string | null;
-  saveRoute: (routeData: {
-    name: string;
-    points: Array<Point>;
-  }) => Promise<StoredRoute>;
+  saveRoute: (routeData: { name: string; points: Array<Point> }) => Promise<StoredRoute>;
   updateRoute: (
     id: string,
     updates: { name?: string; points?: Array<Point> },
@@ -57,8 +58,7 @@ export function useRoutes(): UseRoutesReturn {
         setRoutes(localRoutes);
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to load routes";
+      const errorMessage = err instanceof Error ? err.message : "Failed to load routes";
       setError(errorMessage);
       console.error("Failed to load routes:", err);
     } finally {
@@ -69,6 +69,7 @@ export function useRoutes(): UseRoutesReturn {
   // Load routes when auth state changes
   useEffect(() => {
     if (!authLoading) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       loadRoutes();
     }
   }, [authLoading, loadRoutes]);
@@ -107,8 +108,7 @@ export function useRoutes(): UseRoutesReturn {
           return newRoute;
         }
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to save route";
+        const errorMessage = err instanceof Error ? err.message : "Failed to save route";
         setError(errorMessage);
         throw new Error(errorMessage);
       }
@@ -133,9 +133,7 @@ export function useRoutes(): UseRoutesReturn {
               createdAt: updatedRoute.created_at,
               distance: updatedRoute.distance,
             };
-            setRoutes((prev) =>
-              prev.map((route) => (route.id === id ? routeWithDistance : route)),
-            );
+            setRoutes((prev) => prev.map((route) => (route.id === id ? routeWithDistance : route)));
             return {
               id: updatedRoute.id,
               name: updatedRoute.name,
@@ -152,15 +150,12 @@ export function useRoutes(): UseRoutesReturn {
               ...updatedRoute,
               distance: calculateRouteDistance(updatedRoute.points),
             };
-            setRoutes((prev) =>
-              prev.map((route) => (route.id === id ? routeWithDistance : route)),
-            );
+            setRoutes((prev) => prev.map((route) => (route.id === id ? routeWithDistance : route)));
           }
           return updatedRoute;
         }
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to update route";
+        const errorMessage = err instanceof Error ? err.message : "Failed to update route";
         setError(errorMessage);
         throw new Error(errorMessage);
       }
@@ -190,8 +185,7 @@ export function useRoutes(): UseRoutesReturn {
           return success;
         }
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to delete route";
+        const errorMessage = err instanceof Error ? err.message : "Failed to delete route";
         setError(errorMessage);
         throw new Error(errorMessage);
       }
@@ -213,8 +207,7 @@ export function useRoutes(): UseRoutesReturn {
       }
       setRoutes([]);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to clear routes";
+      const errorMessage = err instanceof Error ? err.message : "Failed to clear routes";
       setError(errorMessage);
       throw new Error(errorMessage);
     }

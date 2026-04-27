@@ -4,10 +4,7 @@
  * @param coord2 - Second coordinate [lng, lat]
  * @returns Distance in kilometers
  */
-export function calculateDistance(
-  coord1: [number, number],
-  coord2: [number, number]
-): number {
+export function calculateDistance(coord1: [number, number], coord2: [number, number]): number {
   const R = 6371; // Earth's radius in kilometers
   const dLat = ((coord2[1] - coord1[1]) * Math.PI) / 180;
   const dLon = ((coord2[0] - coord1[0]) * Math.PI) / 180;
@@ -29,7 +26,7 @@ export function calculateDistance(
  */
 export function interpolatePointAtDistance(
   coordinates: [number, number][],
-  targetDistanceMeters: number
+  targetDistanceMeters: number,
 ): [number, number] | null {
   if (coordinates.length < 2) return null;
 
@@ -63,10 +60,10 @@ export function interpolatePointAtDistance(
 }
 
 interface ElevationPoint {
-  distance: number;        // Distance in km
-  elevation: number;       // Elevation in meters
+  distance: number; // Distance in km
+  elevation: number; // Elevation in meters
   coordinate: [number, number];
-  interpolated?: boolean;  // True if elevation was interpolated
+  interpolated?: boolean; // True if elevation was interpolated
 }
 
 /**
@@ -81,7 +78,7 @@ export function generateElevationPoints(
   coordinates: [number, number][],
   totalDistanceMeters: number,
   sampleIntervalMeters: number,
-  getElevation: (coord: [number, number]) => number | null | undefined
+  getElevation: (coord: [number, number]) => number | null | undefined,
 ): ElevationPoint[] {
   if (coordinates.length < 2 || totalDistanceMeters <= 0) {
     return [];
@@ -119,7 +116,11 @@ export function generateElevationPoints(
  * Uses linear interpolation between nearest known points
  */
 function interpolateMissingElevations(
-  points: Array<{ distance: number; elevation: number | null; coordinate: [number, number] }>
+  points: Array<{
+    distance: number;
+    elevation: number | null;
+    coordinate: [number, number];
+  }>,
 ): ElevationPoint[] {
   if (points.length === 0) return [];
 
@@ -175,7 +176,7 @@ function interpolateMissingElevations(
 function findNearestKnownElevation(
   points: Array<{ distance: number; elevation: number | null }>,
   startIndex: number,
-  direction: -1 | 1
+  direction: -1 | 1,
 ): { distance: number; elevation: number } | null {
   let i = startIndex + direction;
 

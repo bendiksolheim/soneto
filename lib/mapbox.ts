@@ -1,4 +1,4 @@
-import { type Point } from "./map/point";
+import type { Point } from "./map/point";
 
 type LatLon = [number, number];
 
@@ -29,10 +29,7 @@ export type Directions = {
   }>;
 };
 
-export function directions(
-  coordinates: Array<Point>,
-  token: string,
-): Promise<Directions> {
+export function directions(coordinates: Array<Point>, token: string): Promise<Directions> {
   const coordinatesString = coordinates
     .map((coord) => `${coord.longitude},${coord.latitude}`)
     .join(";");

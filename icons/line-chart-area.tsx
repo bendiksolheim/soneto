@@ -11,6 +11,8 @@ export function LineChartArea({ size = 24 }: Props): React.ReactElement {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       stroke="currentColor"
+      role="img"
+      aria-label="Line chart icon"
     >
       <path d="M6 6V42H42" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M14 34L22 18L32 27L42 6V34H14Z" fill="none" strokeWidth="4" strokeLinejoin="round" />

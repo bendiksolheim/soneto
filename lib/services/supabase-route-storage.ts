@@ -1,7 +1,7 @@
+import type { Point } from "@/lib/map/point";
 import { createClient } from "@/lib/supabase/client";
-import { Database } from "@/lib/types/supabase";
-import { Point } from "@/lib/map/point";
 import { calculateRouteDistance } from "@/lib/types/route";
+import type { Database } from "@/lib/types/supabase";
 
 type RouteInsert = Database["public"]["Tables"]["routes"]["Insert"];
 type RouteUpdate = Database["public"]["Tables"]["routes"]["Update"];
@@ -16,11 +16,11 @@ interface SupabaseRoute {
   updated_at: string;
 }
 
-export class SupabaseRouteStorage {
+const storageService = {
   /**
    * Get all routes for the authenticated user
    */
-  static async getRoutes(userId: string): Promise<SupabaseRoute[]> {
+  async getRoutes(userId: string): Promise<SupabaseRoute[]> {
     const supabase = createClient();
 
     const { data, error } = await supabase
@@ -40,15 +40,12 @@ export class SupabaseRouteStorage {
       points: route.points as unknown as Point[],
       distance: Number(route.distance),
     }));
-  }
+  },
 
   /**
    * Get a single route by ID
    */
-  static async getRoute(
-    id: string,
-    userId: string,
-  ): Promise<SupabaseRoute | null> {
+  async getRoute(id: string, userId: string): Promise<SupabaseRoute | null> {
     const supabase = createClient();
 
     const { data, error } = await supabase
@@ -69,12 +66,12 @@ export class SupabaseRouteStorage {
       points: data.points as unknown as Point[],
       distance: Number(data.distance),
     };
-  }
+  },
 
   /**
    * Save a new route
    */
-  static async saveRoute(
+  async saveRoute(
     routeData: { name: string; points: Point[] },
     userId: string,
   ): Promise<SupabaseRoute> {
@@ -89,11 +86,7 @@ export class SupabaseRouteStorage {
       distance,
     };
 
-    const { data, error } = await supabase
-      .from("routes")
-      .insert(insertData)
-      .select()
-      .single();
+    const { data, error } = await supabase.from("routes").insert(insertData).select().single();
 
     if (error) {
       console.error("Error saving route:", error);
@@ -105,12 +98,12 @@ export class SupabaseRouteStorage {
       points: data.points as unknown as Point[],
       distance: Number(data.distance),
     };
-  }
+  },
 
   /**
    * Update an existing route
    */
-  static async updateRoute(
+  async updateRoute(
     id: string,
     updates: { name?: string; points?: Point[] },
     userId: string,
@@ -145,19 +138,15 @@ export class SupabaseRouteStorage {
       points: data.points as unknown as Point[],
       distance: Number(data.distance),
     };
-  }
+  },
 
   /**
    * Delete a route
    */
-  static async deleteRoute(id: string, userId: string): Promise<boolean> {
+  async deleteRoute(id: string, userId: string): Promise<boolean> {
     const supabase = createClient();
 
-    const { error } = await supabase
-      .from("routes")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", userId);
+    const { error } = await supabase.from("routes").delete().eq("id", id).eq("user_id", userId);
 
     if (error) {
       console.error("Error deleting route:", error);
@@ -165,22 +154,21 @@ export class SupabaseRouteStorage {
     }
 
     return true;
-  }
+  },
 
   /**
    * Clear all routes for a user
    */
-  static async clearAllRoutes(userId: string): Promise<void> {
+  async clearAllRoutes(userId: string): Promise<void> {
     const supabase = createClient();
 
-    const { error } = await supabase
-      .from("routes")
-      .delete()
-      .eq("user_id", userId);
+    const { error } = await supabase.from("routes").delete().eq("user_id", userId);
 
     if (error) {
       console.error("Error clearing routes:", error);
       throw new Error("Failed to clear routes from cloud storage");
     }
-  }
-}
+  },
+};
+
+export default storageService;

@@ -1,11 +1,11 @@
 "use client";
-import { useRoutes } from "@/hooks/use-routes";
-import { cn } from "@/lib/utils";
-import { Point } from "@/lib/map/point";
-import { RouteWithCalculatedData } from "@/lib/types/route";
-import { Button, Card, Dropdown } from "../base";
-import { ArrowRightCircleIcon, FolderIcon, FolderPlusIcon, XCircleIcon } from "@/icons";
 import { useState } from "react";
+import { useRoutes } from "@/hooks/use-routes";
+import { ArrowRightCircleIcon, FolderIcon, FolderPlusIcon, XCircleIcon } from "@/icons";
+import type { Point } from "@/lib/map/point";
+import type { RouteWithCalculatedData } from "@/lib/types/route";
+import { cn } from "@/lib/utils";
+import { Button, Card, Dropdown } from "../base";
 
 type ChooseRouteProps = {
   className?: string;
@@ -67,7 +67,7 @@ function ListRoutesDropdown({
                 <Button
                   className="text-nowrap flex join-item"
                   onClick={() => {
-                    // @ts-ignore
+                    // @ts-expect-error
                     document.activeElement.blur();
                     onRouteLoad(route.points);
                   }}
@@ -95,7 +95,7 @@ type SaveRouteDropdownProps = { onSave: (name: string) => Promise<unknown> };
 
 function SaveRouteDropdown({ onSave }: SaveRouteDropdownProps): React.ReactElement {
   const [name, setName] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [_saving, setSaving] = useState(false);
   return (
     <Dropdown
       title={

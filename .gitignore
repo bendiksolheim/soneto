@@ -28,5 +28,3 @@ dist-ssr
 tsconfig.tsbuildinfo
 .claude/settings.local.json
 coverage
-playwright-report
-test-results

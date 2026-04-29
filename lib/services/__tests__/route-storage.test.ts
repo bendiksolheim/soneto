@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { setupLocalStorageMock } from "../../test/mocks/localStorage";
-import type { Point } from "../map/point";
-import { RouteStorageService } from "./route-storage";
+import { setupLocalStorageMock } from "../../../test/mocks/localStorage";
+import type { Point } from "../../map/point";
+import RouteStorageService from "../route-storage";
 
 describe("RouteStorageService", () => {
   let localStorageMock: ReturnType<typeof setupLocalStorageMock>;

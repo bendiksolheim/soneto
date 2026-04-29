@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { render, waitFor } from "../../test/utils/test-utils";
-import { ElevationProfile } from "./elevation-profile";
+import { render, waitFor } from "../../../test/utils/test-utils";
+import { ElevationProfile } from "../elevation-profile";
 
 describe("ElevationProfile", () => {
   const mockElevationData = [

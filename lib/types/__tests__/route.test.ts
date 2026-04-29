@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { Point } from "../map/point";
-import { calculateRouteDistance } from "./route";
+import type { Point } from "../../map/point";
+import { calculateRouteDistance } from "../route";
 
 describe("calculateRouteDistance", () => {
   it("returns 0 for empty array", () => {

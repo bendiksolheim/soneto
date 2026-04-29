@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateSlope, findSteepSegments, getSlopeColor, getSlopeOpacity } from "./slope";
+import { calculateSlope, findSteepSegments, getSlopeColor, getSlopeOpacity } from "../slope";
 
 describe("Slope Calculations", () => {
   describe("calculateSlope", () => {

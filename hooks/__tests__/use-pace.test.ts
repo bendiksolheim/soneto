@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { setupLocalStorageMock } from "../test/mocks/localStorage";
-import { usePace } from "./use-pace";
+import { setupLocalStorageMock } from "../../test/mocks/localStorage";
+import { usePace } from "../use-pace";
 
 describe("usePace", () => {
   let localStorageMock: ReturnType<typeof setupLocalStorageMock>;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Directions } from "@/lib/mapbox";
-import { mergeDirections } from "./mapUtils";
+import { mergeDirections } from "../mapUtils";
 
 function makeDirections(coords: Array<[number, number]>): Directions {
   return {

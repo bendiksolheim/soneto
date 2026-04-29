@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider } from "@/hooks/use-auth";
 import type { Point } from "@/lib/map/point";
 import type { StoredRoute } from "@/lib/types/route";
-import { setupLocalStorageMock } from "../test/mocks/localStorage";
-import { useRoutes } from "./use-routes";
+import { setupLocalStorageMock } from "../../test/mocks/localStorage";
+import { useRoutes } from "../use-routes";
 
 describe("useRoutes", () => {
   let localStorageMock: ReturnType<typeof setupLocalStorageMock>;

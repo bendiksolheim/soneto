@@ -3,7 +3,7 @@ import {
   calculateDistance,
   generateElevationPoints,
   interpolatePointAtDistance,
-} from "./elevation-data";
+} from "../elevation-data";
 
 /**
  * Bug reproduction test: Elevation graph skips the start of routes

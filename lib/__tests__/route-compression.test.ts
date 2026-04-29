@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { Point } from "./map/point";
-import { compressRoute, decompressRoute, isValidPolyline } from "./route-compression";
+import type { Point } from "../map/point";
+import { compressRoute, decompressRoute, isValidPolyline } from "../route-compression";
 
 describe("Route Compression", () => {
   const testPoints: Point[] = [

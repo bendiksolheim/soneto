@@ -11,6 +11,7 @@ vi.mock("@/lib/supabase/client", () => ({
         data: { subscription: { unsubscribe: vi.fn() } },
       })),
       signOut: vi.fn().mockResolvedValue({ error: null }),
+      signInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
     },
     from: vi.fn(() => ({
       select: vi.fn().mockReturnThis(),

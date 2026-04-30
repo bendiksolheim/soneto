@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider } from "@/hooks/use-auth";
 import type { Point } from "@/lib/map/point";
+import RouteStorageService from "@/lib/services/route-storage";
 import type { StoredRoute } from "@/lib/types/route";
 import { setupLocalStorageMock } from "../../test/mocks/localStorage";
 import { useRoutes } from "../use-routes";
@@ -10,6 +11,7 @@ describe("useRoutes", () => {
   let localStorageMock: ReturnType<typeof setupLocalStorageMock>;
 
   beforeEach(() => {
+    vi.restoreAllMocks();
     localStorageMock = setupLocalStorageMock();
   });
 
@@ -169,6 +171,231 @@ describe("useRoutes", () => {
     // RouteStorageService catches errors and returns empty array
     expect(result.current.error).toBeNull();
     expect(result.current.routes).toEqual([]);
+  });
+
+  it("clears all routes", async () => {
+    const { result } = renderHook(() => useRoutes(), {
+      wrapper: ({ children }) => <AuthProvider user={null}>{children}</AuthProvider>,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.saveRoute({
+        name: "Route to clear",
+        points: [{ latitude: 60, longitude: 10 }] as Point[],
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.routes).toHaveLength(1);
+    });
+
+    await act(async () => {
+      await result.current.clearAllRoutes();
+    });
+
+    expect(result.current.routes).toHaveLength(0);
+  });
+
+  it("handles clearAllRoutes errors", async () => {
+    const { result } = renderHook(() => useRoutes(), {
+      wrapper: ({ children }) => <AuthProvider user={null}>{children}</AuthProvider>,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    vi.spyOn(RouteStorageService, "clearAllRoutes").mockImplementation(() => {
+      throw new Error("Storage error");
+    });
+
+    let thrownError: Error | null = null;
+    await act(async () => {
+      try {
+        await result.current.clearAllRoutes();
+      } catch (e) {
+        thrownError = e as Error;
+      }
+    });
+
+    expect(thrownError?.message).toBe("Storage error");
+    expect(result.current.error).toBe("Storage error");
+  });
+
+  it("returns a route by ID", async () => {
+    const { result } = renderHook(() => useRoutes(), {
+      wrapper: ({ children }) => <AuthProvider user={null}>{children}</AuthProvider>,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    let saved: StoredRoute;
+    await act(async () => {
+      saved = await result.current.saveRoute({
+        name: "Findable",
+        points: [{ latitude: 60, longitude: 10 }] as Point[],
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.routes).toHaveLength(1);
+    });
+
+    const found = result.current.getRoute(saved.id);
+    expect(found).not.toBeNull();
+    expect(found?.name).toBe("Findable");
+  });
+
+  it("returns null for unknown route ID", async () => {
+    const { result } = renderHook(() => useRoutes(), {
+      wrapper: ({ children }) => <AuthProvider user={null}>{children}</AuthProvider>,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.getRoute("nonexistent")).toBeNull();
+  });
+
+  it("refreshRoutes reloads routes from storage", async () => {
+    localStorageMock.getItem.mockReturnValue(null);
+
+    const { result } = renderHook(() => useRoutes(), {
+      wrapper: ({ children }) => <AuthProvider user={null}>{children}</AuthProvider>,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.routes).toHaveLength(0);
+
+    const mockData = {
+      routes: [
+        {
+          id: "refreshed-id",
+          name: "Refreshed Route",
+          points: [{ latitude: 60, longitude: 10 }],
+          createdAt: "2025-01-01T00:00:00.000Z",
+        },
+      ],
+      lastModified: "2025-01-01T00:00:00.000Z",
+    };
+    localStorageMock.getItem.mockReturnValue(JSON.stringify(mockData));
+
+    await act(async () => {
+      result.current.refreshRoutes();
+    });
+
+    await waitFor(() => {
+      expect(result.current.routes).toHaveLength(1);
+    });
+
+    expect(result.current.routes[0].name).toBe("Refreshed Route");
+  });
+
+  it("handles saveRoute errors", async () => {
+    const { result } = renderHook(() => useRoutes(), {
+      wrapper: ({ children }) => <AuthProvider user={null}>{children}</AuthProvider>,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    vi.spyOn(RouteStorageService, "saveRoute").mockImplementation(() => {
+      throw new Error("Storage full");
+    });
+
+    let thrownError: Error | null = null;
+    await act(async () => {
+      try {
+        await result.current.saveRoute({
+          name: "Failing Route",
+          points: [{ latitude: 60, longitude: 10 }] as Point[],
+        });
+      } catch (e) {
+        thrownError = e as Error;
+      }
+    });
+
+    expect(thrownError?.message).toBe("Storage full");
+    expect(result.current.error).toBe("Storage full");
+  });
+
+  it("handles updateRoute errors", async () => {
+    const { result } = renderHook(() => useRoutes(), {
+      wrapper: ({ children }) => <AuthProvider user={null}>{children}</AuthProvider>,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    let saved: StoredRoute;
+    await act(async () => {
+      saved = await result.current.saveRoute({
+        name: "Route",
+        points: [{ latitude: 60, longitude: 10 }] as Point[],
+      });
+    });
+
+    vi.spyOn(RouteStorageService, "updateRoute").mockImplementation(() => {
+      throw new Error("Update failed");
+    });
+
+    let thrownError: Error | null = null;
+    await act(async () => {
+      try {
+        await result.current.updateRoute(saved.id, { name: "New Name" });
+      } catch (e) {
+        thrownError = e as Error;
+      }
+    });
+
+    expect(thrownError?.message).toBe("Update failed");
+    expect(result.current.error).toBe("Update failed");
+  });
+
+  it("handles deleteRoute errors", async () => {
+    const { result } = renderHook(() => useRoutes(), {
+      wrapper: ({ children }) => <AuthProvider user={null}>{children}</AuthProvider>,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    let saved: StoredRoute;
+    await act(async () => {
+      saved = await result.current.saveRoute({
+        name: "Route",
+        points: [{ latitude: 60, longitude: 10 }] as Point[],
+      });
+    });
+
+    vi.spyOn(RouteStorageService, "deleteRoute").mockImplementation(() => {
+      throw new Error("Delete failed");
+    });
+
+    let thrownError: Error | null = null;
+    await act(async () => {
+      try {
+        await result.current.deleteRoute(saved.id);
+      } catch (e) {
+        thrownError = e as Error;
+      }
+    });
+
+    expect(thrownError?.message).toBe("Delete failed");
+    expect(result.current.error).toBe("Delete failed");
   });
 });
 
@@ -526,5 +753,137 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
 
     expect(result.current.error).toBeTruthy();
     expect(result.current.routes).toEqual([]);
+  });
+
+  it("clears all routes from Supabase", async () => {
+    const existingRoute = {
+      id: "cloud-to-clear",
+      user_id: mockUser.id,
+      name: "To Clear",
+      points: [{ latitude: 60, longitude: 10 }],
+      distance: 0,
+      created_at: "2025-01-01T00:00:00.000Z",
+      updated_at: "2025-01-01T00:00:00.000Z",
+    };
+
+    const { createClient } = await import("@/lib/supabase/client");
+
+    // biome-ignore lint/suspicious/noExplicitAny: Dont care
+    let mockFrom: any = vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [existingRoute], error: null }),
+    }));
+
+    vi.mocked(createClient).mockReturnValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+        onAuthStateChange: vi.fn(() => ({
+          data: { subscription: { unsubscribe: vi.fn() } },
+        })),
+        signOut: vi.fn().mockResolvedValue({ error: null }),
+      },
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
+      from: mockFrom as any,
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
+    } as any);
+
+    const { result } = renderHook(() => useRoutes(), {
+      wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.routes).toHaveLength(1);
+
+    mockFrom = vi.fn(() => ({
+      delete: vi.fn(() => ({
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      })),
+    }));
+
+    vi.mocked(createClient).mockReturnValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+        onAuthStateChange: vi.fn(() => ({
+          data: { subscription: { unsubscribe: vi.fn() } },
+        })),
+        signOut: vi.fn().mockResolvedValue({ error: null }),
+      },
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
+      from: mockFrom as any,
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
+    } as any);
+
+    await act(async () => {
+      await result.current.clearAllRoutes();
+    });
+
+    expect(result.current.routes).toHaveLength(0);
+  });
+
+  it("updateRoute returns null when route not found in Supabase", async () => {
+    const { createClient } = await import("@/lib/supabase/client");
+
+    // biome-ignore lint/suspicious/noExplicitAny: Dont care
+    let mockFrom: any = vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+    }));
+
+    vi.mocked(createClient).mockReturnValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+        onAuthStateChange: vi.fn(() => ({
+          data: { subscription: { unsubscribe: vi.fn() } },
+        })),
+        signOut: vi.fn().mockResolvedValue({ error: null }),
+      },
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
+      from: mockFrom as any,
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
+    } as any);
+
+    const { result } = renderHook(() => useRoutes(), {
+      wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    mockFrom = vi.fn(() => ({
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: null,
+        error: { code: "PGRST116", message: "Not found" },
+      }),
+    }));
+
+    vi.mocked(createClient).mockReturnValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+        onAuthStateChange: vi.fn(() => ({
+          data: { subscription: { unsubscribe: vi.fn() } },
+        })),
+        signOut: vi.fn().mockResolvedValue({ error: null }),
+      },
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
+      from: mockFrom as any,
+      // biome-ignore lint/suspicious/noExplicitAny: Dont care
+    } as any);
+
+    let updateResult: StoredRoute | null | undefined;
+    await act(async () => {
+      updateResult = await result.current.updateRoute("nonexistent-id", { name: "New Name" });
+    });
+
+    expect(updateResult).toBeNull();
+    expect(result.current.routes).toHaveLength(0);
   });
 });

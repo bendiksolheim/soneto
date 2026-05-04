@@ -1,3 +1,11 @@
+export function calculateElevationGain(elevationData: Array<{ elevation: number }>): number {
+  return elevationData.reduce((total, point, index) => {
+    if (index === 0) return total;
+    const change = point.elevation - elevationData[index - 1].elevation;
+    return change > 0 ? total + change : total;
+  }, 0);
+}
+
 /**
  * Calculate slope percentage between two elevation data points
  * @param point1 - First point with distance (km) and elevation (m)

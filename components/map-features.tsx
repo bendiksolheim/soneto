@@ -23,7 +23,7 @@ export function MapFeatures(props: MapFeatureProps): React.ReactElement {
       <div className="flex flex-col gap-2.5">
         {showStats && <RouteStatsCard distance={props.distance} />}
         {showElevation && (
-          <Card title="Høydeprofil">
+          <Card title="Høydedata">
             <ElevationProfile elevationData={props.elevation} totalDistance={props.distance} />
           </Card>
         )}

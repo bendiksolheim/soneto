@@ -1,5 +1,44 @@
 import { describe, expect, it } from "vitest";
-import { calculateSlope, findSteepSegments, getSlopeColor, getSlopeOpacity } from "../slope";
+import {
+  calculateElevationGain,
+  calculateSlope,
+  findSteepSegments,
+  getSlopeColor,
+  getSlopeOpacity,
+} from "../slope";
+
+describe("calculateElevationGain", () => {
+  it("returns 0 for empty array", () => {
+    expect(calculateElevationGain([])).toBe(0);
+  });
+
+  it("returns 0 for flat terrain", () => {
+    expect(calculateElevationGain([{ elevation: 100 }, { elevation: 100 }, { elevation: 100 }])).toBe(0);
+  });
+
+  it("returns gain for a single uphill section", () => {
+    expect(calculateElevationGain([{ elevation: 0 }, { elevation: 100 }])).toBe(100);
+  });
+
+  it("only counts uphill portions when going up then down", () => {
+    expect(
+      calculateElevationGain([{ elevation: 0 }, { elevation: 100 }, { elevation: 0 }]),
+    ).toBe(100);
+  });
+
+  it("sums all uphill gains across multiple up/down segments", () => {
+    // +100, -100, +100, -100 → gain is 200m
+    expect(
+      calculateElevationGain([
+        { elevation: 0 },
+        { elevation: 100 },
+        { elevation: 0 },
+        { elevation: 100 },
+        { elevation: 0 },
+      ]),
+    ).toBe(200);
+  });
+});
 
 describe("Slope Calculations", () => {
   describe("calculateSlope", () => {

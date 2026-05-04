@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState } from "react";
 import { Area, AreaChart, ReferenceArea, ReferenceDot, Tooltip, XAxis, YAxis } from "recharts";
-import { findSteepSegments, getSlopeColor, getSlopeOpacity } from "@/lib/elevation/slope";
+import { calculateElevationGain, findSteepSegments, getSlopeColor, getSlopeOpacity } from "@/lib/elevation/slope";
 
 interface ElevationProfileProps {
   elevationData: Array<{
@@ -18,6 +18,8 @@ export function ElevationProfile(props: ElevationProfileProps): React.ReactEleme
   const { elevationData } = props;
 
   const [hoveredIndex, onHover] = useState<number | null>(null);
+
+  const elevationGain = Math.round(calculateElevationGain(elevationData));
 
   // Format data for the chart
   const chartData = elevationData.map((point) => ({
@@ -42,6 +44,8 @@ export function ElevationProfile(props: ElevationProfileProps): React.ReactEleme
   }
 
   return (
+    <div className="flex flex-col gap-1">
+      <p className="text-xs text-gray-500 px-1">Stigning: {elevationGain}m</p>
     <AreaChart
       margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
       data={chartData}
@@ -132,5 +136,6 @@ export function ElevationProfile(props: ElevationProfileProps): React.ReactEleme
         />
       )}
     </AreaChart>
+    </div>
   );
 }

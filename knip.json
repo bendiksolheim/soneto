@@ -3,7 +3,6 @@
   "tags": ["-lintignore"],
   "eslint": true,
   "next": true,
-  "ignore": ["lib/types/supabase.ts", "test/**", "lib/supabase/**"],
-  "ignoreDependencies": ["msw"],
-  "ignoreBinaries": ["supabase"]
+  "ignore": ["test/**"],
+  "ignoreDependencies": ["msw"]
 }

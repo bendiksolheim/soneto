@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import type { Point } from "@/lib/map/point";
 import RouteStorageService from "@/lib/services/route-storage";
-import SupabaseRouteStorage from "@/lib/services/supabase-route-storage";
 import {
   calculateRouteDistance,
   type RouteWithCalculatedData,
@@ -24,7 +23,7 @@ interface UseRoutesReturn {
   clearAllRoutes: () => Promise<void>;
   getRoute: (id: string) => RouteWithCalculatedData | null;
   refreshRoutes: () => void;
-  isCloudStorage: boolean; // NEW: Indicates storage type
+  isCloudStorage: boolean;
 }
 
 export function useRoutes(): UseRoutesReturn {
@@ -35,25 +34,17 @@ export function useRoutes(): UseRoutesReturn {
 
   const isCloudStorage = !!user;
 
-  // Load routes from appropriate storage
   const loadRoutes = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
       if (user) {
-        // Load from Supabase
-        const cloudRoutes = await SupabaseRouteStorage.getRoutes(user.id);
-        const routesWithDistance = cloudRoutes.map((route) => ({
-          id: route.id,
-          name: route.name,
-          points: route.points,
-          createdAt: route.created_at,
-          distance: route.distance,
-        }));
-        setRoutes(routesWithDistance);
+        const response = await fetch("/api/routes");
+        if (!response.ok) throw new Error("Failed to load routes from cloud storage");
+        const cloudRoutes: RouteWithCalculatedData[] = await response.json();
+        setRoutes(cloudRoutes);
       } else {
-        // Load from localStorage
         const localRoutes = RouteStorageService.getRoutesWithDistance();
         setRoutes(localRoutes);
       }
@@ -66,7 +57,6 @@ export function useRoutes(): UseRoutesReturn {
     }
   }, [user]);
 
-  // Load routes when auth state changes
   useEffect(() => {
     if (!authLoading) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -74,31 +64,22 @@ export function useRoutes(): UseRoutesReturn {
     }
   }, [authLoading, loadRoutes]);
 
-  // Save a new route
   const saveRoute = useCallback(
     async (routeData: { name: string; points: Array<Point> }) => {
       try {
         setError(null);
 
         if (user) {
-          // Save to Supabase
-          const newRoute = await SupabaseRouteStorage.saveRoute(routeData, user.id);
-          const routeWithDistance: RouteWithCalculatedData = {
-            id: newRoute.id,
-            name: newRoute.name,
-            points: newRoute.points,
-            createdAt: newRoute.created_at,
-            distance: newRoute.distance,
-          };
-          setRoutes((prev) => [routeWithDistance, ...prev]);
-          return {
-            id: newRoute.id,
-            name: newRoute.name,
-            points: newRoute.points,
-            createdAt: newRoute.created_at,
-          };
+          const response = await fetch("/api/routes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(routeData),
+          });
+          if (!response.ok) throw new Error("Failed to save route to cloud storage");
+          const newRoute: RouteWithCalculatedData = await response.json();
+          setRoutes((prev) => [newRoute, ...prev]);
+          return { id: newRoute.id, name: newRoute.name, points: newRoute.points, createdAt: newRoute.createdAt };
         } else {
-          // Save to localStorage
           const newRoute = RouteStorageService.saveRoute(routeData);
           const routeWithDistance: RouteWithCalculatedData = {
             ...newRoute,
@@ -116,34 +97,23 @@ export function useRoutes(): UseRoutesReturn {
     [user],
   );
 
-  // Update an existing route
   const updateRoute = useCallback(
     async (id: string, updates: { name?: string; points?: Array<Point> }) => {
       try {
         setError(null);
 
         if (user) {
-          // Update in Supabase
-          const updatedRoute = await SupabaseRouteStorage.updateRoute(id, updates, user.id);
-          if (updatedRoute) {
-            const routeWithDistance: RouteWithCalculatedData = {
-              id: updatedRoute.id,
-              name: updatedRoute.name,
-              points: updatedRoute.points,
-              createdAt: updatedRoute.created_at,
-              distance: updatedRoute.distance,
-            };
-            setRoutes((prev) => prev.map((route) => (route.id === id ? routeWithDistance : route)));
-            return {
-              id: updatedRoute.id,
-              name: updatedRoute.name,
-              points: updatedRoute.points,
-              createdAt: updatedRoute.created_at,
-            };
-          }
-          return null;
+          const response = await fetch(`/api/routes/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updates),
+          });
+          if (response.status === 404) return null;
+          if (!response.ok) throw new Error("Failed to update route in cloud storage");
+          const updatedRoute: RouteWithCalculatedData = await response.json();
+          setRoutes((prev) => prev.map((route) => (route.id === id ? updatedRoute : route)));
+          return { id: updatedRoute.id, name: updatedRoute.name, points: updatedRoute.points, createdAt: updatedRoute.createdAt };
         } else {
-          // Update in localStorage
           const updatedRoute = RouteStorageService.updateRoute(id, updates);
           if (updatedRoute) {
             const routeWithDistance: RouteWithCalculatedData = {
@@ -163,21 +133,17 @@ export function useRoutes(): UseRoutesReturn {
     [user],
   );
 
-  // Delete a route
   const deleteRoute = useCallback(
     async (id: string) => {
       try {
         setError(null);
 
         if (user) {
-          // Delete from Supabase
-          const success = await SupabaseRouteStorage.deleteRoute(id, user.id);
-          if (success) {
-            setRoutes((prev) => prev.filter((route) => route.id !== id));
-          }
-          return success;
+          const response = await fetch(`/api/routes/${id}`, { method: "DELETE" });
+          if (!response.ok && response.status !== 404) throw new Error("Failed to delete route from cloud storage");
+          setRoutes((prev) => prev.filter((route) => route.id !== id));
+          return true;
         } else {
-          // Delete from localStorage
           const success = RouteStorageService.deleteRoute(id);
           if (success) {
             setRoutes((prev) => prev.filter((route) => route.id !== id));
@@ -193,16 +159,14 @@ export function useRoutes(): UseRoutesReturn {
     [user],
   );
 
-  // Clear all routes
   const clearAllRoutes = useCallback(async () => {
     try {
       setError(null);
 
       if (user) {
-        // Clear from Supabase
-        await SupabaseRouteStorage.clearAllRoutes(user.id);
+        const response = await fetch("/api/routes", { method: "DELETE" });
+        if (!response.ok) throw new Error("Failed to clear routes from cloud storage");
       } else {
-        // Clear from localStorage
         RouteStorageService.clearAllRoutes();
       }
       setRoutes([]);
@@ -213,7 +177,6 @@ export function useRoutes(): UseRoutesReturn {
     }
   }, [user]);
 
-  // Get a single route by ID
   const getRoute = useCallback(
     (id: string): RouteWithCalculatedData | null => {
       return routes.find((route) => route.id === id) || null;
@@ -221,7 +184,6 @@ export function useRoutes(): UseRoutesReturn {
     [routes],
   );
 
-  // Refresh routes from storage
   const refreshRoutes = useCallback(() => {
     loadRoutes();
   }, [loadRoutes]);

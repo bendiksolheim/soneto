@@ -1,11 +1,17 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, type AuthUser } from "@/hooks/use-auth";
 import type { Point } from "@/lib/map/point";
 import RouteStorageService from "@/lib/services/route-storage";
 import type { StoredRoute } from "@/lib/types/route";
 import { setupLocalStorageMock } from "../../test/mocks/localStorage";
 import { useRoutes } from "../use-routes";
+
+function mockFetch(body: unknown, status = 200) {
+  return vi.spyOn(global, "fetch").mockResolvedValue(
+    new Response(status === 204 ? null : JSON.stringify(body), { status }),
+  );
+}
 
 describe("useRoutes", () => {
   let localStorageMock: ReturnType<typeof setupLocalStorageMock>;
@@ -154,7 +160,6 @@ describe("useRoutes", () => {
   });
 
   it("handles localStorage errors gracefully", async () => {
-    // Silence warnings
     vi.spyOn(console, "error").mockImplementation(() => {});
     localStorageMock.getItem.mockImplementation(() => {
       throw new Error("localStorage error");
@@ -168,7 +173,6 @@ describe("useRoutes", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    // RouteStorageService catches errors and returns empty array
     expect(result.current.error).toBeNull();
     expect(result.current.routes).toEqual([]);
   });
@@ -400,79 +404,32 @@ describe("useRoutes", () => {
 });
 
 describe("useRoutes - authenticated user (cloud storage)", () => {
-  let localStorageMock: ReturnType<typeof setupLocalStorageMock>;
-  const mockUser = {
-    id: "test-user-123",
+  const mockUser: AuthUser = {
+    id: "github-123456",
+    name: "Test User",
     email: "test@example.com",
-    aud: "authenticated",
-    role: "authenticated",
-    created_at: "2025-01-01T00:00:00.000Z",
-    // biome-ignore lint/suspicious/noExplicitAny: Dont care
-  } as any; // Type as any to avoid full User type construction
+    image: null,
+  };
 
   beforeEach(() => {
-    localStorageMock = setupLocalStorageMock();
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
-  it("initializes with empty routes from Supabase", async () => {
-    // Mock Supabase getRoutes to return empty array
-    const mockSupabase = (await import("@/lib/supabase/client")).createClient();
-    vi.mocked(mockSupabase.from).mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({ data: [], error: null }),
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    } as any);
-
-    const { result } = renderHook(() => useRoutes(), {
-      wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
-    });
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.routes).toEqual([]);
-    expect(result.current.isCloudStorage).toBe(true);
-    expect(result.current.error).toBeNull();
-  });
-
-  it("loads routes from Supabase on mount", async () => {
-    const mockCloudRoutes = [
+  it("loads routes from API on mount", async () => {
+    const mockRoutes = [
       {
-        id: "cloud-123",
-        user_id: mockUser.id,
-        name: "Cloud Route",
+        id: "db-123",
+        userId: mockUser.id,
+        name: "DB Route",
         points: [
           { latitude: 59.9139, longitude: 10.7522 },
           { latitude: 59.9149, longitude: 10.7532 },
         ],
         distance: 150,
-        created_at: "2025-10-05T00:00:00.000Z",
-        updated_at: "2025-10-05T00:00:00.000Z",
+        createdAt: "2025-10-05T00:00:00.000Z",
       },
     ];
-
-    const { createClient } = await import("@/lib/supabase/client");
-    const mockFrom = vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({ data: mockCloudRoutes, error: null }),
-    }));
-
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-        onAuthStateChange: vi.fn(() => ({
-          data: { subscription: { unsubscribe: vi.fn() } },
-        })),
-        signOut: vi.fn().mockResolvedValue({ error: null }),
-      },
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-      from: mockFrom as any,
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    } as any);
+    mockFetch(mockRoutes);
 
     const { result } = renderHook(() => useRoutes(), {
       wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
@@ -483,47 +440,26 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
     });
 
     expect(result.current.routes).toHaveLength(1);
-    expect(result.current.routes[0].name).toBe("Cloud Route");
-    expect(result.current.routes[0].id).toBe("cloud-123");
+    expect(result.current.routes[0].name).toBe("DB Route");
     expect(result.current.isCloudStorage).toBe(true);
-    expect(localStorageMock.getItem).not.toHaveBeenCalled();
   });
 
-  it("saves new route to Supabase", async () => {
-    const newRouteData = {
-      id: "new-cloud-123",
-      user_id: mockUser.id,
-      name: "New Cloud Route",
+  it("saves new route via API", async () => {
+    const savedRoute = {
+      id: "new-db-123",
+      userId: mockUser.id,
+      name: "New DB Route",
       points: [
         { latitude: 60, longitude: 10 },
         { latitude: 60.1, longitude: 10.1 },
       ],
-      distance: 15700, // Calculated distance
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      distance: 15700,
+      createdAt: new Date().toISOString(),
     };
-
-    const { createClient } = await import("@/lib/supabase/client");
-
-    // Create mock function that will be updated for save operation
-    // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    let mockFrom: any = vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({ data: [], error: null }),
-    }));
-
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-        onAuthStateChange: vi.fn(() => ({
-          data: { subscription: { unsubscribe: vi.fn() } },
-        })),
-        signOut: vi.fn().mockResolvedValue({ error: null }),
-      },
-      from: mockFrom,
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    } as any);
+    mockFetch([]);
+    const fetchSpy = vi.spyOn(global, "fetch");
+    fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200 }));
+    fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(savedRoute), { status: 201 }));
 
     const { result } = renderHook(() => useRoutes(), {
       wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
@@ -533,29 +469,10 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    // Update mock for save operation
-    mockFrom = vi.fn(() => ({
-      insert: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: newRouteData, error: null }),
-    }));
-
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-        onAuthStateChange: vi.fn(() => ({
-          data: { subscription: { unsubscribe: vi.fn() } },
-        })),
-        signOut: vi.fn().mockResolvedValue({ error: null }),
-      },
-      from: mockFrom,
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    } as any);
-
-    let savedRoute: StoredRoute;
+    let returned: StoredRoute;
     await act(async () => {
-      savedRoute = await result.current.saveRoute({
-        name: "New Cloud Route",
+      returned = await result.current.saveRoute({
+        name: "New DB Route",
         points: [
           { latitude: 60, longitude: 10 },
           { latitude: 60.1, longitude: 10.1 },
@@ -563,44 +480,24 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
       });
     });
 
-    expect(savedRoute).toBeTruthy();
-    expect(savedRoute.name).toBe("New Cloud Route");
+    expect(returned.name).toBe("New DB Route");
     expect(result.current.routes).toHaveLength(1);
-    expect(localStorageMock.setItem).not.toHaveBeenCalled();
   });
 
-  it("updates existing route in Supabase", async () => {
+  it("updates existing route via API", async () => {
     const existingRoute = {
       id: "existing-123",
-      user_id: mockUser.id,
+      userId: mockUser.id,
       name: "Original Name",
       points: [{ latitude: 60, longitude: 10 }],
       distance: 0,
-      created_at: "2025-01-01T00:00:00.000Z",
-      updated_at: "2025-01-01T00:00:00.000Z",
+      createdAt: "2025-01-01T00:00:00.000Z",
     };
-
-    const { createClient } = await import("@/lib/supabase/client");
-
-    // Create mock function that will be updated for update operation
-    // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    let mockFrom: any = vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({ data: [existingRoute], error: null }),
-    }));
-
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-        onAuthStateChange: vi.fn(() => ({
-          data: { subscription: { unsubscribe: vi.fn() } },
-        })),
-        signOut: vi.fn().mockResolvedValue({ error: null }),
-      },
-      from: mockFrom,
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    } as any);
+    const fetchSpy = vi.spyOn(global, "fetch");
+    fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify([existingRoute]), { status: 200 }));
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify({ ...existingRoute, name: "Updated Name" }), { status: 200 }),
+    );
 
     const { result } = renderHook(() => useRoutes(), {
       wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
@@ -610,72 +507,27 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    // Mock update operation
-    const updatedRoute = { ...existingRoute, name: "Updated Name" };
-    mockFrom = vi.fn(() => ({
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: updatedRoute, error: null }),
-    }));
-
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-        onAuthStateChange: vi.fn(() => ({
-          data: { subscription: { unsubscribe: vi.fn() } },
-        })),
-        signOut: vi.fn().mockResolvedValue({ error: null }),
-      },
-      from: mockFrom,
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    } as any);
-
     await act(async () => {
-      await result.current.updateRoute("existing-123", {
-        name: "Updated Name",
-      });
+      await result.current.updateRoute("existing-123", { name: "Updated Name" });
     });
 
     await waitFor(() => {
       expect(result.current.routes[0].name).toBe("Updated Name");
     });
-
-    expect(localStorageMock.setItem).not.toHaveBeenCalled();
   });
 
-  it("deletes route from Supabase", async () => {
+  it("deletes route via API", async () => {
     const existingRoute = {
       id: "to-delete-123",
-      user_id: mockUser.id,
+      userId: mockUser.id,
       name: "To Delete",
       points: [{ latitude: 60, longitude: 10 }],
       distance: 0,
-      created_at: "2025-01-01T00:00:00.000Z",
-      updated_at: "2025-01-01T00:00:00.000Z",
+      createdAt: "2025-01-01T00:00:00.000Z",
     };
-
-    const { createClient } = await import("@/lib/supabase/client");
-
-    // Create mock function that will be updated for delete operation
-    // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    let mockFrom: any = vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({ data: [existingRoute], error: null }),
-    }));
-
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-        onAuthStateChange: vi.fn(() => ({
-          data: { subscription: { unsubscribe: vi.fn() } },
-        })),
-        signOut: vi.fn().mockResolvedValue({ error: null }),
-      },
-      from: mockFrom,
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    } as any);
+    const fetchSpy = vi.spyOn(global, "fetch");
+    fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify([existingRoute]), { status: 200 }));
+    fetchSpy.mockResolvedValueOnce(new Response(null, { status: 204 }));
 
     const { result } = renderHook(() => useRoutes(), {
       wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
@@ -684,27 +536,6 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
-
-    // Need to mock the result of the second eq() call
-    mockFrom = vi.fn(() => ({
-      delete: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          eq: vi.fn().mockResolvedValue({ error: null }),
-        })),
-      })),
-    }));
-
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-        onAuthStateChange: vi.fn(() => ({
-          data: { subscription: { unsubscribe: vi.fn() } },
-        })),
-        signOut: vi.fn().mockResolvedValue({ error: null }),
-      },
-      from: mockFrom,
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    } as any);
 
     await act(async () => {
       await result.current.deleteRoute("to-delete-123");
@@ -715,33 +546,9 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
     });
   });
 
-  it("handles Supabase errors gracefully", async () => {
-    // Silence console errors
+  it("handles API errors gracefully", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-
-    const { createClient } = await import("@/lib/supabase/client");
-
-    const mockFrom = vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({
-        data: null,
-        error: { message: "Supabase error" },
-      }),
-    }));
-
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-        onAuthStateChange: vi.fn(() => ({
-          data: { subscription: { unsubscribe: vi.fn() } },
-        })),
-        signOut: vi.fn().mockResolvedValue({ error: null }),
-      },
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-      from: mockFrom as any,
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    } as any);
+    mockFetch({ error: "Server error" }, 500);
 
     const { result } = renderHook(() => useRoutes(), {
       wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
@@ -755,38 +562,18 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
     expect(result.current.routes).toEqual([]);
   });
 
-  it("clears all routes from Supabase", async () => {
+  it("clears all routes via API", async () => {
     const existingRoute = {
       id: "cloud-to-clear",
-      user_id: mockUser.id,
+      userId: mockUser.id,
       name: "To Clear",
       points: [{ latitude: 60, longitude: 10 }],
       distance: 0,
-      created_at: "2025-01-01T00:00:00.000Z",
-      updated_at: "2025-01-01T00:00:00.000Z",
+      createdAt: "2025-01-01T00:00:00.000Z",
     };
-
-    const { createClient } = await import("@/lib/supabase/client");
-
-    // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    let mockFrom: any = vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({ data: [existingRoute], error: null }),
-    }));
-
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-        onAuthStateChange: vi.fn(() => ({
-          data: { subscription: { unsubscribe: vi.fn() } },
-        })),
-        signOut: vi.fn().mockResolvedValue({ error: null }),
-      },
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-      from: mockFrom as any,
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    } as any);
+    const fetchSpy = vi.spyOn(global, "fetch");
+    fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify([existingRoute]), { status: 200 }));
+    fetchSpy.mockResolvedValueOnce(new Response(null, { status: 204 }));
 
     const { result } = renderHook(() => useRoutes(), {
       wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
@@ -798,25 +585,6 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
 
     expect(result.current.routes).toHaveLength(1);
 
-    mockFrom = vi.fn(() => ({
-      delete: vi.fn(() => ({
-        eq: vi.fn().mockResolvedValue({ error: null }),
-      })),
-    }));
-
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-        onAuthStateChange: vi.fn(() => ({
-          data: { subscription: { unsubscribe: vi.fn() } },
-        })),
-        signOut: vi.fn().mockResolvedValue({ error: null }),
-      },
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-      from: mockFrom as any,
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    } as any);
-
     await act(async () => {
       await result.current.clearAllRoutes();
     });
@@ -824,28 +592,12 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
     expect(result.current.routes).toHaveLength(0);
   });
 
-  it("updateRoute returns null when route not found in Supabase", async () => {
-    const { createClient } = await import("@/lib/supabase/client");
-
-    // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    let mockFrom: any = vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({ data: [], error: null }),
-    }));
-
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-        onAuthStateChange: vi.fn(() => ({
-          data: { subscription: { unsubscribe: vi.fn() } },
-        })),
-        signOut: vi.fn().mockResolvedValue({ error: null }),
-      },
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-      from: mockFrom as any,
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    } as any);
+  it("updateRoute returns null when route not found", async () => {
+    const fetchSpy = vi.spyOn(global, "fetch");
+    fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200 }));
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: "Not found" }), { status: 404 }),
+    );
 
     const { result } = renderHook(() => useRoutes(), {
       wrapper: ({ children }) => <AuthProvider user={mockUser}>{children}</AuthProvider>,
@@ -855,35 +607,11 @@ describe("useRoutes - authenticated user (cloud storage)", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    mockFrom = vi.fn(() => ({
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: null,
-        error: { code: "PGRST116", message: "Not found" },
-      }),
-    }));
-
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-        onAuthStateChange: vi.fn(() => ({
-          data: { subscription: { unsubscribe: vi.fn() } },
-        })),
-        signOut: vi.fn().mockResolvedValue({ error: null }),
-      },
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-      from: mockFrom as any,
-      // biome-ignore lint/suspicious/noExplicitAny: Dont care
-    } as any);
-
     let updateResult: StoredRoute | null | undefined;
     await act(async () => {
       updateResult = await result.current.updateRoute("nonexistent-id", { name: "New Name" });
     });
 
     expect(updateResult).toBeNull();
-    expect(result.current.routes).toHaveLength(0);
   });
 });

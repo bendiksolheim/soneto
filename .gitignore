@@ -28,3 +28,8 @@ dist-ssr
 tsconfig.tsbuildinfo
 .claude/settings.local.json
 coverage
+
+# SQLite database
+*.db
+*.db-shm
+*.db-wal

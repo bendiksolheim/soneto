@@ -1,17 +1,16 @@
-import { createClient } from "@/lib/supabase/client";
+import { signIn } from "next-auth/react";
 import { Button, Modal } from "./base";
 
 type LoginDialogProps = {
   isOpen: boolean;
   setIsOpen: () => void;
 };
-export function LoginDialog(props: LoginDialogProps): React.ReactElement {
-  const supabase = createClient();
 
+export function LoginDialog(props: LoginDialogProps): React.ReactElement {
   return (
     <Modal className="text-center" isOpen={props.isOpen} setIsOpen={props.setIsOpen}>
       <h3 className="pb-2 font-bold">Logg inn</h3>
-      <Button onClick={() => handleGithubLogin(supabase)}>
+      <Button onClick={() => signIn("github")}>
         <svg
           className="w-5 h-5 mr-2"
           fill="currentColor"
@@ -25,18 +24,4 @@ export function LoginDialog(props: LoginDialogProps): React.ReactElement {
       </Button>
     </Modal>
   );
-}
-
-async function handleGithubLogin(supabase: ReturnType<typeof createClient>) {
-  try {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "github",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (error) throw error;
-  } catch (error) {
-    console.error(error);
-  }
 }

@@ -7,7 +7,7 @@ import { LoginDialog } from "../login-dialog";
 
 export function User(): React.ReactElement | null {
   const { user, isLoading, signOut } = useAuth();
-  const name = user?.identities[0]?.identity_data?.full_name || "der";
+  const name = user?.name || "der";
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   if (isLoading) {

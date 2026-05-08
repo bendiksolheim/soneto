@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { auth } from "@/auth";
 import { AuthProvider } from "@/hooks/use-auth";
-import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "SoneTo",
@@ -13,15 +13,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const session = await auth();
 
   return (
     <html lang="en" className="w-full h-full font-display" data-theme="silk">
       <body className={"w-full h-full"}>
-        <AuthProvider user={user}>{children}</AuthProvider>
+        <AuthProvider user={session?.user ?? null}>{children}</AuthProvider>
       </body>
     </html>
   );

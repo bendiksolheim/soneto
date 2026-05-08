@@ -1,12 +1,10 @@
-import type { User } from "@supabase/supabase-js";
 import { type RenderOptions, render } from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, type AuthUser } from "@/hooks/use-auth";
 
-// Add providers here if needed (e.g., ThemeProvider)
 interface WrapperProps {
   children: ReactNode;
-  user?: User | null;
+  user?: AuthUser | null;
 }
 
 function AllTheProviders({ children, user = null }: WrapperProps) {
@@ -14,7 +12,7 @@ function AllTheProviders({ children, user = null }: WrapperProps) {
 }
 
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
-  user?: User | null;
+  user?: AuthUser | null;
 }
 
 const customRender = (ui: ReactElement, options?: CustomRenderOptions) => {

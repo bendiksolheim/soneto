@@ -3,7 +3,7 @@ import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
-  db: {},
+  getDb: () => ({}),
 }));
 
 afterEach(() => {

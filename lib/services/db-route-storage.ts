@@ -1,5 +1,5 @@
 import { desc, eq } from "drizzle-orm";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { routes } from "@/lib/db/schema";
 import type { Point } from "@/lib/map/point";
 import { calculateRouteDistance } from "@/lib/types/route";
@@ -27,7 +27,7 @@ function rowToRoute(row: typeof routes.$inferSelect): DbRoute {
 
 const storageService = {
   async getRoutes(userId: string): Promise<DbRoute[]> {
-    const rows = db
+    const rows = getDb()
       .select()
       .from(routes)
       .where(eq(routes.userId, userId))
@@ -37,7 +37,7 @@ const storageService = {
   },
 
   async getRoute(id: string, userId: string): Promise<DbRoute | null> {
-    const row = db
+    const row = getDb()
       .select()
       .from(routes)
       .where(eq(routes.id, id))
@@ -51,7 +51,7 @@ const storageService = {
     userId: string,
   ): Promise<DbRoute> {
     const distance = calculateRouteDistance(routeData.points);
-    const row = db
+    const row = getDb()
       .insert(routes)
       .values({
         userId,
@@ -72,7 +72,7 @@ const storageService = {
     const existing = await storageService.getRoute(id, userId);
     if (!existing) return null;
 
-    const row = db
+    const row = getDb()
       .update(routes)
       .set({
         ...(updates.name !== undefined && { name: updates.name }),
@@ -91,12 +91,12 @@ const storageService = {
   async deleteRoute(id: string, userId: string): Promise<boolean> {
     const existing = await storageService.getRoute(id, userId);
     if (!existing) return false;
-    db.delete(routes).where(eq(routes.id, id)).run();
+    getDb().delete(routes).where(eq(routes.id, id)).run();
     return true;
   },
 
   async clearAllRoutes(userId: string): Promise<void> {
-    db.delete(routes).where(eq(routes.userId, userId)).run();
+    getDb().delete(routes).where(eq(routes.userId, userId)).run();
   },
 };
 

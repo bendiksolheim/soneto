@@ -1,10 +1,12 @@
 import { type ChangeEvent, useState } from "react";
 import { usePace } from "@/hooks/use-pace";
-import { AdjustmentsHorizontalIcon, CalculatorIcon } from "@/icons";
+import { AdjustmentsHorizontalIcon, CalculatorIcon, ListOrdered } from "@/icons";
 import { LineChartArea } from "@/icons/line-chart-area";
+import type { Point } from "@/lib/map/point";
 import { Button, Card, Modal } from "./base";
 import { ElevationProfile } from "./widgets/elevation-profile";
 import { RouteStats } from "./widgets/route-stats";
+import { WaypointsList } from "./widgets/waypoints-list";
 
 type MapFeatureProps = {
   elevation: Array<{
@@ -13,11 +15,17 @@ type MapFeatureProps = {
     coordinate: [number, number];
   }>;
   distance: number;
+  points: Array<Point>;
+  pointDistances: Array<number>;
+  hoveredPointIndex: number | null;
+  onPointHover: (index: number | null) => void;
+  onDeletePoint: (index: number) => void;
 };
 
 export function MapFeatures(props: MapFeatureProps): React.ReactElement {
   const [showStats, setShowStats] = useState(true);
   const [showElevation, setShowElevation] = useState(false);
+  const [showWaypoints, setShowWaypoints] = useState(false);
   return (
     <div className="absolute top-1 right-1 flex  gap-2.5">
       <div className="flex flex-col gap-2.5">
@@ -25,6 +33,17 @@ export function MapFeatures(props: MapFeatureProps): React.ReactElement {
         {showElevation && (
           <Card title="Løypeprofil">
             <ElevationProfile elevationData={props.elevation} totalDistance={props.distance} />
+          </Card>
+        )}
+        {showWaypoints && (
+          <Card title="Veipunkter">
+            <WaypointsList
+              points={props.points}
+              pointDistances={props.pointDistances}
+              hoveredIndex={props.hoveredPointIndex}
+              onHover={props.onPointHover}
+              onDelete={props.onDeletePoint}
+            />
           </Card>
         )}
       </div>
@@ -46,6 +65,15 @@ export function MapFeatures(props: MapFeatureProps): React.ReactElement {
           onClick={() => setShowElevation(!showElevation)}
         >
           <LineChartArea size={20} />
+        </Button>
+        <Button
+          square
+          size="md"
+          active={showWaypoints}
+          className="text-base-content"
+          onClick={() => setShowWaypoints(!showWaypoints)}
+        >
+          <ListOrdered size={20} />
         </Button>
       </div>
     </div>

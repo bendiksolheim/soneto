@@ -7,6 +7,7 @@ export * from "./calculator-icon";
 export * from "./folder-icon";
 export * from "./folder-plus-icon";
 export * from "./line-chart-area";
+export * from "./list-ordered";
 export * from "./share-icon";
 export * from "./user-circle-icon";
 export * from "./x-circle-icon";

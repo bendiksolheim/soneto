@@ -6,16 +6,16 @@ import { RouteMarker } from "./route-marker";
 type RouteProps = {
   route: Array<Point>;
   setRoute: (route: Array<Point>) => void;
+  hoveredIndex: number | null;
+  onHover: (index: number | null) => void;
+  onDeletePoint: (index: number) => void;
 };
 
 export function Markers(props: RouteProps): ReactNode {
   const handleMarkerClick = (indexToRemove: number, e: MarkerEvent<MouseEvent>) => {
     // Prevent the map's onClick from firing
     e.originalEvent?.stopPropagation();
-
-    // Remove the point at the specified index
-    const newRoutePoints = props.route.filter((_, index) => index !== indexToRemove);
-    props.setRoute(newRoutePoints);
+    props.onDeletePoint(indexToRemove);
   };
 
   const handleMarkerDrag = (index: number, event: MarkerDragEvent) => {
@@ -31,8 +31,11 @@ export function Markers(props: RouteProps): ReactNode {
       index={index}
       point={point}
       numberOfPoints={props.route.length}
+      isHovered={props.hoveredIndex === index}
       onClick={(e) => handleMarkerClick(index, e)}
       onDrag={(e) => handleMarkerDrag(index, e)}
+      onMouseEnter={() => props.onHover(index)}
+      onMouseLeave={() => props.onHover(null)}
     />
   ));
 }

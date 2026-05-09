@@ -13,6 +13,10 @@ type FrameProps = React.PropsWithChildren<{
     coordinate: [number, number];
   }>;
   points: Array<Point>;
+  pointDistances: Array<number>;
+  hoveredPointIndex: number | null;
+  onPointHover: (index: number | null) => void;
+  onDeletePoint: (index: number) => void;
   onClearPoints: () => void;
   onRouteLoad: (route: Array<Point>) => void;
 }>;
@@ -27,7 +31,15 @@ export function Frame(props: FrameProps): React.ReactElement {
       />
       <div className="card card-border border-base-300 w-full h-full overflow-hidden relative">
         {props.children}
-        <MapFeatures elevation={props.elevation} distance={props.distance} />
+        <MapFeatures
+          elevation={props.elevation}
+          distance={props.distance}
+          points={props.points}
+          pointDistances={props.pointDistances}
+          hoveredPointIndex={props.hoveredPointIndex}
+          onPointHover={props.onPointHover}
+          onDeletePoint={props.onDeletePoint}
+        />
       </div>
     </div>
   );

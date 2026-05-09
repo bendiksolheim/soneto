@@ -37,6 +37,9 @@ interface MapContainerProps {
   ) => void;
   hoveredElevationIndex: number | null;
   onElevationHover: (index: number | null) => void;
+  hoveredPointIndex: number | null;
+  onPointHover: (index: number | null) => void;
+  onDeletePoint: (index: number) => void;
   shouldFitBounds?: boolean;
   onFitBoundsComplete?: () => void;
 }
@@ -49,6 +52,9 @@ export function RunMap({
   setElevation,
   hoveredElevationIndex,
   onElevationHover,
+  hoveredPointIndex,
+  onPointHover,
+  onDeletePoint,
   shouldFitBounds,
   onFitBoundsComplete,
 }: MapContainerProps) {
@@ -186,7 +192,13 @@ export function RunMap({
       <Layer {...hillshadeStyle} source="terrain-source" />
 
       <Route directions={directions} />
-      <Markers route={routePoints} setRoute={setRoutePoints} />
+      <Markers
+        route={routePoints}
+        setRoute={setRoutePoints}
+        hoveredIndex={hoveredPointIndex}
+        onHover={onPointHover}
+        onDeletePoint={onDeletePoint}
+      />
       <UserLocationMarker
         onLocationFound={(location) => {
           mapRef.current.jumpTo({

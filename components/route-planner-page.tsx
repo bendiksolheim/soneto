@@ -5,6 +5,7 @@ import { Frame } from "@/components/frame";
 import { RunMap } from "@/components/map";
 import { Share } from "@/components/widgets/share";
 import type { Point } from "@/lib/map/point";
+import { computeWaypointDistances } from "@/lib/map/waypoint-distances";
 import { type Directions, directions } from "@/lib/mapbox";
 
 const DRAFT_ROUTE_STORAGE_KEY = "draft-route";
@@ -21,6 +22,7 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
     Array<{ distance: number; elevation: number; coordinate: [number, number] }>
   >([]);
   const [hoveredElevationIndex, setHoveredElevationIndex] = useState<number | null>(null);
+  const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
   const [shouldFitBounds, setShouldFitBounds] = useState(false);
   const [routePoints, setRoutePoints] = useState<Array<Point>>(() => {
     if (initialRoute && initialRoute.length > 0) {
@@ -38,6 +40,8 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
   const distance = useMemo(() => {
     return directions.reduce((acc, direction) => acc + direction.routes[0].distance / 1000, 0);
   }, [directions]);
+
+  const pointDistances = useMemo(() => computeWaypointDistances(directions), [directions]);
 
   // Clean up URL if route was loaded from URL parameter
   useEffect(() => {
@@ -94,6 +98,10 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
     }
   };
 
+  const handleDeletePoint = (index: number) => {
+    setRoutePoints(routePoints.filter((_, i) => i !== index));
+  };
+
   const handleRouteLoad = (routePoints: Array<Point>) => {
     setRoutePoints(routePoints);
     setShouldFitBounds(true);
@@ -104,6 +112,10 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
       distance={distance}
       elevation={elevation}
       points={routePoints}
+      pointDistances={pointDistances}
+      hoveredPointIndex={hoveredPointIndex}
+      onPointHover={setHoveredPointIndex}
+      onDeletePoint={handleDeletePoint}
       onClearPoints={handleClearPoints}
       onRouteLoad={handleRouteLoad}
     >
@@ -115,6 +127,9 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
         setElevation={setElevation}
         hoveredElevationIndex={hoveredElevationIndex}
         onElevationHover={setHoveredElevationIndex}
+        hoveredPointIndex={hoveredPointIndex}
+        onPointHover={setHoveredPointIndex}
+        onDeletePoint={handleDeletePoint}
         shouldFitBounds={shouldFitBounds}
         onFitBoundsComplete={() => setShouldFitBounds(false)}
       />

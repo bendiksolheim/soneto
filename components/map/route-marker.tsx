@@ -1,16 +1,23 @@
 import { Marker, type MarkerDragEvent, type MarkerEvent } from "react-map-gl/mapbox";
 import type { Point } from "@/lib/map/point";
+import { cn } from "@/lib/utils";
 
 type RouteMarkerProps = {
   index: number;
   point: Point;
   numberOfPoints: number;
+  isHovered: boolean;
   onClick: (event: MarkerEvent<MouseEvent>) => void;
   onDrag: (event: MarkerDragEvent) => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
 };
 
 export function RouteMarker(props: RouteMarkerProps): React.ReactElement {
-  const { index, point, numberOfPoints, onClick, onDrag } = props;
+  const { index, point, numberOfPoints, isHovered, onClick, onDrag, onMouseEnter, onMouseLeave } =
+    props;
+  const isStart = index === 0;
+  const isFinish = index === numberOfPoints - 1;
   return (
     <Marker
       key={`route-${index}`}
@@ -20,26 +27,31 @@ export function RouteMarker(props: RouteMarkerProps): React.ReactElement {
       onClick={onClick}
       onDragEnd={onDrag}
     >
-      <div
-        className="relative cursor-pointer group"
+      <button
+        type="button"
+        aria-label={isStart ? "Start" : isFinish ? "Mål" : `Veipunkt ${index}`}
+        className="relative cursor-pointer group p-0 bg-transparent border-0"
         style={{
           width: "10px",
           height: "10px",
         }}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
       >
         {/* Marker pin */}
         <div
-          className={`
-        ${index === 0 || index === numberOfPoints - 1 ? "w-3.5 h-3.5" : "w-2.5 h-2.5"}
-        rounded-full border border-white shadow-lg
-        ${index === 0 ? "bg-green-500" : index === numberOfPoints - 1 ? "bg-red-500" : "bg-blue-500"}
-        group-hover:scale-110 transition-transform duration-200
-        flex items-center justify-center
-      `}
+          className={cn(
+            isStart || isFinish ? "w-3.5 h-3.5" : "w-2.5 h-2.5",
+            "rounded-full border border-white shadow-lg",
+            isStart ? "bg-green-500" : isFinish ? "bg-red-500" : "bg-blue-500",
+            "transition-transform duration-200",
+            "flex items-center justify-center",
+            isHovered && "scale-150 ring-4 ring-base-content/70",
+          )}
         >
-          {index === 0 ? (
+          {isStart ? (
             <span className="text-white text-[8px] font-bold ml-0.5">▶</span>
-          ) : index === numberOfPoints - 1 ? (
+          ) : isFinish ? (
             <span className="text-white text-[8px] font-bold">⚑</span>
           ) : null}
         </div>
@@ -53,10 +65,9 @@ export function RouteMarker(props: RouteMarkerProps): React.ReactElement {
         pointer-events-none z-10
       "
         >
-          {index === 0 ? "Start" : index === numberOfPoints - 1 ? "Finish" : "Waypoint"} • Click to
-          remove • Drag to move
+          {isStart ? "Start" : isFinish ? "Finish" : "Waypoint"} • Click to remove • Drag to move
         </div>
-      </div>
+      </button>
     </Marker>
   );
 }

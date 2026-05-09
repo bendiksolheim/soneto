@@ -27,7 +27,6 @@ export default defineConfig({
         ".next/**",
       ],
       include: ["lib/**", "hooks/**", "components/**"],
-      all: true,
     },
     watch: false,
   },

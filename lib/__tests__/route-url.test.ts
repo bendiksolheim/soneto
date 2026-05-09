@@ -50,8 +50,8 @@ describe("extractRouteFromUrl", () => {
 
     expect(points).not.toBeNull();
     expect(points).toHaveLength(testPoints.length);
-    expect(points![0].latitude).toBeCloseTo(testPoints[0].latitude, 5);
-    expect(points![0].longitude).toBeCloseTo(testPoints[0].longitude, 5);
+    expect(points[0].latitude).toBeCloseTo(testPoints[0].latitude, 5);
+    expect(points[0].longitude).toBeCloseTo(testPoints[0].longitude, 5);
   });
 
   it("accepts URLSearchParams as input", () => {
@@ -68,7 +68,7 @@ describe("extractRouteFromUrl", () => {
     const decoded = extractRouteFromUrl(new URL(url).search);
 
     expect(decoded).toHaveLength(testPoints.length);
-    decoded!.forEach((point, i) => {
+    decoded.forEach((point, i) => {
       expect(point.latitude).toBeCloseTo(testPoints[i].latitude, 5);
       expect(point.longitude).toBeCloseTo(testPoints[i].longitude, 5);
     });

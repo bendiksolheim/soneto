@@ -14,7 +14,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   callbacks: {
     session({ session, token }) {
-      session.user.id = token.sub!;
+      if (!token.sub) {
+        throw new Error("JWT token missing sub");
+      }
+      session.user.id = token.sub;
       return session;
     },
   },

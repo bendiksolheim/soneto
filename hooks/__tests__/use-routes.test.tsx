@@ -8,9 +8,9 @@ import { setupLocalStorageMock } from "../../test/mocks/localStorage";
 import { useRoutes } from "../use-routes";
 
 function mockFetch(body: unknown, status = 200) {
-  return vi.spyOn(global, "fetch").mockResolvedValue(
-    new Response(status === 204 ? null : JSON.stringify(body), { status }),
-  );
+  return vi
+    .spyOn(global, "fetch")
+    .mockResolvedValue(new Response(status === 204 ? null : JSON.stringify(body), { status }));
 }
 
 describe("useRoutes", () => {

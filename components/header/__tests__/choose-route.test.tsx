@@ -34,7 +34,10 @@ const defaultMock = {
 };
 
 beforeEach(() => {
-  vi.mocked(useRoutes).mockReturnValue({ ...defaultMock, saveRoute: vi.fn().mockResolvedValue({}) });
+  vi.mocked(useRoutes).mockReturnValue({
+    ...defaultMock,
+    saveRoute: vi.fn().mockResolvedValue({}),
+  });
 });
 
 describe("ChooseRoute", () => {
@@ -77,7 +80,7 @@ describe("ChooseRoute", () => {
     vi.mocked(useRoutes).mockReturnValue({ ...defaultMock, routes: mockRoutes, deleteRoute });
     render(<ChooseRoute points={[]} onRouteLoad={vi.fn()} onClearPoints={vi.fn()} />);
 
-    const routeItem = screen.getByText("Morgentur").closest("li")!;
+    const routeItem = screen.getByText("Morgentur").closest("li");
     fireEvent.click(within(routeItem).getByRole("button", { name: /Slett/i }));
 
     expect(deleteRoute).toHaveBeenCalledWith("route-1");

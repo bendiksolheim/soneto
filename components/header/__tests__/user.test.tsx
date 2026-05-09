@@ -41,7 +41,7 @@ describe("User", () => {
     fireEvent.click(screen.getByRole("button", { name: /Logg inn/i }));
 
     await waitFor(() => {
-      const dialog = document.querySelector("dialog")!;
+      const dialog = document.querySelector("dialog");
       expect(dialog.showModal).toHaveBeenCalled();
     });
   });

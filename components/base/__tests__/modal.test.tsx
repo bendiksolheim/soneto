@@ -23,7 +23,7 @@ describe("Modal", () => {
         content
       </Modal>,
     );
-    const dialog = container.querySelector("dialog")!;
+    const dialog = container.querySelector("dialog");
     expect(dialog.showModal).toHaveBeenCalledOnce();
   });
 
@@ -33,7 +33,7 @@ describe("Modal", () => {
         content
       </Modal>,
     );
-    const dialog = container.querySelector("dialog")!;
+    const dialog = container.querySelector("dialog");
     expect(dialog.close).toHaveBeenCalledOnce();
   });
 

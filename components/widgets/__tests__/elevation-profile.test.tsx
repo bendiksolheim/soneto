@@ -1,6 +1,11 @@
+import type { ComponentProps } from "react";
+import type { AreaChart as RealAreaChart, Tooltip as RealTooltip } from "recharts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "../../../test/utils/test-utils";
 import { ElevationProfile } from "../elevation-profile";
+
+type AreaChartProps = ComponentProps<typeof RealAreaChart>;
+type TooltipProps = ComponentProps<typeof RealTooltip>;
 
 const mockMoveState = vi.hoisted(() => ({
   isTooltipActive: true as boolean,
@@ -8,32 +13,32 @@ const mockMoveState = vi.hoisted(() => ({
 }));
 
 vi.mock("recharts", () => ({
-  AreaChart: ({ children, onMouseMove, onMouseLeave }: any) => (
-    <div
+  AreaChart: ({ children, onMouseMove, onMouseLeave }: AreaChartProps) => (
+    <figure
       data-testid="area-chart"
       onMouseMove={() => onMouseMove?.(mockMoveState)}
       onMouseLeave={onMouseLeave}
     >
       {children}
-    </div>
+    </figure>
   ),
   XAxis: () => null,
   YAxis: () => null,
-  Tooltip: ({ content }: any) => (
+  Tooltip: ({ content }: TooltipProps) => (
     <>
       <div data-testid="tooltip-visible">
         {content?.({ active: true, payload: [{ value: 150 }], label: "0.5" })}
       </div>
-      <div data-testid="tooltip-hidden">
-        {content?.({ active: false, payload: [], label: "" })}
-      </div>
+      <div data-testid="tooltip-hidden">{content?.({ active: false, payload: [], label: "" })}</div>
     </>
   ),
   Area: () => null,
-  ReferenceArea: ({ x1, x2, fill }: any) => (
+  ReferenceArea: ({ x1, x2, fill }: { x1: number; x2: number; fill: string }) => (
     <div data-testid="reference-area" data-x1={x1} data-x2={x2} data-fill={fill} />
   ),
-  ReferenceDot: ({ x, y }: any) => <div data-testid="reference-dot" data-x={x} data-y={y} />,
+  ReferenceDot: ({ x, y }: { x: number; y: number }) => (
+    <div data-testid="reference-dot" data-x={x} data-y={y} />
+  ),
 }));
 
 describe("ElevationProfile", () => {
@@ -104,7 +109,7 @@ describe("ElevationProfile", () => {
       <ElevationProfile elevationData={mockElevationData} totalDistance={1.0} />,
     );
 
-    const chart = await waitFor(() => container.querySelector('[data-testid="area-chart"]')!);
+    const chart = await waitFor(() => container.querySelector('[data-testid="area-chart"]'));
 
     fireEvent.mouseMove(chart);
 
@@ -120,7 +125,7 @@ describe("ElevationProfile", () => {
       <ElevationProfile elevationData={mockElevationData} totalDistance={1.0} />,
     );
 
-    const chart = await waitFor(() => container.querySelector('[data-testid="area-chart"]')!);
+    const chart = await waitFor(() => container.querySelector('[data-testid="area-chart"]'));
 
     fireEvent.mouseMove(chart);
 
@@ -139,7 +144,7 @@ describe("ElevationProfile", () => {
       <ElevationProfile elevationData={mockElevationData} totalDistance={1.0} />,
     );
 
-    const chart = await waitFor(() => container.querySelector('[data-testid="area-chart"]')!);
+    const chart = await waitFor(() => container.querySelector('[data-testid="area-chart"]'));
 
     fireEvent.mouseMove(chart);
 
@@ -153,7 +158,7 @@ describe("ElevationProfile", () => {
       <ElevationProfile elevationData={mockElevationData} totalDistance={1.0} />,
     );
 
-    const chart = await waitFor(() => container.querySelector('[data-testid="area-chart"]')!);
+    const chart = await waitFor(() => container.querySelector('[data-testid="area-chart"]'));
 
     fireEvent.mouseMove(chart);
 
@@ -165,7 +170,7 @@ describe("ElevationProfile", () => {
       <ElevationProfile elevationData={mockElevationData} totalDistance={1.0} />,
     );
 
-    const chart = await waitFor(() => container.querySelector('[data-testid="area-chart"]')!);
+    const chart = await waitFor(() => container.querySelector('[data-testid="area-chart"]'));
 
     fireEvent.mouseMove(chart);
     await waitFor(() => {

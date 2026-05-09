@@ -1,6 +1,6 @@
-import { act, renderHook, screen, render } from "@testing-library/react";
+import { act, render, renderHook, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AuthProvider, useAuth, type AuthUser } from "../use-auth";
+import { AuthProvider, type AuthUser, useAuth } from "../use-auth";
 
 vi.mock("next-auth/react", () => ({
   signOut: vi.fn().mockResolvedValue(undefined),

@@ -10,10 +10,7 @@ const twoPoints: Point[] = [
 const mockResponse = { routes: [], uuid: "test", waypoints: [] };
 
 beforeEach(() => {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue({ json: () => Promise.resolve(mockResponse) }),
-  );
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ json: () => Promise.resolve(mockResponse) }));
 });
 
 afterEach(() => {
@@ -60,10 +57,7 @@ describe("directions", () => {
 
   it("returns the parsed JSON response", async () => {
     const data = { routes: [{ distance: 150 }], uuid: "abc", waypoints: [] };
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({ json: () => Promise.resolve(data) }),
-    );
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ json: () => Promise.resolve(data) }));
 
     const result = await directions(twoPoints, "token");
     expect(result).toEqual(data);

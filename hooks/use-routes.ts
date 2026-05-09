@@ -78,7 +78,12 @@ export function useRoutes(): UseRoutesReturn {
           if (!response.ok) throw new Error("Failed to save route to cloud storage");
           const newRoute: RouteWithCalculatedData = await response.json();
           setRoutes((prev) => [newRoute, ...prev]);
-          return { id: newRoute.id, name: newRoute.name, points: newRoute.points, createdAt: newRoute.createdAt };
+          return {
+            id: newRoute.id,
+            name: newRoute.name,
+            points: newRoute.points,
+            createdAt: newRoute.createdAt,
+          };
         } else {
           const newRoute = RouteStorageService.saveRoute(routeData);
           const routeWithDistance: RouteWithCalculatedData = {
@@ -112,7 +117,12 @@ export function useRoutes(): UseRoutesReturn {
           if (!response.ok) throw new Error("Failed to update route in cloud storage");
           const updatedRoute: RouteWithCalculatedData = await response.json();
           setRoutes((prev) => prev.map((route) => (route.id === id ? updatedRoute : route)));
-          return { id: updatedRoute.id, name: updatedRoute.name, points: updatedRoute.points, createdAt: updatedRoute.createdAt };
+          return {
+            id: updatedRoute.id,
+            name: updatedRoute.name,
+            points: updatedRoute.points,
+            createdAt: updatedRoute.createdAt,
+          };
         } else {
           const updatedRoute = RouteStorageService.updateRoute(id, updates);
           if (updatedRoute) {
@@ -140,7 +150,8 @@ export function useRoutes(): UseRoutesReturn {
 
         if (user) {
           const response = await fetch(`/api/routes/${id}`, { method: "DELETE" });
-          if (!response.ok && response.status !== 404) throw new Error("Failed to delete route from cloud storage");
+          if (!response.ok && response.status !== 404)
+            throw new Error("Failed to delete route from cloud storage");
           setRoutes((prev) => prev.filter((route) => route.id !== id));
           return true;
         } else {

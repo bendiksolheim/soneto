@@ -13,7 +13,9 @@ describe("calculateElevationGain", () => {
   });
 
   it("returns 0 for flat terrain", () => {
-    expect(calculateElevationGain([{ elevation: 100 }, { elevation: 100 }, { elevation: 100 }])).toBe(0);
+    expect(
+      calculateElevationGain([{ elevation: 100 }, { elevation: 100 }, { elevation: 100 }]),
+    ).toBe(0);
   });
 
   it("returns gain for a single uphill section", () => {
@@ -21,9 +23,9 @@ describe("calculateElevationGain", () => {
   });
 
   it("only counts uphill portions when going up then down", () => {
-    expect(
-      calculateElevationGain([{ elevation: 0 }, { elevation: 100 }, { elevation: 0 }]),
-    ).toBe(100);
+    expect(calculateElevationGain([{ elevation: 0 }, { elevation: 100 }, { elevation: 0 }])).toBe(
+      100,
+    );
   });
 
   it("sums all uphill gains across multiple up/down segments", () => {

@@ -13,9 +13,7 @@ describe("exportGpx", () => {
 
   it("sets download filename and triggers click on the link", () => {
     const mockLink = { download: "", href: "", click: vi.fn() };
-    vi.spyOn(document, "createElement").mockReturnValueOnce(
-      mockLink as unknown as HTMLElement,
-    );
+    vi.spyOn(document, "createElement").mockReturnValueOnce(mockLink as unknown as HTMLElement);
     const serializeToString = vi.fn().mockReturnValue("<gpx />");
     vi.stubGlobal(
       "XMLSerializer",
@@ -34,9 +32,7 @@ describe("exportGpx", () => {
 
   it("creates a Blob of type text/xml from the serialized GPX", () => {
     const mockLink = { download: "", href: "", click: vi.fn() };
-    vi.spyOn(document, "createElement").mockReturnValueOnce(
-      mockLink as unknown as HTMLElement,
-    );
+    vi.spyOn(document, "createElement").mockReturnValueOnce(mockLink as unknown as HTMLElement);
     const serializeToString = vi.fn().mockReturnValue("<gpx>data</gpx>");
     vi.stubGlobal(
       "XMLSerializer",

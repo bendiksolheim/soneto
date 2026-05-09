@@ -37,19 +37,12 @@ const storageService = {
   },
 
   async getRoute(id: string, userId: string): Promise<DbRoute | null> {
-    const row = getDb()
-      .select()
-      .from(routes)
-      .where(eq(routes.id, id))
-      .get();
+    const row = getDb().select().from(routes).where(eq(routes.id, id)).get();
     if (!row || row.userId !== userId) return null;
     return rowToRoute(row);
   },
 
-  async saveRoute(
-    routeData: { name: string; points: Point[] },
-    userId: string,
-  ): Promise<DbRoute> {
+  async saveRoute(routeData: { name: string; points: Point[] }, userId: string): Promise<DbRoute> {
     const distance = calculateRouteDistance(routeData.points);
     const row = getDb()
       .insert(routes)

@@ -31,12 +31,12 @@ export function MapFeatures(props: MapFeatureProps): React.ReactElement {
       <div className="flex flex-col gap-2.5">
         {showStats && <RouteStatsCard distance={props.distance} />}
         {showElevation && (
-          <Card title="Løypeprofil">
+          <Card title="Profil">
             <ElevationProfile elevationData={props.elevation} totalDistance={props.distance} />
           </Card>
         )}
         {showWaypoints && (
-          <Card title="Veipunkter">
+          <Card title="Punkter">
             <WaypointsList
               points={props.points}
               pointDistances={props.pointDistances}
@@ -99,7 +99,7 @@ function RouteStatsCard(props: RouteStatsCardProps): React.ReactElement {
 
   return (
     <Card
-      title="Løypedetaljer"
+      title="Detaljer"
       className="min-w-64"
       actions={
         <>

@@ -10,6 +10,7 @@ import { createElevationLookup, fetchElevations } from "@/lib/elevation/terrain-
 import type { Point } from "@/lib/map/point";
 import type { Directions } from "@/lib/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import MapboxMap, {
   type HillshadeLayerSpecification,
@@ -24,8 +25,11 @@ import { DistanceMarkers } from "./map/distance-markers";
 import { HoverMarker } from "./map/hover-marker";
 import { Markers } from "./map/markers";
 import { Route } from "./map/route";
-import { SearchBox } from "./map/search-box";
 import { UserLocationMarker } from "./map/user-location-marker";
+
+const SearchBox = dynamic(() => import("./map/search-box").then((mod) => mod.SearchBox), {
+  ssr: false,
+});
 
 interface MapContainerProps {
   mapboxToken: string;

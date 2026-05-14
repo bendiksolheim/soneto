@@ -16,11 +16,15 @@ import MapboxMap, {
   Layer,
   type MapMouseEvent,
   type MapRef,
+  NavigationControl,
+  ScaleControl,
   Source,
 } from "react-map-gl/mapbox";
+import { DistanceMarkers } from "./map/distance-markers";
 import { HoverMarker } from "./map/hover-marker";
 import { Markers } from "./map/markers";
 import { Route } from "./map/route";
+import { SearchBox } from "./map/search-box";
 import { UserLocationMarker } from "./map/user-location-marker";
 
 interface MapContainerProps {
@@ -154,62 +158,69 @@ export function RunMap({
   };
 
   return (
-    <MapboxMap
-      ref={mapRef}
-      mapboxAccessToken={mapboxToken}
-      mapStyle="mapbox://styles/mapbox/streets-v12"
-      initialViewState={{
-        latitude: 59.9139,
-        longitude: 10.7522,
-        zoom: 3,
-      }}
-      maxZoom={20}
-      minZoom={3}
-      onClick={onClick}
-      onLoad={() => setMapLoaded(true)}
-      terrain={{ source: "terrain-source", exaggeration: 0.5 }}
-      onMouseMove={(e: MapMouseEvent) => {
-        const features = e.target.queryRenderedFeatures(e.point, {
-          layers: ["route-layer"],
-        });
-
-        if (features.length > 0) {
-          const nearestIndex = findNearestElevationPoint(e.lngLat, elevationData);
-          if (nearestIndex !== null) {
-            onElevationHover(nearestIndex);
-          }
-        } else if (hoveredElevationIndex !== null) {
-          // Clear hover if not over route
-          onElevationHover(null);
-        }
-      }}
-      interactiveLayerIds={["route-layer"]}
-    >
-      {/* Terrain source */}
-      <Source id="terrain-source" {...terrainSource} />
-
-      {/* Hillshade layer for visual elevation */}
-      <Layer {...hillshadeStyle} source="terrain-source" />
-
-      <Route directions={directions} />
-      <Markers
-        route={routePoints}
-        setRoute={setRoutePoints}
-        hoveredIndex={hoveredPointIndex}
-        onHover={onPointHover}
-        onDeletePoint={onDeletePoint}
-      />
-      <UserLocationMarker
-        onLocationFound={(location) => {
-          mapRef.current.jumpTo({
-            center: [location.longitude, location.latitude],
-            zoom: 15,
-          });
-          // setZoom(15);
+    <>
+      <MapboxMap
+        ref={mapRef}
+        mapboxAccessToken={mapboxToken}
+        mapStyle="mapbox://styles/mapbox/outdoors-v12"
+        initialViewState={{
+          latitude: 59.9139,
+          longitude: 10.7522,
+          zoom: 3,
         }}
-      />
-      {hoveredCoordinate && <HoverMarker coordinate={hoveredCoordinate} />}
-    </MapboxMap>
+        maxZoom={20}
+        minZoom={3}
+        onClick={onClick}
+        onLoad={() => setMapLoaded(true)}
+        terrain={{ source: "terrain-source", exaggeration: 0.5 }}
+        onMouseMove={(e: MapMouseEvent) => {
+          const features = e.target.queryRenderedFeatures(e.point, {
+            layers: ["route-layer"],
+          });
+
+          if (features.length > 0) {
+            const nearestIndex = findNearestElevationPoint(e.lngLat, elevationData);
+            if (nearestIndex !== null) {
+              onElevationHover(nearestIndex);
+            }
+          } else if (hoveredElevationIndex !== null) {
+            // Clear hover if not over route
+            onElevationHover(null);
+          }
+        }}
+        interactiveLayerIds={["route-layer"]}
+      >
+        <NavigationControl position="bottom-right" />
+        <ScaleControl position="bottom-left" unit="metric" />
+
+        {/* Terrain source */}
+        <Source id="terrain-source" {...terrainSource} />
+
+        {/* Hillshade layer for visual elevation */}
+        <Layer {...hillshadeStyle} source="terrain-source" />
+
+        <Route directions={directions} elevation={elevationData} />
+        <DistanceMarkers directions={directions} />
+        <Markers
+          route={routePoints}
+          setRoute={setRoutePoints}
+          hoveredIndex={hoveredPointIndex}
+          onHover={onPointHover}
+          onDeletePoint={onDeletePoint}
+        />
+        <UserLocationMarker
+          onLocationFound={(location) => {
+            mapRef.current.jumpTo({
+              center: [location.longitude, location.latitude],
+              zoom: 15,
+            });
+            // setZoom(15);
+          }}
+        />
+        {hoveredCoordinate && <HoverMarker coordinate={hoveredCoordinate} />}
+      </MapboxMap>
+      <SearchBox mapboxToken={mapboxToken} mapRef={mapRef} />
+    </>
   );
 }
 
@@ -228,7 +239,7 @@ const hillshadeStyle: Omit<HillshadeLayerSpecification, "source"> = {
     "hillshade-accent-color": "#5a5a5a",
     "hillshade-shadow-color": "#000000",
     "hillshade-illumination-direction": 335,
-    "hillshade-exaggeration": 0.6,
+    "hillshade-exaggeration": 0.3,
   },
 };
 

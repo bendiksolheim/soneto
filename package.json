@@ -18,6 +18,7 @@
   "dependencies": {
     "@dwayneparton/geojson-to-gpx": "^0.2.0",
     "@mapbox/polyline": "^1.2.1",
+    "@mapbox/search-js-react": "^1.5.1",
     "babel-plugin-react-compiler": "^1.0.0",
     "better-sqlite3": "^12.9.0",
     "clsx": "^2.1.1",

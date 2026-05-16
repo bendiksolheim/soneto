@@ -50,6 +50,7 @@ interface MapContainerProps {
   onDeletePoint: (index: number) => void;
   shouldFitBounds?: boolean;
   onFitBoundsComplete?: () => void;
+  onUserLocationFound?: (location: Point) => void;
 }
 
 export function RunMap({
@@ -65,6 +66,7 @@ export function RunMap({
   onDeletePoint,
   shouldFitBounds,
   onFitBoundsComplete,
+  onUserLocationFound,
 }: MapContainerProps) {
   const mapRef = useRef<MapRef>(null);
   const [elevationData, setElevationDataState] = useState<
@@ -218,7 +220,10 @@ export function RunMap({
               center: [location.longitude, location.latitude],
               zoom: 15,
             });
-            // setZoom(15);
+            onUserLocationFound?.({
+              latitude: location.latitude,
+              longitude: location.longitude,
+            });
           }}
         />
         {hoveredCoordinate && <HoverMarker coordinate={hoveredCoordinate} />}

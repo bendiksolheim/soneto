@@ -1,9 +1,10 @@
 import { type ChangeEvent, useState } from "react";
 import { usePace } from "@/hooks/use-pace";
-import { AdjustmentsHorizontalIcon, CalculatorIcon, ListOrdered } from "@/icons";
+import { AdjustmentsHorizontalIcon, CalculatorIcon, ListOrdered, SparklesIcon } from "@/icons";
 import { LineChartArea } from "@/icons/line-chart-area";
 import type { Point } from "@/lib/map/point";
 import { Button, Card, Modal } from "./base";
+import { AutoRoute } from "./widgets/auto-route";
 import { ElevationProfile } from "./widgets/elevation-profile";
 import { RouteStats } from "./widgets/route-stats";
 import { WaypointsList } from "./widgets/waypoints-list";
@@ -20,12 +21,17 @@ type MapFeatureProps = {
   hoveredPointIndex: number | null;
   onPointHover: (index: number | null) => void;
   onDeletePoint: (index: number) => void;
+  autoRouteEnabled: boolean;
+  mapboxToken: string;
+  userLocation: Point | null;
+  onAutoRouteGenerated: (points: Array<Point>) => void;
 };
 
 export function MapFeatures(props: MapFeatureProps): React.ReactElement {
   const [showStats, setShowStats] = useState(true);
   const [showElevation, setShowElevation] = useState(false);
   const [showWaypoints, setShowWaypoints] = useState(false);
+  const [showAutoRoute, setShowAutoRoute] = useState(false);
   return (
     <div className="absolute top-1 right-1 flex  gap-2.5">
       <div className="flex flex-col gap-2.5">
@@ -43,6 +49,15 @@ export function MapFeatures(props: MapFeatureProps): React.ReactElement {
               hoveredIndex={props.hoveredPointIndex}
               onHover={props.onPointHover}
               onDelete={props.onDeletePoint}
+            />
+          </Card>
+        )}
+        {props.autoRouteEnabled && showAutoRoute && (
+          <Card title="Auto-rute">
+            <AutoRoute
+              mapboxToken={props.mapboxToken}
+              userLocation={props.userLocation}
+              onRouteGenerated={props.onAutoRouteGenerated}
             />
           </Card>
         )}
@@ -75,6 +90,17 @@ export function MapFeatures(props: MapFeatureProps): React.ReactElement {
         >
           <ListOrdered size={20} />
         </Button>
+        {props.autoRouteEnabled && (
+          <Button
+            square
+            size="md"
+            active={showAutoRoute}
+            className="text-base-content"
+            onClick={() => setShowAutoRoute(!showAutoRoute)}
+          >
+            <SparklesIcon size={20} />
+          </Button>
+        )}
       </div>
     </div>
   );

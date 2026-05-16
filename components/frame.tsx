@@ -19,6 +19,10 @@ type FrameProps = React.PropsWithChildren<{
   onDeletePoint: (index: number) => void;
   onClearPoints: () => void;
   onRouteLoad: (route: Array<Point>) => void;
+  autoRouteEnabled: boolean;
+  mapboxToken: string;
+  userLocation: Point | null;
+  onAutoRouteGenerated: (points: Array<Point>) => void;
 }>;
 
 export function Frame(props: FrameProps): React.ReactElement {
@@ -39,6 +43,10 @@ export function Frame(props: FrameProps): React.ReactElement {
           hoveredPointIndex={props.hoveredPointIndex}
           onPointHover={props.onPointHover}
           onDeletePoint={props.onDeletePoint}
+          autoRouteEnabled={props.autoRouteEnabled}
+          mapboxToken={props.mapboxToken}
+          userLocation={props.userLocation}
+          onAutoRouteGenerated={props.onAutoRouteGenerated}
         />
       </div>
     </div>

@@ -24,6 +24,8 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
   const [hoveredElevationIndex, setHoveredElevationIndex] = useState<number | null>(null);
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
   const [shouldFitBounds, setShouldFitBounds] = useState(false);
+  const [autoRouteEnabled, setAutoRouteEnabled] = useState(false);
+  const [userLocation, setUserLocation] = useState<Point | null>(null);
   const [routePoints, setRoutePoints] = useState<Array<Point>>(() => {
     if (initialRoute && initialRoute.length > 0) {
       return initialRoute;
@@ -53,6 +55,15 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [initialRoute]);
+
+  // Read feature flag from localStorage on mount (client-only, avoids SSR mismatch)
+  useEffect(() => {
+    try {
+      setAutoRouteEnabled(localStorage.getItem("autoroute") === "true");
+    } catch {
+      setAutoRouteEnabled(false);
+    }
+  }, []);
 
   // Save draft route to localStorage whenever routePoints changes
   useEffect(() => {
@@ -107,6 +118,11 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
     setShouldFitBounds(true);
   };
 
+  const handleAutoRouteGenerated = (points: Array<Point>) => {
+    setRoutePoints(points);
+    setShouldFitBounds(true);
+  };
+
   return (
     <Frame
       distance={distance}
@@ -118,6 +134,10 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
       onDeletePoint={handleDeletePoint}
       onClearPoints={handleClearPoints}
       onRouteLoad={handleRouteLoad}
+      autoRouteEnabled={autoRouteEnabled}
+      mapboxToken={mapboxToken}
+      userLocation={userLocation}
+      onAutoRouteGenerated={handleAutoRouteGenerated}
     >
       <RunMap
         mapboxToken={mapboxToken}
@@ -132,6 +152,7 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
         onDeletePoint={handleDeletePoint}
         shouldFitBounds={shouldFitBounds}
         onFitBoundsComplete={() => setShouldFitBounds(false)}
+        onUserLocationFound={setUserLocation}
       />
       <div className="absolute bottom-2 left-[50%] transform-[translate(-50%, 0)]">
         <Share points={routePoints} directions={directions} />

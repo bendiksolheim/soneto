@@ -34,7 +34,12 @@ export function Dropdown(props: DropdownProps): React.ReactElement {
   return (
     <div
       ref={rootRef}
-      className={cn("dropdown", placement, isOpen && "dropdown-open", props.classNames?.dropdown)}
+      className={cn(
+        "dropdown z-50",
+        placement,
+        isOpen && "dropdown-open",
+        props.classNames?.dropdown,
+      )}
     >
       <button
         type="button"

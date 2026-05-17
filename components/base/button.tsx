@@ -35,6 +35,7 @@ export function Button(props: ButtonProps) {
         props.className,
       )}
       onClick={props.onClick}
+      disabled={props.disabled}
       type="button"
     >
       {props.children}

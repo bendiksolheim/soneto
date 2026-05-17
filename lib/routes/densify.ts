@@ -1,7 +1,7 @@
 import type { Point } from "../map/point";
 import { haversineDistanceMeters } from "./geo";
 
-type LngLat = [number, number];
+export type LngLat = [number, number];
 
 function lngLatToPoint([longitude, latitude]: LngLat): Point {
   return { latitude, longitude };

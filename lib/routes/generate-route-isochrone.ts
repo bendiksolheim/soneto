@@ -1,28 +1,27 @@
 import type { Point } from "../map/point";
-import { type Directions, directions, isochrone } from "../mapbox";
-import { densifyLineString } from "./densify";
+import { directions, isochrone } from "../mapbox";
+import { bearingTo, destinationPoint } from "./geo";
 import {
-  DENSIFY_INTERVAL_METERS,
   DISTANCE_TOLERANCE,
   type GenerateRouteInput,
   type GenerateRouteResult,
   initialScale,
-  MAX_DIRECTION_ROTATION_RETRIES,
   MAX_DISTANCE_SCALING_RETRIES,
-} from "./generate-route-directions";
-import { bearingTo, destinationPoint } from "./geo";
-
-const DIRECTION_ROTATION_STEP_DEGREES = 45;
-
-function isUsableDirections(response: Directions): boolean {
-  return Array.isArray(response.routes) && response.routes.length > 0;
-}
+  runWithRotationRetries,
+  type TryOnceResult,
+} from "./shared";
 
 function angularDistance(a: number, b: number): number {
   const diff = Math.abs(a - b) % 360;
   return diff > 180 ? 360 - diff : diff;
 }
 
+/**
+ * Walks the isochrone polygon vertices and returns the one whose bearing from
+ * `reference` is closest to `targetBearing`. Used to pick `pFar`: of all the
+ * places we can actually walk to in time `rIso`, we pick the one nearest to
+ * the user's chosen direction.
+ */
 function pickVertexClosestToBearing(
   vertices: Array<[number, number]>,
   reference: Point,
@@ -43,74 +42,113 @@ function pickVertexClosestToBearing(
   return { latitude: best[1], longitude: best[0] };
 }
 
+/**
+ * Inner scaling loop. Asks Mapbox for an isochrone polygon (everything
+ * reachable within `rIso` metres of walking), picks the polygon vertex
+ * closest to the requested bearing as `pFar`, then routes a loop through
+ * `pFar` and two perpendicular lateral points.
+ *
+ * Rescales both the lateral offset and the isochrone radius until the loop
+ * length is on target, or returns null if the isochrone/directions calls
+ * produce nothing usable in this direction.
+ */
 async function tryOnce(
   start: Point,
   targetLengthMeters: number,
   bearing: number,
   elongation: number,
   token: string,
-): Promise<{ response: Directions; attempts: number } | null> {
+): Promise<TryOnceResult | null> {
   let scale = initialScale(targetLengthMeters, elongation);
   let rIso = scale * elongation;
-  let scalingAttempts = 0;
 
-  while (true) {
+  for (let attempt = 0; attempt <= MAX_DISTANCE_SCALING_RETRIES; attempt++) {
     const iso = await isochrone(start, rIso, token);
+    // Isochrone returns a FeatureCollection of polygons; we ask for one
+    // contour so we want its outer ring. <3 vertices means the polygon is
+    // degenerate (start near water, no reachable area, etc.) — bail out
+    // and let the outer loop rotate the bearing.
     const polygon = iso.features?.[0]?.geometry?.coordinates?.[0];
     if (!polygon || polygon.length < 3) {
       return null;
     }
 
+    // pFar lives on the isochrone boundary in the requested direction, so by
+    // construction it's roughly `rIso` walking-metres from start — closer to
+    // the user's distance target than a straight-line point would be.
     const pFar = pickVertexClosestToBearing(polygon, start, bearing);
     const pLatR = destinationPoint(start, (bearing + 90) % 360, scale);
     const pLatL = destinationPoint(start, (bearing + 270) % 360, scale);
 
     const response = await directions([start, pLatL, pFar, pLatR, start], token);
-    if (!isUsableDirections(response)) {
+    const route = response.routes?.[0];
+    if (!route) {
       return null;
     }
 
-    const actual = response.routes[0].distance;
+    const actual = route.distance;
     const error = Math.abs(actual - targetLengthMeters) / targetLengthMeters;
-    if (error <= DISTANCE_TOLERANCE || scalingAttempts >= MAX_DISTANCE_SCALING_RETRIES) {
-      return { response, attempts: scalingAttempts + 1 };
+    if (error <= DISTANCE_TOLERANCE || attempt === MAX_DISTANCE_SCALING_RETRIES) {
+      return { coordinates: route.geometry.coordinates, distance: actual };
     }
 
+    // Scale both lateral offset and isochrone radius by the same factor so
+    // the loop's overall shape is preserved while its size changes.
     const factor = targetLengthMeters / actual;
     scale *= factor;
     rIso *= factor;
-    scalingAttempts++;
   }
+
+  return null;
 }
 
+/**
+ * Generates a circular running route by anchoring its far point on a
+ * walking-time isochrone instead of on a fixed-shape diamond.
+ *
+ * # How it works
+ *
+ * 1. Ask Mapbox for an isochrone polygon centred at `start` with radius
+ *    `rIso = initialScale * elongation` metres. This polygon outlines
+ *    everywhere a walker can reach within that distance along real roads.
+ *
+ *                       . - - - - - .
+ *                     /  ◦         ◦  \
+ *                    /     ◦   ◦      \
+ *                   |   ◦  start  ◦    |     ◦ = polygon vertex
+ *                    \    ◦   ◦      /
+ *                     \ ◦      pFar ◦      ← chosen vertex: closest
+ *                       ' - - - - - '         bearing to user's direction
+ *
+ * 2. Walk the polygon vertices and pick the one whose bearing from `start`
+ *    is closest to the user's requested bearing. This becomes `pFar`.
+ *
+ * 3. Build two lateral points `pLatL`, `pLatR` perpendicular to the bearing
+ *    at distance `scale`, then ask the Directions API to walk
+ *    `start → pLatL → pFar → pLatR → start`.
+ *
+ * 4. If the resulting loop length is off-target, scale both `scale` and
+ *    `rIso` by `target / actual` and retry — preserving the loop's overall
+ *    proportions.
+ *
+ * 5. If the isochrone or directions call produces nothing usable, rotate
+ *    the bearing and try again. Owned by `runWithRotationRetries`.
+ *
+ * # Trade-offs vs. the other algorithms
+ *
+ * - Most accurate distance estimate before the directions call: `pFar` is
+ *   already roughly `rIso` walking-metres away, not straight-line metres,
+ *   so the loop length converges faster.
+ * - Costs an extra API call per attempt (isochrone + directions, vs. just
+ *   directions or optimized-trips).
+ * - The far point follows real roads, so the loop's direction may visibly
+ *   deviate from the requested bearing in dense or one-sided road networks.
+ */
 export async function generateRouteIsochrone(
   input: GenerateRouteInput,
   mapboxToken: string,
 ): Promise<GenerateRouteResult> {
-  let bearing = input.bearing;
-  let attempts = 0;
-
-  for (let rotation = 0; rotation <= MAX_DIRECTION_ROTATION_RETRIES; rotation++) {
-    const outcome = await tryOnce(
-      input.start,
-      input.targetLengthMeters,
-      bearing,
-      input.elongation,
-      mapboxToken,
-    );
-    if (outcome) {
-      attempts += outcome.attempts;
-      const route = outcome.response.routes[0];
-      const points = densifyLineString(route.geometry.coordinates, DENSIFY_INTERVAL_METERS);
-      return {
-        points,
-        actualDistanceMeters: route.distance,
-        attempts,
-      };
-    }
-    attempts++;
-    bearing = (bearing + DIRECTION_ROTATION_STEP_DEGREES) % 360;
-  }
-
-  throw new Error("Couldn't generate a route — try a different direction or distance.");
+  return runWithRotationRetries(input, (start, target, bearing, elongation) =>
+    tryOnce(start, target, bearing, elongation, mapboxToken),
+  );
 }

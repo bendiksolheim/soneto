@@ -6,9 +6,9 @@ import {
   type GenerateRouteInput,
   type GenerateRouteResult,
   generateRouteDirections,
-} from "@/lib/routes/generate-route-directions";
-import { generateRouteIsochrone } from "@/lib/routes/generate-route-isochrone";
-import { generateRouteOptimization } from "@/lib/routes/generate-route-optimization";
+  generateRouteIsochrone,
+  generateRouteOptimization,
+} from "@/lib/routes";
 import { Button } from "../base";
 
 type Algorithm = "directions" | "isochrone" | "optimization";

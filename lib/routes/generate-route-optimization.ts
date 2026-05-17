@@ -1,80 +1,100 @@
 import type { Point } from "../map/point";
-import { type OptimizedTrips, optimizedTrips } from "../mapbox";
-import { densifyLineString } from "./densify";
+import { optimizedTrips } from "../mapbox";
 import {
-  DENSIFY_INTERVAL_METERS,
   DISTANCE_TOLERANCE,
   elongatedWaypoints,
   type GenerateRouteInput,
   type GenerateRouteResult,
   initialScale,
-  MAX_DIRECTION_ROTATION_RETRIES,
   MAX_DISTANCE_SCALING_RETRIES,
-} from "./generate-route-directions";
+  runWithRotationRetries,
+  type TryOnceResult,
+} from "./shared";
 
-const DIRECTION_ROTATION_STEP_DEGREES = 45;
-
-function isUsableTrips(response: OptimizedTrips): boolean {
-  return Array.isArray(response.trips) && response.trips.length > 0;
-}
-
+/**
+ * Inner scaling loop. Same shape as in `generate-route-directions`, but
+ * targets the Optimized Trips API (which decides the waypoint order itself)
+ * instead of the Directions API.
+ *
+ * Returns null when the API can't form a usable trip for this bearing.
+ */
 async function tryOnce(
   start: Point,
   targetLengthMeters: number,
   bearing: number,
   elongation: number,
   token: string,
-): Promise<{ response: OptimizedTrips; attempts: number } | null> {
+): Promise<TryOnceResult | null> {
   let scale = initialScale(targetLengthMeters, elongation);
-  let scalingAttempts = 0;
 
-  while (true) {
+  for (let attempt = 0; attempt <= MAX_DISTANCE_SCALING_RETRIES; attempt++) {
     const { pFar, pLatR, pLatL } = elongatedWaypoints(start, bearing, scale, elongation);
 
+    // Note: the order we pass is irrelevant — the Optimized Trips API treats
+    // `start` as fixed (roundtrip=true is the default) and reorders the rest
+    // to minimize total distance.
     const response = await optimizedTrips([start, pFar, pLatR, pLatL], token);
-    if (!isUsableTrips(response)) {
+    const trip = response.trips?.[0];
+    if (!trip) {
       return null;
     }
 
-    const actual = response.trips[0].distance;
+    const actual = trip.distance;
     const error = Math.abs(actual - targetLengthMeters) / targetLengthMeters;
-    if (error <= DISTANCE_TOLERANCE || scalingAttempts >= MAX_DISTANCE_SCALING_RETRIES) {
-      return { response, attempts: scalingAttempts + 1 };
+    if (error <= DISTANCE_TOLERANCE || attempt === MAX_DISTANCE_SCALING_RETRIES) {
+      return { coordinates: trip.geometry.coordinates, distance: actual };
     }
 
     scale = scale * (targetLengthMeters / actual);
-    scalingAttempts++;
   }
+
+  return null;
 }
 
+/**
+ * Generates a circular running route by feeding an elongated diamond of
+ * waypoints to the Mapbox Optimized Trips API and letting it decide the order.
+ *
+ * # How it works
+ *
+ * Same diamond construction as `generate-route-directions`:
+ *
+ *                            pFar
+ *                             /\
+ *                            /  \
+ *                           /    \
+ *                    pLatL ⟨ start ⟩ pLatR
+ *                           \    /
+ *                            \  /
+ *                             \/
+ *                          (start)
+ *
+ * The difference is the API call. We hand Mapbox the four points
+ * `[start, pFar, pLatR, pLatL]` in *arbitrary* order; the Optimized Trips
+ * endpoint solves a small travelling-salesman problem to visit them all and
+ * return to `start` with minimum total walking distance.
+ *
+ * The scale/rotation retry strategy is identical to the directions algorithm:
+ *
+ * - If the returned distance is off-target, scale the diamond by
+ *   `target / actual` and retry (up to `MAX_DISTANCE_SCALING_RETRIES`).
+ * - If the API returns no usable trip, rotate the bearing and try again
+ *   (up to `MAX_DIRECTION_ROTATION_RETRIES`).
+ *
+ * # Trade-offs vs. the other algorithms
+ *
+ * - Tends to produce more natural loops than `generate-route-directions`
+ *   because Mapbox can reorder waypoints when one diamond corner is
+ *   awkwardly placed.
+ * - Less faithful to the requested bearing — if the optimizer finds a much
+ *   shorter visit order, the visible "direction" of the loop may not align
+ *   with the user's chosen compass heading.
+ */
 export async function generateRouteOptimization(
   input: GenerateRouteInput,
   mapboxToken: string,
 ): Promise<GenerateRouteResult> {
-  let bearing = input.bearing;
-  let attempts = 0;
-
-  for (let rotation = 0; rotation <= MAX_DIRECTION_ROTATION_RETRIES; rotation++) {
-    const outcome = await tryOnce(
-      input.start,
-      input.targetLengthMeters,
-      bearing,
-      input.elongation,
-      mapboxToken,
-    );
-    if (outcome) {
-      attempts += outcome.attempts;
-      const trip = outcome.response.trips[0];
-      const points = densifyLineString(trip.geometry.coordinates, DENSIFY_INTERVAL_METERS);
-      return {
-        points,
-        actualDistanceMeters: trip.distance,
-        attempts,
-      };
-    }
-    attempts++;
-    bearing = (bearing + DIRECTION_ROTATION_STEP_DEGREES) % 360;
-  }
-
-  throw new Error("Couldn't generate a route — try a different direction or distance.");
+  return runWithRotationRetries(input, (start, target, bearing, elongation) =>
+    tryOnce(start, target, bearing, elongation, mapboxToken),
+  );
 }

@@ -6,6 +6,11 @@ import { ElevationProfile } from "../elevation-profile";
 
 type AreaChartProps = ComponentProps<typeof RealAreaChart>;
 type TooltipProps = ComponentProps<typeof RealTooltip>;
+type MoveStateArg = Parameters<NonNullable<AreaChartProps["onMouseMove"]>>[0];
+type MoveEventArg = Parameters<NonNullable<AreaChartProps["onMouseMove"]>>[1];
+type TooltipContentArg = Parameters<
+  Extract<TooltipProps["content"], (...args: never) => unknown>
+>[0];
 
 const mockMoveState = vi.hoisted(() => ({
   isTooltipActive: true as boolean,
@@ -16,22 +21,39 @@ vi.mock("recharts", () => ({
   AreaChart: ({ children, onMouseMove, onMouseLeave }: AreaChartProps) => (
     <figure
       data-testid="area-chart"
-      onMouseMove={() => onMouseMove?.(mockMoveState)}
-      onMouseLeave={onMouseLeave}
+      onMouseMove={(e) =>
+        onMouseMove?.(mockMoveState as unknown as MoveStateArg, e as unknown as MoveEventArg)
+      }
+      onMouseLeave={(e) =>
+        onMouseLeave?.(mockMoveState as unknown as MoveStateArg, e as unknown as MoveEventArg)
+      }
     >
       {children}
     </figure>
   ),
   XAxis: () => null,
   YAxis: () => null,
-  Tooltip: ({ content }: TooltipProps) => (
-    <>
-      <div data-testid="tooltip-visible">
-        {content?.({ active: true, payload: [{ value: 150 }], label: "0.5" })}
-      </div>
-      <div data-testid="tooltip-hidden">{content?.({ active: false, payload: [], label: "" })}</div>
-    </>
-  ),
+  Tooltip: ({ content }: TooltipProps) => {
+    if (typeof content !== "function") return null;
+    return (
+      <>
+        <div data-testid="tooltip-visible">
+          {content({
+            active: true,
+            payload: [{ value: 150 }],
+            label: "0.5",
+          } as unknown as TooltipContentArg)}
+        </div>
+        <div data-testid="tooltip-hidden">
+          {content({
+            active: false,
+            payload: [],
+            label: "",
+          } as unknown as TooltipContentArg)}
+        </div>
+      </>
+    );
+  },
   Area: () => null,
   ReferenceArea: ({ x1, x2, fill }: { x1: number; x2: number; fill: string }) => (
     <div data-testid="reference-area" data-x1={x1} data-x2={x2} data-fill={fill} />

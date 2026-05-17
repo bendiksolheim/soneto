@@ -1,4 +1,5 @@
 import NextAuth, { type DefaultSession } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import GitHub from "next-auth/providers/github";
 
 declare module "next-auth" {
@@ -19,7 +20,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [GitHub],
   session: { strategy: "jwt" },
   callbacks: {
-    jwt({ token, account, profile }) {
+    jwt({ token, account, profile }): JWT {
       if (account?.provider === "github" && profile?.id != null) {
         token.githubId = String(profile.id);
       }

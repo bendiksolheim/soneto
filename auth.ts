@@ -9,15 +9,27 @@ declare module "next-auth" {
   }
 }
 
+declare module "next-auth/jwt" {
+  interface JWT {
+    githubId?: string;
+  }
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [GitHub],
   session: { strategy: "jwt" },
   callbacks: {
-    session({ session, token }) {
-      if (!token.sub) {
-        throw new Error("JWT token missing sub");
+    jwt({ token, account, profile }) {
+      if (account?.provider === "github" && profile?.id != null) {
+        token.githubId = String(profile.id);
       }
-      session.user.id = token.sub;
+      return token;
+    },
+    session({ session, token }) {
+      if (!token.githubId) {
+        throw new Error("JWT token missing githubId — sign out and back in");
+      }
+      session.user.id = token.githubId;
       return session;
     },
   },

@@ -95,7 +95,8 @@ type SaveRouteDropdownProps = { onSave: (name: string) => Promise<unknown> };
 
 function SaveRouteDropdown({ onSave }: SaveRouteDropdownProps): React.ReactElement {
   const [name, setName] = useState("");
-  const [_saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   return (
     <Dropdown
       title={
@@ -124,16 +125,22 @@ function SaveRouteDropdown({ onSave }: SaveRouteDropdownProps): React.ReactEleme
               className="join-item"
               onClick={() => {
                 setSaving(true);
-                onSave(name).then(() => {
-                  setSaving(false);
-                  setName("");
-                });
+                setError(null);
+                onSave(name)
+                  .then(() => {
+                    setName("");
+                  })
+                  .catch((err) => {
+                    setError(err instanceof Error ? err.message : "Kunne ikke lagre løypen");
+                  })
+                  .finally(() => setSaving(false));
               }}
-              disabled={name === ""}
+              disabled={name === "" || saving}
             >
-              Lagre
+              {saving ? "Lagrer…" : "Lagre"}
             </Button>
           </div>
+          {error && <p className="label text-error">{error}</p>}
           <p className="label">Gi løypen et beskrivende navn slik at du lett finner den senere</p>
         </div>
       </Card>

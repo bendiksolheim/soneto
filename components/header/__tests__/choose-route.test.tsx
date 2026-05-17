@@ -33,6 +33,14 @@ const defaultMock = {
   isCloudStorage: false,
 };
 
+function openListDropdown() {
+  fireEvent.click(screen.getByRole("button", { name: /Mine løyper/i }));
+}
+
+function openSaveDropdown() {
+  fireEvent.click(screen.getByRole("button", { name: /Lagre løype/i }));
+}
+
 beforeEach(() => {
   vi.mocked(useRoutes).mockReturnValue({
     ...defaultMock,
@@ -62,6 +70,7 @@ describe("ChooseRoute", () => {
   it("lists saved routes in the dropdown", () => {
     vi.mocked(useRoutes).mockReturnValue({ ...defaultMock, routes: mockRoutes });
     render(<ChooseRoute points={[]} onRouteLoad={vi.fn()} onClearPoints={vi.fn()} />);
+    openListDropdown();
     expect(screen.getByText("Morgentur")).toBeTruthy();
   });
 
@@ -69,6 +78,7 @@ describe("ChooseRoute", () => {
     vi.mocked(useRoutes).mockReturnValue({ ...defaultMock, routes: mockRoutes });
     const onRouteLoad = vi.fn();
     render(<ChooseRoute points={[]} onRouteLoad={onRouteLoad} onClearPoints={vi.fn()} />);
+    openListDropdown();
 
     fireEvent.click(screen.getByRole("button", { name: /Last inn/i }));
 
@@ -79,6 +89,7 @@ describe("ChooseRoute", () => {
     const deleteRoute = vi.fn();
     vi.mocked(useRoutes).mockReturnValue({ ...defaultMock, routes: mockRoutes, deleteRoute });
     render(<ChooseRoute points={[]} onRouteLoad={vi.fn()} onClearPoints={vi.fn()} />);
+    openListDropdown();
 
     const routeItem = screen.getByText("Morgentur").closest("li");
     fireEvent.click(within(routeItem).getByRole("button", { name: /Slett/i }));
@@ -86,22 +97,24 @@ describe("ChooseRoute", () => {
     expect(deleteRoute).toHaveBeenCalledWith("route-1");
   });
 
-  it("save button has btn-disabled class when name is empty", () => {
+  it("save button is disabled when name is empty", () => {
     render(<ChooseRoute points={[]} onRouteLoad={vi.fn()} onClearPoints={vi.fn()} />);
+    openSaveDropdown();
     const saveButton = screen.getByRole("button", { name: /^Lagre$/ });
-    expect(saveButton).toHaveClass("btn-disabled");
+    expect(saveButton).toBeDisabled();
   });
 
   it("save button is enabled and calls saveRoute after typing a name", () => {
     const saveRoute = vi.fn().mockResolvedValue({});
     vi.mocked(useRoutes).mockReturnValue({ ...defaultMock, saveRoute });
     render(<ChooseRoute points={[]} onRouteLoad={vi.fn()} onClearPoints={vi.fn()} />);
+    openSaveDropdown();
 
     const input = screen.getByPlaceholderText("Løypenavn");
     fireEvent.change(input, { target: { value: "Min løype" } });
 
     const saveButton = screen.getByRole("button", { name: /^Lagre$/ });
-    expect(saveButton).not.toHaveClass("btn-disabled");
+    expect(saveButton).not.toBeDisabled();
 
     fireEvent.click(saveButton);
     expect(saveRoute).toHaveBeenCalledWith(expect.objectContaining({ name: "Min løype" }));

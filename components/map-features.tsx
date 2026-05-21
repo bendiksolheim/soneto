@@ -3,6 +3,7 @@ import { usePace } from "@/hooks/use-pace";
 import { AdjustmentsHorizontalIcon, CalculatorIcon, ListOrdered, SparklesIcon } from "@/icons";
 import { LineChartArea } from "@/icons/line-chart-area";
 import type { Point } from "@/lib/map/point";
+import type { GenerateRouteResult, RouteDebugData } from "@/lib/routes";
 import { Button, Card, Modal } from "./base";
 import { AutoRoute } from "./widgets/auto-route";
 import { ElevationProfile } from "./widgets/elevation-profile";
@@ -24,7 +25,8 @@ type MapFeatureProps = {
   autoRouteEnabled: boolean;
   mapboxToken: string;
   userLocation: Point | null;
-  onAutoRouteGenerated: (points: Array<Point>) => void;
+  onAutoRouteGenerated: (result: GenerateRouteResult) => void;
+  onAutoRouteDebugChanged: (data: RouteDebugData | null) => void;
 };
 
 export function MapFeatures(props: MapFeatureProps): React.ReactElement {
@@ -58,6 +60,7 @@ export function MapFeatures(props: MapFeatureProps): React.ReactElement {
               mapboxToken={props.mapboxToken}
               userLocation={props.userLocation}
               onRouteGenerated={props.onAutoRouteGenerated}
+              onDebugDataChanged={props.onAutoRouteDebugChanged}
             />
           </Card>
         )}

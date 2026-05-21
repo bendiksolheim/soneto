@@ -1,6 +1,6 @@
 import type { Point } from "../map/point";
 import { densifyLineString, type LngLat } from "./densify";
-import { destinationPoint } from "./geo";
+import { bearingTo, destinationPoint } from "./geo";
 
 export const DENSIFY_INTERVAL_METERS = 500;
 export const DISTANCE_TOLERANCE = 0.15;
@@ -13,16 +13,33 @@ export type GenerateRouteInput = {
   targetLengthMeters: number;
   bearing: number;
   elongation: number;
+  lateralOffset: number;
+  bulgeAmount: number;
+  distanceTolerance: number;
+  densifyIntervalMeters: number;
+};
+
+export type RouteDebugData = {
+  diamond: {
+    start: Point;
+    pFar: Point;
+    pLatL: Point;
+    pLatR: Point;
+    midpoints?: [Point, Point, Point, Point];
+  };
+  isochronePolygon?: [number, number][];
 };
 
 export type GenerateRouteResult = {
   points: Point[];
   actualDistanceMeters: number;
+  debug: RouteDebugData;
 };
 
 export type TryOnceResult = {
   coordinates: LngLat[];
   distance: number;
+  debug: RouteDebugData;
 };
 
 export type ElongatedWaypoints = {
@@ -32,48 +49,113 @@ export type ElongatedWaypoints = {
 };
 
 /**
- * Places three waypoints around `start` that, together with `start`, form an
- * elongated diamond pointing along `bearing`. The diamond's long axis is
- * `2 * scale * elongation` and its short axis is `2 * scale`.
+ * Places pLatL and pLatR perpendicular to a point `forwardDistance * lateralOffset`
+ * ahead of `start` along `bearing`.
  *
- *                       pFar           (distance: scale * elongation)
- *                        /\
- *                       /  \
- *                      /    \
- *               pLatL <  start  > pLatR   (each: distance scale, perpendicular)
- *                      \    /
- *                       \  /
- *                        \/
- *                       (back to start — the route is a loop)
+ * `lateralOffset = 0` puts the lateral points at start's level (current triangle).
+ * `lateralOffset = 0.5` puts them halfway to pFar (kite/arrowhead with start as rear corner).
+ * `lateralOffset = 1` puts them at pFar's level.
+ */
+export function lateralWaypoints(
+  start: Point,
+  bearing: number,
+  scale: number,
+  forwardDistance: number,
+  lateralOffset: number,
+): { pLatL: Point; pLatR: Point } {
+  const midPoint = destinationPoint(start, bearing, forwardDistance * lateralOffset);
+  return {
+    pLatL: destinationPoint(midPoint, (bearing + 270) % 360, scale),
+    pLatR: destinationPoint(midPoint, (bearing + 90) % 360, scale),
+  };
+}
+
+/**
+ * Computes 4 outward-pushed midpoints for the rounded topology.
  *
- * The directions and optimization algorithms feed these four points to Mapbox;
- * the API then fills in the actual streets between them.
+ * For each edge of the kite (start→pLatL, pLatL→pFar, pFar→pLatR, pLatR→start),
+ * finds the geographic midpoint and pushes it radially outward from the centroid
+ * of the four corners by `pushDistance` meters.
+ *
+ * Returns midpoints in route order: [m₀₁, m₁₂, m₂₃, m₃₀].
+ * At `pushDistance = 0` each midpoint lies exactly on its edge (kite degeneracy).
+ */
+export function bulgeWaypoints(
+  start: Point,
+  pLatL: Point,
+  pFar: Point,
+  pLatR: Point,
+  pushDistance: number,
+): [Point, Point, Point, Point] {
+  const centroid: Point = {
+    latitude: (start.latitude + pLatL.latitude + pFar.latitude + pLatR.latitude) / 4,
+    longitude: (start.longitude + pLatL.longitude + pFar.longitude + pLatR.longitude) / 4,
+  };
+
+  function pushedMidpoint(a: Point, b: Point): Point {
+    const mid: Point = {
+      latitude: (a.latitude + b.latitude) / 2,
+      longitude: (a.longitude + b.longitude) / 2,
+    };
+    return destinationPoint(mid, bearingTo(centroid, mid), pushDistance);
+  }
+
+  return [
+    pushedMidpoint(start, pLatL),
+    pushedMidpoint(pLatL, pFar),
+    pushedMidpoint(pFar, pLatR),
+    pushedMidpoint(pLatR, start),
+  ];
+}
+
+/**
+ * Places three waypoints forming a loop shape around `start` pointing along `bearing`.
+ *
+ * `lateralOffset = 0` produces a triangle with start at the base midpoint.
+ * `lateralOffset = 0.5` produces a kite/arrowhead with start as the rear corner.
+ *
+ *   lateralOffset = 0 (triangle):       lateralOffset = 0.5 (kite):
+ *
+ *          pFar                                 pFar
+ *           /\                                   /\
+ *          /  \                                 /  \
+ *   pLatL--start--pLatR               pLatL        pLatR
+ *                                          \      /
+ *                                           start
  */
 export function elongatedWaypoints(
   start: Point,
   bearing: number,
   scale: number,
   elongation: number,
+  lateralOffset: number,
 ): ElongatedWaypoints {
+  const { pLatL, pLatR } = lateralWaypoints(start, bearing, scale, scale * elongation, lateralOffset);
   return {
     pFar: destinationPoint(start, bearing, scale * elongation),
-    pLatR: destinationPoint(start, (bearing + 90) % 360, scale),
-    pLatL: destinationPoint(start, (bearing + 270) % 360, scale),
+    pLatL,
+    pLatR,
   };
 }
 
 /**
- * First-guess `scale` such that a perfect diamond loop of long axis
- * `scale * elongation` and short axis `scale` has perimeter `targetLengthMeters`.
+ * First-guess `scale` such that the loop's straight-line perimeter equals
+ * `targetLengthMeters`. Accounts for `lateralOffset` — at `f = 0` this
+ * reduces to the original formula.
  *
- * Derivation: the loop's perimeter is 4 * hypot(scale, scale * elongation)
- * = 4 * scale * sqrt(1 + elongation^2). We want that ≈ targetLengthMeters,
- * but actual roads add detours so we conservatively assume the loop is closer
- * to two diagonals plus two perpendiculars, giving the divisor below.
+ * Perimeter = 2 × scale × (√(1+(f·e)²) + √(1+((1−f)·e)²))
+ * where e = elongation, f = lateralOffset.
+ *
  * This is just a starting point — `tryOnce` scales again from the real distance.
  */
-export function initialScale(targetLengthMeters: number, elongation: number): number {
-  return targetLengthMeters / (2 * (1 + Math.sqrt(1 + elongation * elongation)));
+export function initialScale(
+  targetLengthMeters: number,
+  elongation: number,
+  lateralOffset: number,
+): number {
+  const fe = lateralOffset * elongation;
+  const re = (1 - lateralOffset) * elongation;
+  return targetLengthMeters / (2 * (Math.sqrt(1 + fe * fe) + Math.sqrt(1 + re * re)));
 }
 
 /**
@@ -97,16 +179,24 @@ export async function runWithRotationRetries(
     targetLengthMeters: number,
     bearing: number,
     elongation: number,
+    distanceTolerance: number,
   ) => Promise<TryOnceResult | null>,
 ): Promise<GenerateRouteResult> {
   let bearing = input.bearing;
 
   for (let rotation = 0; rotation <= MAX_DIRECTION_ROTATION_RETRIES; rotation++) {
-    const result = await tryOnce(input.start, input.targetLengthMeters, bearing, input.elongation);
+    const result = await tryOnce(
+      input.start,
+      input.targetLengthMeters,
+      bearing,
+      input.elongation,
+      input.distanceTolerance,
+    );
     if (result) {
       return {
-        points: densifyLineString(result.coordinates, DENSIFY_INTERVAL_METERS),
+        points: densifyLineString(result.coordinates, input.densifyIntervalMeters),
         actualDistanceMeters: result.distance,
+        debug: result.debug,
       };
     }
     bearing = (bearing + DIRECTION_ROTATION_STEP_DEGREES) % 360;

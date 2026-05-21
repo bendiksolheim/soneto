@@ -1,7 +1,7 @@
 import type { Point } from "../map/point";
 import { optimizedTrips } from "../mapbox";
 import {
-  DISTANCE_TOLERANCE,
+  bulgeWaypoints,
   elongatedWaypoints,
   type GenerateRouteInput,
   type GenerateRouteResult,
@@ -23,17 +23,24 @@ async function tryOnce(
   targetLengthMeters: number,
   bearing: number,
   elongation: number,
+  distanceTolerance: number,
+  lateralOffset: number,
+  bulgeAmt: number,
   token: string,
 ): Promise<TryOnceResult | null> {
-  let scale = initialScale(targetLengthMeters, elongation);
+  let scale = initialScale(targetLengthMeters, elongation, lateralOffset);
 
   for (let attempt = 0; attempt <= MAX_DISTANCE_SCALING_RETRIES; attempt++) {
-    const { pFar, pLatR, pLatL } = elongatedWaypoints(start, bearing, scale, elongation);
+    const { pFar, pLatR, pLatL } = elongatedWaypoints(start, bearing, scale, elongation, lateralOffset);
 
-    // Note: the order we pass is irrelevant — the Optimized Trips API treats
+    const midpoints = bulgeAmt > 0 ? bulgeWaypoints(start, pLatL, pFar, pLatR, bulgeAmt * scale) : undefined;
+    // Note: without bulge the order we pass is irrelevant — the Optimized Trips API treats
     // `start` as fixed (roundtrip=true is the default) and reorders the rest
-    // to minimize total distance.
-    const response = await optimizedTrips([start, pFar, pLatR, pLatL], token);
+    // to minimize total distance. With bulge we pass an ordered octagon.
+    const waypointList = midpoints
+      ? [start, midpoints[0], pLatL, midpoints[1], pFar, midpoints[2], pLatR, midpoints[3], start]
+      : [start, pFar, pLatR, pLatL];
+    const response = await optimizedTrips(waypointList, token);
     const trip = response.trips?.[0];
     if (!trip) {
       return null;
@@ -41,8 +48,12 @@ async function tryOnce(
 
     const actual = trip.distance;
     const error = Math.abs(actual - targetLengthMeters) / targetLengthMeters;
-    if (error <= DISTANCE_TOLERANCE || attempt === MAX_DISTANCE_SCALING_RETRIES) {
-      return { coordinates: trip.geometry.coordinates, distance: actual };
+    if (error <= distanceTolerance || attempt === MAX_DISTANCE_SCALING_RETRIES) {
+      return {
+        coordinates: trip.geometry.coordinates,
+        distance: actual,
+        debug: { diamond: { start, pFar, pLatL, pLatR, midpoints } },
+      };
     }
 
     scale = scale * (targetLengthMeters / actual);
@@ -94,7 +105,7 @@ export async function generateRouteOptimization(
   input: GenerateRouteInput,
   mapboxToken: string,
 ): Promise<GenerateRouteResult> {
-  return runWithRotationRetries(input, (start, target, bearing, elongation) =>
-    tryOnce(start, target, bearing, elongation, mapboxToken),
+  return runWithRotationRetries(input, (start, target, bearing, elongation, distanceTolerance) =>
+    tryOnce(start, target, bearing, elongation, distanceTolerance, input.lateralOffset, input.bulgeAmount, mapboxToken),
   );
 }

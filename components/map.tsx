@@ -21,10 +21,12 @@ import MapboxMap, {
   ScaleControl,
   Source,
 } from "react-map-gl/mapbox";
+import type { RouteDebugData } from "@/lib/routes";
 import { DistanceMarkers } from "./map/distance-markers";
 import { HoverMarker } from "./map/hover-marker";
 import { Markers } from "./map/markers";
 import { Route } from "./map/route";
+import { RouteDebugOverlay } from "./map/route-debug-overlay";
 import { UserLocationMarker } from "./map/user-location-marker";
 
 const SearchBox = dynamic(() => import("./map/search-box").then((mod) => mod.SearchBox), {
@@ -51,6 +53,7 @@ interface MapContainerProps {
   shouldFitBounds?: boolean;
   onFitBoundsComplete?: () => void;
   onUserLocationFound?: (location: Point) => void;
+  debugData?: RouteDebugData | null;
 }
 
 export function RunMap({
@@ -67,6 +70,7 @@ export function RunMap({
   shouldFitBounds,
   onFitBoundsComplete,
   onUserLocationFound,
+  debugData,
 }: MapContainerProps) {
   const mapRef = useRef<MapRef>(null);
   const [elevationData, setElevationDataState] = useState<
@@ -227,6 +231,7 @@ export function RunMap({
           }}
         />
         {hoveredCoordinate && <HoverMarker coordinate={hoveredCoordinate} />}
+        {debugData && <RouteDebugOverlay data={debugData} />}
       </MapboxMap>
       <SearchBox mapboxToken={mapboxToken} mapRef={mapRef} />
     </>

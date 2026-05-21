@@ -1,7 +1,7 @@
 import type { Point } from "../map/point";
 import { directions } from "../mapbox";
 import {
-  DISTANCE_TOLERANCE,
+  bulgeWaypoints,
   elongatedWaypoints,
   type GenerateRouteInput,
   type GenerateRouteResult,
@@ -26,16 +26,22 @@ async function tryOnce(
   targetLengthMeters: number,
   bearing: number,
   elongation: number,
+  distanceTolerance: number,
+  lateralOffset: number,
+  bulgeAmt: number,
   token: string,
 ): Promise<TryOnceResult | null> {
-  let scale = initialScale(targetLengthMeters, elongation);
+  let scale = initialScale(targetLengthMeters, elongation, lateralOffset);
 
   for (let attempt = 0; attempt <= MAX_DISTANCE_SCALING_RETRIES; attempt++) {
-    const { pFar, pLatR, pLatL } = elongatedWaypoints(start, bearing, scale, elongation);
+    const { pFar, pLatR, pLatL } = elongatedWaypoints(start, bearing, scale, elongation, lateralOffset);
 
-    // Order matters: pLatL → pFar → pLatR traces the diamond counter-clockwise
-    // and closing with `start` makes Mapbox return a loop instead of an open path.
-    const response = await directions([start, pLatL, pFar, pLatR, start], token);
+    const midpoints = bulgeAmt > 0 ? bulgeWaypoints(start, pLatL, pFar, pLatR, bulgeAmt * scale) : undefined;
+    const waypointList = midpoints
+      ? [start, midpoints[0], pLatL, midpoints[1], pFar, midpoints[2], pLatR, midpoints[3], start]
+      : [start, pLatL, pFar, pLatR, start];
+
+    const response = await directions(waypointList, token);
     const route = response.routes?.[0];
     if (!route) {
       return null;
@@ -43,8 +49,12 @@ async function tryOnce(
 
     const actual = route.distance;
     const error = Math.abs(actual - targetLengthMeters) / targetLengthMeters;
-    if (error <= DISTANCE_TOLERANCE || attempt === MAX_DISTANCE_SCALING_RETRIES) {
-      return { coordinates: route.geometry.coordinates, distance: actual };
+    if (error <= distanceTolerance || attempt === MAX_DISTANCE_SCALING_RETRIES) {
+      return {
+        coordinates: route.geometry.coordinates,
+        distance: actual,
+        debug: { diamond: { start, pFar, pLatL, pLatR, midpoints } },
+      };
     }
 
     // Roads rarely lie perfectly along our diamond, so the first try is usually
@@ -104,7 +114,7 @@ export async function generateRouteDirections(
   input: GenerateRouteInput,
   mapboxToken: string,
 ): Promise<GenerateRouteResult> {
-  return runWithRotationRetries(input, (start, target, bearing, elongation) =>
-    tryOnce(start, target, bearing, elongation, mapboxToken),
+  return runWithRotationRetries(input, (start, target, bearing, elongation, distanceTolerance) =>
+    tryOnce(start, target, bearing, elongation, distanceTolerance, input.lateralOffset, input.bulgeAmount, mapboxToken),
   );
 }

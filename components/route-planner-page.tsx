@@ -7,6 +7,7 @@ import { Share } from "@/components/widgets/share";
 import type { Point } from "@/lib/map/point";
 import { computeWaypointDistances } from "@/lib/map/waypoint-distances";
 import { type Directions, directions } from "@/lib/mapbox";
+import type { GenerateRouteResult, RouteDebugData } from "@/lib/routes";
 
 const DRAFT_ROUTE_STORAGE_KEY = "draft-route";
 
@@ -26,6 +27,7 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
   const [shouldFitBounds, setShouldFitBounds] = useState(false);
   const [autoRouteEnabled, setAutoRouteEnabled] = useState(false);
   const [userLocation, setUserLocation] = useState<Point | null>(null);
+  const [debugData, setDebugData] = useState<RouteDebugData | null>(null);
   const [routePoints, setRoutePoints] = useState<Array<Point>>(() => {
     if (initialRoute && initialRoute.length > 0) {
       return initialRoute;
@@ -118,8 +120,8 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
     setShouldFitBounds(true);
   };
 
-  const handleAutoRouteGenerated = (points: Array<Point>) => {
-    setRoutePoints(points);
+  const handleAutoRouteGenerated = (result: GenerateRouteResult) => {
+    setRoutePoints(result.points);
     setShouldFitBounds(true);
   };
 
@@ -138,6 +140,7 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
       mapboxToken={mapboxToken}
       userLocation={userLocation}
       onAutoRouteGenerated={handleAutoRouteGenerated}
+      onAutoRouteDebugChanged={setDebugData}
     >
       <RunMap
         mapboxToken={mapboxToken}
@@ -153,6 +156,7 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
         shouldFitBounds={shouldFitBounds}
         onFitBoundsComplete={() => setShouldFitBounds(false)}
         onUserLocationFound={setUserLocation}
+        debugData={debugData}
       />
       <div className="absolute bottom-2 left-[50%] transform-[translate(-50%, 0)]">
         <Share points={routePoints} directions={directions} />

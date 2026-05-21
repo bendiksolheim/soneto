@@ -1,11 +1,12 @@
 import type { Point } from "../map/point";
 import { directions, isochrone } from "../mapbox";
-import { bearingTo, destinationPoint } from "./geo";
+import { bearingTo } from "./geo";
 import {
-  DISTANCE_TOLERANCE,
+  bulgeWaypoints,
   type GenerateRouteInput,
   type GenerateRouteResult,
   initialScale,
+  lateralWaypoints,
   MAX_DISTANCE_SCALING_RETRIES,
   runWithRotationRetries,
   type TryOnceResult,
@@ -57,9 +58,12 @@ async function tryOnce(
   targetLengthMeters: number,
   bearing: number,
   elongation: number,
+  distanceTolerance: number,
+  lateralOffset: number,
+  bulgeAmt: number,
   token: string,
 ): Promise<TryOnceResult | null> {
-  let scale = initialScale(targetLengthMeters, elongation);
+  let scale = initialScale(targetLengthMeters, elongation, lateralOffset);
   let rIso = scale * elongation;
 
   for (let attempt = 0; attempt <= MAX_DISTANCE_SCALING_RETRIES; attempt++) {
@@ -77,10 +81,13 @@ async function tryOnce(
     // construction it's roughly `rIso` walking-metres from start — closer to
     // the user's distance target than a straight-line point would be.
     const pFar = pickVertexClosestToBearing(polygon, start, bearing);
-    const pLatR = destinationPoint(start, (bearing + 90) % 360, scale);
-    const pLatL = destinationPoint(start, (bearing + 270) % 360, scale);
+    const { pLatL, pLatR } = lateralWaypoints(start, bearing, scale, rIso, lateralOffset);
 
-    const response = await directions([start, pLatL, pFar, pLatR, start], token);
+    const midpoints = bulgeAmt > 0 ? bulgeWaypoints(start, pLatL, pFar, pLatR, bulgeAmt * scale) : undefined;
+    const waypointList = midpoints
+      ? [start, midpoints[0], pLatL, midpoints[1], pFar, midpoints[2], pLatR, midpoints[3], start]
+      : [start, pLatL, pFar, pLatR, start];
+    const response = await directions(waypointList, token);
     const route = response.routes?.[0];
     if (!route) {
       return null;
@@ -88,8 +95,15 @@ async function tryOnce(
 
     const actual = route.distance;
     const error = Math.abs(actual - targetLengthMeters) / targetLengthMeters;
-    if (error <= DISTANCE_TOLERANCE || attempt === MAX_DISTANCE_SCALING_RETRIES) {
-      return { coordinates: route.geometry.coordinates, distance: actual };
+    if (error <= distanceTolerance || attempt === MAX_DISTANCE_SCALING_RETRIES) {
+      return {
+        coordinates: route.geometry.coordinates,
+        distance: actual,
+        debug: {
+          diamond: { start, pFar, pLatL, pLatR, midpoints },
+          isochronePolygon: polygon as [number, number][],
+        },
+      };
     }
 
     // Scale both lateral offset and isochrone radius by the same factor so
@@ -148,7 +162,7 @@ export async function generateRouteIsochrone(
   input: GenerateRouteInput,
   mapboxToken: string,
 ): Promise<GenerateRouteResult> {
-  return runWithRotationRetries(input, (start, target, bearing, elongation) =>
-    tryOnce(start, target, bearing, elongation, mapboxToken),
+  return runWithRotationRetries(input, (start, target, bearing, elongation, distanceTolerance) =>
+    tryOnce(start, target, bearing, elongation, distanceTolerance, input.lateralOffset, input.bulgeAmount, mapboxToken),
   );
 }

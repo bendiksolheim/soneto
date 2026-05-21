@@ -5,6 +5,7 @@ import type { Point } from "@/lib/map/point";
 import {
   type GenerateRouteInput,
   type GenerateRouteResult,
+  type RouteDebugData,
   generateRouteDirections,
   generateRouteIsochrone,
   generateRouteOptimization,
@@ -62,14 +63,22 @@ type Status =
 type AutoRouteProps = {
   mapboxToken: string;
   userLocation: Point | null;
-  onRouteGenerated: (points: Point[]) => void;
+  onRouteGenerated: (result: GenerateRouteResult) => void;
+  onDebugDataChanged: (data: RouteDebugData | null) => void;
 };
 
 export function AutoRoute(props: AutoRouteProps): React.ReactElement {
   const [distanceKm, setDistanceKm] = useState<string>("5");
   const [direction, setDirection] = useState<CardinalDirection>("N");
   const [shape, setShape] = useState<Shape>("balanced");
+  const [topology, setTopology] = useState<"triangle" | "kite" | "rounded">("triangle");
+  const [lateralOffset, setLateralOffset] = useState<string>("0.5");
+  const [bulgeAmount, setBulgeAmount] = useState<string>("0.5");
   const [algorithm, setAlgorithm] = useState<Algorithm>("directions");
+  const [distanceTolerance, setDistanceTolerance] = useState<string>("0.15");
+  const [densifyIntervalMeters, setDensifyIntervalMeters] = useState<string>("500");
+  const [showDebug, setShowDebug] = useState<boolean>(false);
+  const [lastDebugData, setLastDebugData] = useState<RouteDebugData | null>(null);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   const locationUnavailable = props.userLocation === null;
@@ -93,6 +102,10 @@ export function AutoRoute(props: AutoRouteProps): React.ReactElement {
       targetLengthMeters: parsed * 1000,
       bearing: CARDINAL_BEARINGS[direction],
       elongation: SHAPE_ELONGATION[shape],
+      lateralOffset: topology !== "triangle" ? Number(lateralOffset) : 0,
+      bulgeAmount: topology === "rounded" ? Number(bulgeAmount) : 0,
+      distanceTolerance: Number(distanceTolerance),
+      densifyIntervalMeters: Number(densifyIntervalMeters),
     };
 
     setStatus({ kind: "loading" });
@@ -100,7 +113,9 @@ export function AutoRoute(props: AutoRouteProps): React.ReactElement {
     try {
       const result: GenerateRouteResult = await runAlgorithm(algorithm, input, props.mapboxToken);
 
-      props.onRouteGenerated(result.points);
+      setLastDebugData(result.debug);
+      props.onRouteGenerated(result);
+      props.onDebugDataChanged(showDebug ? result.debug : null);
       setStatus({ kind: "success", actualDistanceMeters: result.actualDistanceMeters });
     } catch (error) {
       const message =
@@ -156,6 +171,74 @@ export function AutoRoute(props: AutoRouteProps): React.ReactElement {
         </select>
       </label>
 
+      <label className="form-control">
+        <span className="label-text text-xs mb-1">Topology</span>
+        <select
+          className="select select-sm select-bordered w-full"
+          value={topology}
+          onChange={(e) => setTopology(e.target.value as "triangle" | "kite" | "rounded")}
+        >
+          <option value="triangle">triangle</option>
+          <option value="kite">kite</option>
+          <option value="rounded">rounded</option>
+        </select>
+      </label>
+
+      {topology !== "triangle" && (
+        <label className="form-control">
+          <span className="label-text text-xs mb-1">Lateral offset (0–1)</span>
+          <input
+            type="number"
+            className="input input-sm input-bordered w-full"
+            min={0}
+            max={1}
+            step={0.1}
+            value={lateralOffset}
+            onChange={(e) => setLateralOffset(e.target.value)}
+          />
+        </label>
+      )}
+
+      {topology === "rounded" && (
+        <label className="form-control">
+          <span className="label-text text-xs mb-1">Bulge amount (0–1)</span>
+          <input
+            type="number"
+            className="input input-sm input-bordered w-full"
+            min={0}
+            max={1}
+            step={0.1}
+            value={bulgeAmount}
+            onChange={(e) => setBulgeAmount(e.target.value)}
+          />
+        </label>
+      )}
+
+      <label className="form-control">
+        <span className="label-text text-xs mb-1">Distance tolerance (0–1)</span>
+        <input
+          type="number"
+          className="input input-sm input-bordered w-full"
+          min={0}
+          max={1}
+          step={0.05}
+          value={distanceTolerance}
+          onChange={(e) => setDistanceTolerance(e.target.value)}
+        />
+      </label>
+
+      <label className="form-control">
+        <span className="label-text text-xs mb-1">Densify interval (m)</span>
+        <input
+          type="number"
+          className="input input-sm input-bordered w-full"
+          min={10}
+          step={10}
+          value={densifyIntervalMeters}
+          onChange={(e) => setDensifyIntervalMeters(e.target.value)}
+        />
+      </label>
+
       <fieldset className="flex flex-col gap-1">
         <span className="label-text text-xs">Algorithm</span>
         <label className="label cursor-pointer justify-start gap-2 py-1">
@@ -189,6 +272,19 @@ export function AutoRoute(props: AutoRouteProps): React.ReactElement {
           <span className="label-text">optimization</span>
         </label>
       </fieldset>
+
+      <label className="label cursor-pointer justify-start gap-2 py-1">
+        <input
+          type="checkbox"
+          className="checkbox checkbox-sm"
+          checked={showDebug}
+          onChange={(e) => {
+            setShowDebug(e.target.checked);
+            props.onDebugDataChanged(e.target.checked ? lastDebugData : null);
+          }}
+        />
+        <span className="label-text text-xs">Show debug overlay</span>
+      </label>
 
       <Button variant="primary" size="sm" disabled={disabled} onClick={handleGenerate}>
         {generating ? <span className="loading loading-spinner loading-xs" /> : "Generate"}

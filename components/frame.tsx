@@ -2,6 +2,7 @@
 
 import type React from "react";
 import type { Point } from "@/lib/map/point";
+import type { GenerateRouteResult, RouteDebugData } from "@/lib/routes";
 import { Header } from "./header";
 import { MapFeatures } from "./map-features";
 
@@ -22,7 +23,8 @@ type FrameProps = React.PropsWithChildren<{
   autoRouteEnabled: boolean;
   mapboxToken: string;
   userLocation: Point | null;
-  onAutoRouteGenerated: (points: Array<Point>) => void;
+  onAutoRouteGenerated: (result: GenerateRouteResult) => void;
+  onAutoRouteDebugChanged: (data: RouteDebugData | null) => void;
 }>;
 
 export function Frame(props: FrameProps): React.ReactElement {
@@ -47,6 +49,7 @@ export function Frame(props: FrameProps): React.ReactElement {
           mapboxToken={props.mapboxToken}
           userLocation={props.userLocation}
           onAutoRouteGenerated={props.onAutoRouteGenerated}
+          onAutoRouteDebugChanged={props.onAutoRouteDebugChanged}
         />
       </div>
     </div>

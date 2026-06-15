@@ -21,9 +21,11 @@ import MapboxMap, {
   ScaleControl,
   Source,
 } from "react-map-gl/mapbox";
+import { useUserLocation } from "@/hooks/use-user-location";
 import type { RouteDebugData } from "@/lib/routes";
 import { DistanceMarkers } from "./map/distance-markers";
 import { HoverMarker } from "./map/hover-marker";
+import { LocationControl, type TrackingMode } from "./map/location-control";
 import { Markers } from "./map/markers";
 import { Route } from "./map/route";
 import { RouteDebugOverlay } from "./map/route-debug-overlay";
@@ -77,6 +79,56 @@ export function RunMap({
     Array<{ distance: number; elevation: number; coordinate: [number, number] }>
   >([]);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [trackingMode, setTrackingMode] = useState<TrackingMode>("off");
+  const hasCenteredOnUser = useRef(false);
+  const {
+    location: userLocation,
+    start,
+    stop,
+  } = useUserLocation({
+    onError: () => setTrackingMode("off"),
+  });
+
+  // Toggle location tracking through the OFF -> FOLLOWING -> OFF cycle, with LOCATED
+  // (camera detached after a manual pan) resuming FOLLOWING on the next press.
+  const handleLocationToggle = () => {
+    switch (trackingMode) {
+      case "off":
+        hasCenteredOnUser.current = false;
+        setTrackingMode("following");
+        start();
+        break;
+      case "following":
+        setTrackingMode("off");
+        stop();
+        break;
+      case "located":
+        setTrackingMode("following");
+        break;
+    }
+  };
+
+  // Keep the camera on the user while following. The first fix flies in at street zoom;
+  // subsequent fixes (and resuming from LOCATED) ease to the new position at the current
+  // zoom so we don't yank the user around.
+  useEffect(() => {
+    if (trackingMode !== "following" || !userLocation || !mapRef.current) return;
+
+    const center: [number, number] = [userLocation.longitude, userLocation.latitude];
+    if (hasCenteredOnUser.current) {
+      mapRef.current.easeTo({ center, duration: 500 });
+    } else {
+      mapRef.current.flyTo({ center, zoom: 15 });
+      hasCenteredOnUser.current = true;
+    }
+  }, [trackingMode, userLocation]);
+
+  // Surface the latest position upward (e.g. for Auto-Route) regardless of follow state.
+  useEffect(() => {
+    if (userLocation) {
+      onUserLocationFound?.(userLocation);
+    }
+  }, [userLocation, onUserLocationFound]);
 
   // Query elevation for route points and generate elevation profile
   useEffect(() => {
@@ -182,6 +234,12 @@ export function RunMap({
         minZoom={3}
         onClick={onClick}
         onLoad={() => setMapLoaded(true)}
+        onDragStart={() => {
+          // A manual pan detaches the camera but keeps the marker updating.
+          if (trackingMode === "following") {
+            setTrackingMode("located");
+          }
+        }}
         terrain={{ source: "terrain-source", exaggeration: 0.5 }}
         onMouseMove={(e: MapMouseEvent) => {
           const features = e.target.queryRenderedFeatures(e.point, {
@@ -218,22 +276,12 @@ export function RunMap({
           onHover={onPointHover}
           onDeletePoint={onDeletePoint}
         />
-        <UserLocationMarker
-          onLocationFound={(location) => {
-            mapRef.current.jumpTo({
-              center: [location.longitude, location.latitude],
-              zoom: 15,
-            });
-            onUserLocationFound?.({
-              latitude: location.latitude,
-              longitude: location.longitude,
-            });
-          }}
-        />
+        <UserLocationMarker location={userLocation} />
         {hoveredCoordinate && <HoverMarker coordinate={hoveredCoordinate} />}
         {debugData && <RouteDebugOverlay data={debugData} />}
       </MapboxMap>
       <SearchBox mapboxToken={mapboxToken} mapRef={mapRef} />
+      <LocationControl mode={trackingMode} onClick={handleLocationToggle} />
     </>
   );
 }

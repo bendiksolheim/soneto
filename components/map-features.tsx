@@ -35,16 +35,16 @@ export function MapFeatures(props: MapFeatureProps): React.ReactElement {
   const [showWaypoints, setShowWaypoints] = useState(false);
   const [showAutoRoute, setShowAutoRoute] = useState(false);
   return (
-    <div className="absolute top-1 right-1 flex  gap-2.5">
-      <div className="flex flex-col gap-2.5">
+    <div className="absolute top-1 right-1 flex gap-1.5 md:gap-2.5">
+      <div className="flex flex-col gap-1.5 md:gap-2.5">
         {showStats && <RouteStatsCard distance={props.distance} />}
         {showElevation && (
-          <Card title="Profil">
+          <Card title="Profil" className="w-80 max-w-[calc(100vw-4.5rem)]">
             <ElevationProfile elevationData={props.elevation} totalDistance={props.distance} />
           </Card>
         )}
         {showWaypoints && (
-          <Card title="Punkter">
+          <Card title="Punkter" className="w-80 max-w-[calc(100vw-4.5rem)]">
             <WaypointsList
               points={props.points}
               pointDistances={props.pointDistances}
@@ -55,7 +55,7 @@ export function MapFeatures(props: MapFeatureProps): React.ReactElement {
           </Card>
         )}
         {props.autoRouteEnabled && showAutoRoute && (
-          <Card title="Auto-rute">
+          <Card title="Auto-rute" className="max-w-[calc(100vw-4.5rem)]">
             <AutoRoute
               mapboxToken={props.mapboxToken}
               userLocation={props.userLocation}
@@ -65,30 +65,30 @@ export function MapFeatures(props: MapFeatureProps): React.ReactElement {
           </Card>
         )}
       </div>
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-1.5 md:gap-2.5">
         <Button
           square
-          size="md"
+          size="sm"
           active={showStats}
-          className="text-base-content"
+          className="text-base-content md:btn-md"
           onClick={() => setShowStats(!showStats)}
         >
           <CalculatorIcon size={20} />
         </Button>
         <Button
           square
-          size="md"
+          size="sm"
           active={showElevation}
-          className="text-base-content"
+          className="text-base-content md:btn-md"
           onClick={() => setShowElevation(!showElevation)}
         >
           <LineChartArea size={20} />
         </Button>
         <Button
           square
-          size="md"
+          size="sm"
           active={showWaypoints}
-          className="text-base-content"
+          className="text-base-content md:btn-md"
           onClick={() => setShowWaypoints(!showWaypoints)}
         >
           <ListOrdered size={20} />
@@ -96,9 +96,9 @@ export function MapFeatures(props: MapFeatureProps): React.ReactElement {
         {props.autoRouteEnabled && (
           <Button
             square
-            size="md"
+            size="sm"
             active={showAutoRoute}
-            className="text-base-content"
+            className="text-base-content md:btn-md"
             onClick={() => setShowAutoRoute(!showAutoRoute)}
           >
             <SparklesIcon size={20} />
@@ -129,7 +129,7 @@ function RouteStatsCard(props: RouteStatsCardProps): React.ReactElement {
   return (
     <Card
       title="Detaljer"
-      className="min-w-64"
+      className="md:min-w-64"
       actions={
         <>
           <Button variant="ghost" size="sm" onClick={() => setIsPacePopupOpen(!isPacePopupOpen)}>

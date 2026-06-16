@@ -3,6 +3,7 @@
 export * from "./adjustments-horizontal-icon";
 export * from "./arrow-down-circle-icon";
 export * from "./arrow-right-circle-icon";
+export * from "./bars-icon";
 export * from "./calculator-icon";
 export * from "./folder-icon";
 export * from "./folder-plus-icon";

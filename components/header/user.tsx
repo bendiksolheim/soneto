@@ -2,10 +2,13 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { UserCircleIcon } from "@/icons";
+import { cn } from "@/lib/utils";
 import { Button, Dropdown, Menu } from "../base";
 import { LoginDialog } from "../login-dialog";
 
-export function User(): React.ReactElement | null {
+type UserProps = { className?: string };
+
+export function User({ className }: UserProps): React.ReactElement | null {
   const { user, isLoading, signOut } = useAuth();
   const name = user?.name || "der";
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
@@ -18,7 +21,7 @@ export function User(): React.ReactElement | null {
     return (
       <Dropdown
         title={`Hei, ${name}!`}
-        classNames={{ dropdown: "justify-self-end content-center" }}
+        classNames={{ dropdown: cn("justify-self-end content-center", className) }}
         placement="end"
       >
         <Menu
@@ -36,7 +39,7 @@ export function User(): React.ReactElement | null {
     );
   } else {
     return (
-      <div className="content-center justify-self-end">
+      <div className={cn("content-center justify-self-end", className)}>
         <Button onClick={() => setAuthDialogOpen(true)}>
           <UserCircleIcon size={16} />
           Logg inn

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Point } from "@/lib/map/point";
-import { ChooseRoute } from "./choose-route";
+import { ChooseRoute, MobileMenu } from "./choose-route";
 import { User } from "./user";
 
 type HeaderProps = {
@@ -12,15 +12,23 @@ type HeaderProps = {
 
 export function Header({ points, onClearPoints, onRouteLoad }: HeaderProps): React.ReactElement {
   return (
-    <div className="grid grid-cols-3 h-12">
+    <div className="flex justify-between h-12 items-center">
       <div className="text-lg justify-self-start content-center">Soneto</div>
       <ChooseRoute
-        className="justify-self-center content-center"
+        className="justify-self-center content-center max-md:hidden"
         points={points}
         onRouteLoad={onRouteLoad}
         onClearPoints={onClearPoints}
       />
-      <User />
+      <div className="justify-self-end flex justify-end items-center">
+        <User className="max-md:hidden" />
+        <MobileMenu
+          className="md:hidden"
+          points={points}
+          onRouteLoad={onRouteLoad}
+          onClearPoints={onClearPoints}
+        />
+      </div>
     </div>
   );
 }

@@ -32,7 +32,7 @@ export function SearchBox(props: SearchBoxProps): ReactNode {
   const [value, setValue] = useState("");
 
   return (
-    <div className="absolute top-2 left-2 z-10 w-72">
+    <div className="absolute top-2 left-2 z-10 w-72 max-w-[45vw] md:max-w-none">
       <MapboxSearchBox
         accessToken={props.mapboxToken}
         value={value}
@@ -43,7 +43,11 @@ export function SearchBox(props: SearchBoxProps): ReactNode {
           const feature = res.features[0];
           if (!feature) return;
           const [lng, lat] = feature.geometry.coordinates;
-          props.mapRef.current?.flyTo({ center: [lng, lat], zoom: 14, duration: 1000 });
+          props.mapRef.current?.flyTo({
+            center: [lng, lat],
+            zoom: 14,
+            duration: 1000,
+          });
         }}
       />
     </div>

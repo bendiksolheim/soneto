@@ -21,7 +21,7 @@ import MapboxMap, {
   ScaleControl,
   Source,
 } from "react-map-gl/mapbox";
-import { useUserLocation } from "@/hooks/use-user-location";
+import { type UserPosition, useUserLocation } from "@/hooks/use-user-location";
 import type { RouteDebugData } from "@/lib/routes";
 import { DistanceMarkers } from "./map/distance-markers";
 import { HoverMarker } from "./map/hover-marker";
@@ -54,8 +54,14 @@ interface MapContainerProps {
   onDeletePoint: (index: number) => void;
   shouldFitBounds?: boolean;
   onFitBoundsComplete?: () => void;
-  onUserLocationFound?: (location: Point) => void;
+  onUserLocationFound?: (location: UserPosition) => void;
   debugData?: RouteDebugData | null;
+  // When true, the map becomes a locked-down follow-me view: interaction is
+  // disabled, planner chrome is hidden, and the camera follows the user.
+  runMode?: boolean;
+  // Called when run mode can't proceed (e.g. location permission denied) so the
+  // parent can drop out of run mode.
+  onExitRunMode?: () => void;
 }
 
 export function RunMap({
@@ -73,6 +79,8 @@ export function RunMap({
   onFitBoundsComplete,
   onUserLocationFound,
   debugData,
+  runMode = false,
+  onExitRunMode,
 }: MapContainerProps) {
   const mapRef = useRef<MapRef>(null);
   const [elevationData, setElevationDataState] = useState<
@@ -81,12 +89,23 @@ export function RunMap({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [trackingMode, setTrackingMode] = useState<TrackingMode>("off");
   const hasCenteredOnUser = useRef(false);
+  // Run mode follow state: whether the next fix should fly in, and the last known
+  // heading so the map keeps its bearing while the user is momentarily stationary
+  // (GPS heading is null when not moving).
+  const runFirstFix = useRef(false);
+  const lastBearing = useRef<number | null>(null);
+  const runModeRef = useRef(runMode);
+  runModeRef.current = runMode;
   const {
     location: userLocation,
     start,
     stop,
   } = useUserLocation({
-    onError: () => setTrackingMode("off"),
+    onError: () => {
+      setTrackingMode("off");
+      // If location fails while running, there's nothing to follow — leave run mode.
+      if (runModeRef.current) onExitRunMode?.();
+    },
   });
 
   // Toggle location tracking through the OFF -> FOLLOWING -> OFF cycle, with LOCATED
@@ -129,6 +148,60 @@ export function RunMap({
       onUserLocationFound?.(userLocation);
     }
   }, [userLocation, onUserLocationFound]);
+
+  // Entering run mode starts the GPS watch and primes a fly-in; exiting stops the
+  // watch and returns the camera to the flat, north-up planner view.
+  useEffect(() => {
+    if (runMode) {
+      runFirstFix.current = true;
+      lastBearing.current = null;
+      start();
+    } else {
+      stop();
+      mapRef.current?.easeTo({ pitch: 0, bearing: 0, duration: 500 });
+    }
+  }, [runMode, start, stop]);
+
+  // Lock down all map interaction while in run mode.
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!map || !mapLoaded) return;
+
+    const handlers = [
+      map.dragPan,
+      map.scrollZoom,
+      map.boxZoom,
+      map.dragRotate,
+      map.keyboard,
+      map.doubleClickZoom,
+      map.touchZoomRotate,
+    ];
+    handlers.forEach((handler) => {
+      if (runMode) {
+        handler.disable();
+      } else {
+        handler.enable();
+      }
+    });
+  }, [runMode, mapLoaded]);
+
+  // Nav-style follow camera: tilted, zoomed in, rotated to the direction of travel.
+  useEffect(() => {
+    if (!runMode || !userLocation || !mapRef.current) return;
+
+    const center: [number, number] = [userLocation.longitude, userLocation.latitude];
+    if (userLocation.heading !== null && !Number.isNaN(userLocation.heading)) {
+      lastBearing.current = userLocation.heading;
+    }
+    const camera = { center, bearing: lastBearing.current ?? 0, pitch: 55, zoom: 17 };
+
+    if (runFirstFix.current) {
+      mapRef.current.flyTo({ ...camera, duration: 1000 });
+      runFirstFix.current = false;
+    } else {
+      mapRef.current.easeTo({ ...camera, duration: 400 });
+    }
+  }, [runMode, userLocation]);
 
   // Query elevation for route points and generate elevation profile
   useEffect(() => {
@@ -201,6 +274,8 @@ export function RunMap({
       : null;
 
   const onClick = async (e: MapMouseEvent) => {
+    // Run mode is read-only — never add points by tapping the map.
+    if (runMode) return;
     // Use unproject to get more accurate coordinates with terrain enabled
     const map = mapRef.current;
     if (map) {
@@ -258,8 +333,8 @@ export function RunMap({
         }}
         interactiveLayerIds={["route-layer"]}
       >
-        <NavigationControl position="bottom-right" />
-        <ScaleControl position="bottom-left" unit="metric" />
+        {!runMode && <NavigationControl position="bottom-right" />}
+        {!runMode && <ScaleControl position="bottom-left" unit="metric" />}
 
         {/* Terrain source */}
         <Source id="terrain-source" {...terrainSource} />
@@ -267,21 +342,24 @@ export function RunMap({
         {/* Hillshade layer for visual elevation */}
         <Layer {...hillshadeStyle} source="terrain-source" />
 
+        {/* The planned route stays visible as a guide, even in run mode. */}
         <Route directions={directions} elevation={elevationData} />
         <DistanceMarkers directions={directions} />
-        <Markers
-          route={routePoints}
-          setRoute={setRoutePoints}
-          hoveredIndex={hoveredPointIndex}
-          onHover={onPointHover}
-          onDeletePoint={onDeletePoint}
-        />
+        {!runMode && (
+          <Markers
+            route={routePoints}
+            setRoute={setRoutePoints}
+            hoveredIndex={hoveredPointIndex}
+            onHover={onPointHover}
+            onDeletePoint={onDeletePoint}
+          />
+        )}
         <UserLocationMarker location={userLocation} />
-        {hoveredCoordinate && <HoverMarker coordinate={hoveredCoordinate} />}
-        {debugData && <RouteDebugOverlay data={debugData} />}
+        {!runMode && hoveredCoordinate && <HoverMarker coordinate={hoveredCoordinate} />}
+        {!runMode && debugData && <RouteDebugOverlay data={debugData} />}
       </MapboxMap>
-      <SearchBox mapboxToken={mapboxToken} mapRef={mapRef} />
-      <LocationControl mode={trackingMode} onClick={handleLocationToggle} />
+      {!runMode && <SearchBox mapboxToken={mapboxToken} mapRef={mapRef} />}
+      {!runMode && <LocationControl mode={trackingMode} onClick={handleLocationToggle} />}
     </>
   );
 }

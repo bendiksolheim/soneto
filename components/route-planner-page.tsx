@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/base";
 import { Frame } from "@/components/frame";
 import { RunMap } from "@/components/map";
+import { RunModeOverlay } from "@/components/map/run-mode-overlay";
 import { Share } from "@/components/widgets/share";
+import { useRunSession } from "@/hooks/use-run-session";
+import type { UserPosition } from "@/hooks/use-user-location";
+import { useWakeLock } from "@/hooks/use-wake-lock";
+import { PlayIcon } from "@/icons";
+import { readFlag } from "@/lib/feature-flags";
 import type { Point } from "@/lib/map/point";
 import { computeWaypointDistances } from "@/lib/map/waypoint-distances";
 import { type Directions, directions } from "@/lib/mapbox";
@@ -26,8 +33,13 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
   const [shouldFitBounds, setShouldFitBounds] = useState(false);
   const [autoRouteEnabled, setAutoRouteEnabled] = useState(false);
-  const [userLocation, setUserLocation] = useState<Point | null>(null);
+  const [userLocation, setUserLocation] = useState<UserPosition | null>(null);
   const [debugData, setDebugData] = useState<RouteDebugData | null>(null);
+  const [runMode, setRunMode] = useState(false);
+  const [showRunButton, setShowRunButton] = useState(false);
+
+  const wakeLock = useWakeLock();
+  const runSession = useRunSession({ position: userLocation, active: runMode });
   const [routePoints, setRoutePoints] = useState<Array<Point>>(() => {
     if (initialRoute && initialRoute.length > 0) {
       return initialRoute;
@@ -58,13 +70,10 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
     }
   }, [initialRoute]);
 
-  // Read feature flag from localStorage on mount (client-only, avoids SSR mismatch)
+  // Read feature flags from localStorage on mount (client-only, avoids SSR mismatch)
   useEffect(() => {
-    try {
-      setAutoRouteEnabled(localStorage.getItem("autoroute") === "true");
-    } catch {
-      setAutoRouteEnabled(false);
-    }
+    setAutoRouteEnabled(readFlag("autoroute"));
+    setShowRunButton(readFlag("show-run-button"));
   }, []);
 
   // Save draft route to localStorage whenever routePoints changes
@@ -125,6 +134,16 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
     setShouldFitBounds(true);
   };
 
+  const enterRunMode = () => {
+    setRunMode(true);
+    wakeLock.request();
+  };
+
+  const exitRunMode = () => {
+    setRunMode(false);
+    wakeLock.release();
+  };
+
   return (
     <Frame
       distance={distance}
@@ -141,6 +160,7 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
       userLocation={userLocation}
       onAutoRouteGenerated={handleAutoRouteGenerated}
       onAutoRouteDebugChanged={setDebugData}
+      hideChrome={runMode}
     >
       <RunMap
         mapboxToken={mapboxToken}
@@ -157,10 +177,30 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
         onFitBoundsComplete={() => setShouldFitBounds(false)}
         onUserLocationFound={setUserLocation}
         debugData={debugData}
+        runMode={runMode}
+        onExitRunMode={exitRunMode}
       />
-      <div className="absolute bottom-2 left-[50%] transform-[translate(-50%, 0)]">
-        <Share points={routePoints} directions={directions} />
-      </div>
+      {!runMode && showRunButton && (
+        <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-10">
+          <Button size="md" className="shadow-lg gap-2" onClick={enterRunMode}>
+            <PlayIcon size={18} />
+            Run
+          </Button>
+        </div>
+      )}
+      {!runMode && (
+        <div className="absolute bottom-2 left-[50%] transform-[translate(-50%, 0)]">
+          <Share points={routePoints} directions={directions} />
+        </div>
+      )}
+      {runMode && (
+        <RunModeOverlay
+          distanceKm={runSession.distanceKm}
+          elapsedSeconds={runSession.elapsedSeconds}
+          paceSecondsPerKm={runSession.paceSecondsPerKm}
+          onExit={exitRunMode}
+        />
+      )}
     </Frame>
   );
 }

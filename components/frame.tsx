@@ -25,32 +25,51 @@ type FrameProps = React.PropsWithChildren<{
   userLocation: Point | null;
   onAutoRouteGenerated: (result: GenerateRouteResult) => void;
   onAutoRouteDebugChanged: (data: RouteDebugData | null) => void;
+  // In run mode the planner chrome (header + feature panels) is hidden, leaving a
+  // fullscreen map.
+  hideChrome?: boolean;
 }>;
 
 export function Frame(props: FrameProps): React.ReactElement {
   return (
-    <div className="flex flex-col w-full h-full px-2 md:px-4 pb-2 md:pb-4">
-      <Header
-        points={props.points}
-        onClearPoints={props.onClearPoints}
-        onRouteLoad={props.onRouteLoad}
-      />
-      <div className="card card-border border-base-300 w-full h-full overflow-hidden relative">
-        {props.children}
-        <MapFeatures
-          elevation={props.elevation}
-          distance={props.distance}
+    <div
+      className={
+        props.hideChrome
+          ? "flex flex-col w-full h-full"
+          : "flex flex-col w-full h-full px-2 md:px-4 pb-2 md:pb-4"
+      }
+    >
+      {!props.hideChrome && (
+        <Header
           points={props.points}
-          pointDistances={props.pointDistances}
-          hoveredPointIndex={props.hoveredPointIndex}
-          onPointHover={props.onPointHover}
-          onDeletePoint={props.onDeletePoint}
-          autoRouteEnabled={props.autoRouteEnabled}
-          mapboxToken={props.mapboxToken}
-          userLocation={props.userLocation}
-          onAutoRouteGenerated={props.onAutoRouteGenerated}
-          onAutoRouteDebugChanged={props.onAutoRouteDebugChanged}
+          onClearPoints={props.onClearPoints}
+          onRouteLoad={props.onRouteLoad}
         />
+      )}
+      <div
+        className={
+          props.hideChrome
+            ? "w-full h-full overflow-hidden relative"
+            : "card card-border border-base-300 w-full h-full overflow-hidden relative"
+        }
+      >
+        {props.children}
+        {!props.hideChrome && (
+          <MapFeatures
+            elevation={props.elevation}
+            distance={props.distance}
+            points={props.points}
+            pointDistances={props.pointDistances}
+            hoveredPointIndex={props.hoveredPointIndex}
+            onPointHover={props.onPointHover}
+            onDeletePoint={props.onDeletePoint}
+            autoRouteEnabled={props.autoRouteEnabled}
+            mapboxToken={props.mapboxToken}
+            userLocation={props.userLocation}
+            onAutoRouteGenerated={props.onAutoRouteGenerated}
+            onAutoRouteDebugChanged={props.onAutoRouteDebugChanged}
+          />
+        )}
       </div>
     </div>
   );

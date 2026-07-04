@@ -21,6 +21,7 @@ import MapboxMap, {
   ScaleControl,
   Source,
 } from "react-map-gl/mapbox";
+import { useSmoothFollow } from "@/hooks/use-smooth-follow";
 import { type UserPosition, useUserLocation } from "@/hooks/use-user-location";
 import type { RouteDebugData } from "@/lib/routes";
 import { DistanceMarkers } from "./map/distance-markers";
@@ -62,6 +63,10 @@ interface MapContainerProps {
   // Called when run mode can't proceed (e.g. location permission denied) so the
   // parent can drop out of run mode.
   onExitRunMode?: () => void;
+  // Smoothed device-compass heading (degrees clockwise from north), owned by the
+  // parent so the permission prompt can be triggered from the user's gesture. Used
+  // to rotate the follow camera instantly when the user turns.
+  headingRef?: React.RefObject<number | null>;
 }
 
 export function RunMap({
@@ -81,6 +86,7 @@ export function RunMap({
   debugData,
   runMode = false,
   onExitRunMode,
+  headingRef,
 }: MapContainerProps) {
   const mapRef = useRef<MapRef>(null);
   const [elevationData, setElevationDataState] = useState<
@@ -89,11 +95,6 @@ export function RunMap({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [trackingMode, setTrackingMode] = useState<TrackingMode>("off");
   const hasCenteredOnUser = useRef(false);
-  // Run mode follow state: whether the next fix should fly in, and the last known
-  // heading so the map keeps its bearing while the user is momentarily stationary
-  // (GPS heading is null when not moving).
-  const runFirstFix = useRef(false);
-  const lastBearing = useRef<number | null>(null);
   const runModeRef = useRef(runMode);
   runModeRef.current = runMode;
   const {
@@ -106,6 +107,21 @@ export function RunMap({
       // If location fails while running, there's nothing to follow — leave run mode.
       if (runModeRef.current) onExitRunMode?.();
     },
+  });
+
+  // The compass heading is owned by the parent (so iOS permission can be requested
+  // from a user gesture); fall back to a local empty ref when not provided.
+  const fallbackHeadingRef = useRef<number | null>(null);
+  const activeHeadingRef = headingRef ?? fallbackHeadingRef;
+
+  // Smoothly interpolate the follow camera + marker between the ~1Hz GPS fixes so
+  // run-mode tracking looks live rather than jumping once per second.
+  const { renderedPosition, renderedBearing } = useSmoothFollow({
+    mapRef,
+    position: userLocation,
+    headingRef: activeHeadingRef,
+    enabled: runMode,
+    ready: mapLoaded,
   });
 
   // Toggle location tracking through the OFF -> FOLLOWING -> OFF cycle, with LOCATED
@@ -129,9 +145,11 @@ export function RunMap({
 
   // Keep the camera on the user while following. The first fix flies in at street zoom;
   // subsequent fixes (and resuming from LOCATED) ease to the new position at the current
-  // zoom so we don't yank the user around.
+  // zoom so we don't yank the user around. Disabled in run mode: there useSmoothFollow
+  // owns the camera, and this effect's pitch-less easeTo would otherwise cancel the
+  // nav-view fly-in's tilt on every GPS fix.
   useEffect(() => {
-    if (trackingMode !== "following" || !userLocation || !mapRef.current) return;
+    if (runMode || trackingMode !== "following" || !userLocation || !mapRef.current) return;
 
     const center: [number, number] = [userLocation.longitude, userLocation.latitude];
     if (hasCenteredOnUser.current) {
@@ -140,7 +158,7 @@ export function RunMap({
       mapRef.current.flyTo({ center, zoom: 15 });
       hasCenteredOnUser.current = true;
     }
-  }, [trackingMode, userLocation]);
+  }, [runMode, trackingMode, userLocation]);
 
   // Surface the latest position upward (e.g. for Auto-Route) regardless of follow state.
   useEffect(() => {
@@ -149,18 +167,39 @@ export function RunMap({
     }
   }, [userLocation, onUserLocationFound]);
 
-  // Entering run mode starts the GPS watch and primes a fly-in; exiting stops the
-  // watch and returns the camera to the flat, north-up planner view.
+  // Entering run mode starts the GPS watch; exiting stops the watch and returns the
+  // camera to the flat, north-up planner view. (The follow camera itself is driven by
+  // useSmoothFollow.)
   useEffect(() => {
     if (runMode) {
-      runFirstFix.current = true;
-      lastBearing.current = null;
       start();
     } else {
       stop();
       mapRef.current?.easeTo({ pitch: 0, bearing: 0, duration: 500 });
     }
   }, [runMode, start, stop]);
+
+  // Mapbox doesn't reliably resize its canvas when the planner chrome collapses
+  // (frame.tsx animates the container's padding + header height), so the canvas keeps
+  // its old size and leaves the grown right/bottom edges uncovered. Observe the
+  // container and resize to match — but debounce to a single resize once the size
+  // settles, since resizing on every animation frame reallocates the GL drawing buffer
+  // each frame and flickers.
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!map || !mapLoaded) return;
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const observer = new ResizeObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => map.resize(), 40);
+    });
+    observer.observe(map.getContainer());
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [mapLoaded]);
 
   // Lock down all map interaction while in run mode.
   useEffect(() => {
@@ -184,24 +223,6 @@ export function RunMap({
       }
     });
   }, [runMode, mapLoaded]);
-
-  // Nav-style follow camera: tilted, zoomed in, rotated to the direction of travel.
-  useEffect(() => {
-    if (!runMode || !userLocation || !mapRef.current) return;
-
-    const center: [number, number] = [userLocation.longitude, userLocation.latitude];
-    if (userLocation.heading !== null && !Number.isNaN(userLocation.heading)) {
-      lastBearing.current = userLocation.heading;
-    }
-    const camera = { center, bearing: lastBearing.current ?? 0, pitch: 55, zoom: 17 };
-
-    if (runFirstFix.current) {
-      mapRef.current.flyTo({ ...camera, duration: 1000 });
-      runFirstFix.current = false;
-    } else {
-      mapRef.current.easeTo({ ...camera, duration: 400 });
-    }
-  }, [runMode, userLocation]);
 
   // Query elevation for route points and generate elevation profile
   useEffect(() => {
@@ -354,7 +375,10 @@ export function RunMap({
             onDeletePoint={onDeletePoint}
           />
         )}
-        <UserLocationMarker location={userLocation} />
+        <UserLocationMarker
+          location={runMode ? (renderedPosition ?? userLocation) : userLocation}
+          bearing={runMode ? renderedBearing : undefined}
+        />
         {!runMode && hoveredCoordinate && <HoverMarker coordinate={hoveredCoordinate} />}
         {!runMode && debugData && <RouteDebugOverlay data={debugData} />}
       </MapboxMap>

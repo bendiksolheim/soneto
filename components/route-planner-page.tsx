@@ -6,7 +6,8 @@ import { Frame } from "@/components/frame";
 import { RunMap } from "@/components/map";
 import { RunModeOverlay } from "@/components/map/run-mode-overlay";
 import { Share } from "@/components/widgets/share";
-import { useRunSession } from "@/hooks/use-run-session";
+import { useDeviceHeading } from "@/hooks/use-device-heading";
+import { useFadeTransition } from "@/hooks/use-fade-transition";
 import type { UserPosition } from "@/hooks/use-user-location";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import { PlayIcon } from "@/icons";
@@ -39,7 +40,10 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
   const [showRunButton, setShowRunButton] = useState(false);
 
   const wakeLock = useWakeLock();
-  const runSession = useRunSession({ position: userLocation, active: runMode });
+  const deviceHeading = useDeviceHeading();
+  // Crossfade between the planner overlays (run/share buttons) and the run-mode overlay.
+  const plannerUi = useFadeTransition(!runMode, 250);
+  const runUi = useFadeTransition(runMode, 250);
   const [routePoints, setRoutePoints] = useState<Array<Point>>(() => {
     if (initialRoute && initialRoute.length > 0) {
       return initialRoute;
@@ -137,11 +141,14 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
   const enterRunMode = () => {
     setRunMode(true);
     wakeLock.request();
+    // Must run from this click so iOS allows the compass permission prompt.
+    deviceHeading.start();
   };
 
   const exitRunMode = () => {
     setRunMode(false);
     wakeLock.release();
+    deviceHeading.stop();
   };
 
   return (
@@ -179,28 +186,30 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
         debugData={debugData}
         runMode={runMode}
         onExitRunMode={exitRunMode}
+        headingRef={deviceHeading.headingRef}
       />
-      {!runMode && showRunButton && (
-        <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-10">
+      {plannerUi.mounted && showRunButton && (
+        <div
+          className={`absolute bottom-14 left-1/2 -translate-x-1/2 z-10 transition-opacity duration-[250ms] ease-in-out ${
+            plannerUi.visible ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+        >
           <Button size="md" className="shadow-lg gap-2" onClick={enterRunMode}>
             <PlayIcon size={18} />
             Run
           </Button>
         </div>
       )}
-      {!runMode && (
-        <div className="absolute bottom-2 left-[50%] transform-[translate(-50%, 0)]">
+      {plannerUi.mounted && (
+        <div
+          className={`absolute bottom-2 left-[50%] transform-[translate(-50%, 0)] transition-opacity duration-[250ms] ease-in-out ${
+            plannerUi.visible ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+        >
           <Share points={routePoints} directions={directions} />
         </div>
       )}
-      {runMode && (
-        <RunModeOverlay
-          distanceKm={runSession.distanceKm}
-          elapsedSeconds={runSession.elapsedSeconds}
-          paceSecondsPerKm={runSession.paceSecondsPerKm}
-          onExit={exitRunMode}
-        />
-      )}
+      {runUi.mounted && <RunModeOverlay onExit={exitRunMode} visible={runUi.visible} />}
     </Frame>
   );
 }

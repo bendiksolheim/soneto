@@ -33,28 +33,34 @@ type FrameProps = React.PropsWithChildren<{
 export function Frame(props: FrameProps): React.ReactElement {
   return (
     <div
-      className={
-        props.hideChrome
-          ? "flex flex-col w-full h-full"
-          : "flex flex-col w-full h-full px-2 md:px-4 pb-2 md:pb-4"
-      }
+      className={`flex flex-col w-full h-full transition-[padding] duration-[250ms] ease-in-out ${
+        props.hideChrome ? "" : "px-2 md:px-4 pb-2 md:pb-4"
+      }`}
     >
-      {!props.hideChrome && (
-        <Header
-          points={props.points}
-          onClearPoints={props.onClearPoints}
-          onRouteLoad={props.onRouteLoad}
-        />
-      )}
       <div
-        className={
-          props.hideChrome
-            ? "w-full h-full overflow-hidden relative"
-            : "card card-border border-base-300 w-full h-full overflow-hidden relative"
-        }
+        className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-[250ms] ease-in-out ${
+          props.hideChrome ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
+        }`}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <Header
+            points={props.points}
+            onClearPoints={props.onClearPoints}
+            onRouteLoad={props.onRouteLoad}
+          />
+        </div>
+      </div>
+      <div
+        className={`w-full h-full overflow-hidden relative transition-[border-radius] duration-[250ms] ease-in-out ${
+          props.hideChrome ? "" : "card card-border border-base-300"
+        }`}
       >
         {props.children}
-        {!props.hideChrome && (
+        <div
+          className={`transition-opacity duration-[250ms] ease-in-out ${
+            props.hideChrome ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
+        >
           <MapFeatures
             elevation={props.elevation}
             distance={props.distance}
@@ -69,7 +75,7 @@ export function Frame(props: FrameProps): React.ReactElement {
             onAutoRouteGenerated={props.onAutoRouteGenerated}
             onAutoRouteDebugChanged={props.onAutoRouteDebugChanged}
           />
-        )}
+        </div>
       </div>
     </div>
   );

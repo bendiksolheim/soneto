@@ -22,7 +22,7 @@ const searchBoxTheme = {
     fontFamily:
       'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
     fontWeight: "400",
-    unit: "14px",
+    unit: "16px",
     padding: "0.5em",
     lineHeight: "1.4",
   },

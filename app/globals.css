@@ -4,6 +4,29 @@
   logs: true;
 }
 
+/* Lock the page so only the map zooms/scrolls. Content already fits within the
+   h-full, overflow-hidden Frame, so this just removes rubber-band scroll and
+   pull-to-refresh. `touch-action: manipulation` also removes browser double-tap
+   zoom on the page chrome (the Mapbox canvas sets its own touch-action). */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  touch-action: manipulation;
+}
+
+/* Prevent iOS from auto-zooming into focused inputs (< 16px triggers it). With page
+   pinch-zoom disabled there would be no way to zoom back out. */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
 @plugin "daisyui/theme" {
   name: "silk";
   --color-base-100: oklch(97% 0.0035 67.78);

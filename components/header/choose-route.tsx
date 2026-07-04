@@ -86,7 +86,7 @@ export function MobileMenu({
         <BarsIcon size={20} />
       </Button>
       {isOpen && (
-        <div className="fixed inset-x-0 bottom-0 top-10 z-40 flex flex-col gap-2 overflow-y-auto bg-base-100 p-4">
+        <div className="fixed inset-x-0 bottom-0 top-10 z-40 flex flex-col gap-2 overflow-y-auto overscroll-contain bg-base-100 p-4">
           <UserMenuSection />
           <MenuSection title="Mine løyper" icon={<FolderIcon size={16} />}>
             <RoutesListContent

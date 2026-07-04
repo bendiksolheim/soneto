@@ -19,7 +19,7 @@ export function WaypointsList(props: WaypointsListProps): React.ReactElement {
   }
 
   return (
-    <ul className="max-h-[40vh] overflow-y-auto divide-y divide-base-300 -mx-2">
+    <ul className="max-h-[40vh] overflow-y-auto overscroll-contain divide-y divide-base-300 -mx-2">
       {points.map((point, index) => {
         const isStart = index === 0;
         const isFinish = index === points.length - 1;

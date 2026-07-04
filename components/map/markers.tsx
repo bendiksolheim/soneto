@@ -26,8 +26,12 @@ export function Markers(props: RouteProps): ReactNode {
   };
 
   return props.route.map((point, index) => (
+    // A point's identity in the route is its index (delete/hover/drag all key off index),
+    // and two points can legitimately share coordinates (e.g. a loop returning to its
+    // start), so a coordinate-based key would collide. The index is the correct key here.
     <RouteMarker
-      key={`${point.latitude}-${point.longitude}`}
+      // biome-ignore lint/suspicious/noArrayIndexKey: index is the route point's identity (coords aren't unique for loops)
+      key={index}
       index={index}
       point={point}
       numberOfPoints={props.route.length}

@@ -294,6 +294,14 @@ export function RunMap({
       ? elevationData[hoveredElevationIndex].coordinate
       : null;
 
+  // In run mode we flatten the terrain (exaggeration 0). The follow camera looks at the
+  // ground at a steep pitch, and draping the route onto 3D terrain let hills occlude the
+  // line and made it snap to the coarse, overzoomed DEM facets — so the route appeared to
+  // "drop" or skew at crests. A flat surface keeps the route fully visible. Elevation
+  // colouring is unaffected (it uses separately-fetched data) and the hillshade layer still
+  // shades the map; the planning view keeps the 3D terrain.
+  const terrain = { source: "terrain-source", exaggeration: runMode ? 0 : 0.5 };
+
   const onClick = async (e: MapMouseEvent) => {
     // Run mode is read-only — never add points by tapping the map.
     if (runMode) return;
@@ -336,7 +344,7 @@ export function RunMap({
             setTrackingMode("located");
           }
         }}
-        terrain={{ source: "terrain-source", exaggeration: 0.5 }}
+        terrain={terrain}
         onMouseMove={(e: MapMouseEvent) => {
           const features = e.target.queryRenderedFeatures(e.point, {
             layers: ["route-layer"],

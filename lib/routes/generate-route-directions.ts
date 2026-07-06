@@ -34,9 +34,16 @@ async function tryOnce(
   let scale = initialScale(targetLengthMeters, elongation, lateralOffset);
 
   for (let attempt = 0; attempt <= MAX_DISTANCE_SCALING_RETRIES; attempt++) {
-    const { pFar, pLatR, pLatL } = elongatedWaypoints(start, bearing, scale, elongation, lateralOffset);
+    const { pFar, pLatR, pLatL } = elongatedWaypoints(
+      start,
+      bearing,
+      scale,
+      elongation,
+      lateralOffset,
+    );
 
-    const midpoints = bulgeAmt > 0 ? bulgeWaypoints(start, pLatL, pFar, pLatR, bulgeAmt * scale) : undefined;
+    const midpoints =
+      bulgeAmt > 0 ? bulgeWaypoints(start, pLatL, pFar, pLatR, bulgeAmt * scale) : undefined;
     const waypointList = midpoints
       ? [start, midpoints[0], pLatL, midpoints[1], pFar, midpoints[2], pLatR, midpoints[3], start]
       : [start, pLatL, pFar, pLatR, start];
@@ -115,6 +122,15 @@ export async function generateRouteDirections(
   mapboxToken: string,
 ): Promise<GenerateRouteResult> {
   return runWithRotationRetries(input, (start, target, bearing, elongation, distanceTolerance) =>
-    tryOnce(start, target, bearing, elongation, distanceTolerance, input.lateralOffset, input.bulgeAmount, mapboxToken),
+    tryOnce(
+      start,
+      target,
+      bearing,
+      elongation,
+      distanceTolerance,
+      input.lateralOffset,
+      input.bulgeAmount,
+      mapboxToken,
+    ),
   );
 }

@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "biome check",
     "lint:fix": "biome check --write",
+    "format": "biome format --write app/ components/ hooks/ icons/ lib/ test/",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",

@@ -130,7 +130,13 @@ export function elongatedWaypoints(
   elongation: number,
   lateralOffset: number,
 ): ElongatedWaypoints {
-  const { pLatL, pLatR } = lateralWaypoints(start, bearing, scale, scale * elongation, lateralOffset);
+  const { pLatL, pLatR } = lateralWaypoints(
+    start,
+    bearing,
+    scale,
+    scale * elongation,
+    lateralOffset,
+  );
   return {
     pFar: destinationPoint(start, bearing, scale * elongation),
     pLatL,

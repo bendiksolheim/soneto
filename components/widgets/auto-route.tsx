@@ -5,10 +5,10 @@ import type { Point } from "@/lib/map/point";
 import {
   type GenerateRouteInput,
   type GenerateRouteResult,
-  type RouteDebugData,
   generateRouteDirections,
   generateRouteIsochrone,
   generateRouteOptimization,
+  type RouteDebugData,
 } from "@/lib/routes";
 import { Button } from "../base";
 

@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import {
+  type FillLayerSpecification,
   Layer,
   type LineLayerSpecification,
-  type FillLayerSpecification,
   Source,
 } from "react-map-gl/mapbox";
 import type { RouteDebugData } from "@/lib/routes";

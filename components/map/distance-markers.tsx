@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo } from "react";
+import type { ReactNode } from "react";
 import {
   type CircleLayerSpecification,
   Layer,
@@ -13,7 +13,7 @@ type DistanceMarkersProps = {
 };
 
 export function DistanceMarkers(props: DistanceMarkersProps): ReactNode {
-  const data = useMemo(() => buildMarkers(props.directions), [props.directions]);
+  const data = buildMarkers(props.directions);
 
   if (data.features.length === 0) {
     return null;

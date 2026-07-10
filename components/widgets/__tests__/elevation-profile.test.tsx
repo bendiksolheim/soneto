@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import type { AreaChart as RealAreaChart, Tooltip as RealTooltip } from "recharts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "../../../test/utils/test-utils";
@@ -18,6 +18,9 @@ const mockMoveState = vi.hoisted(() => ({
 }));
 
 vi.mock("recharts", () => ({
+  ResponsiveContainer: ({ children }: { children: ReactNode }) => (
+    <div data-testid="responsive-container">{children}</div>
+  ),
   AreaChart: ({ children, onMouseMove, onMouseLeave }: AreaChartProps) => (
     <figure
       data-testid="area-chart"

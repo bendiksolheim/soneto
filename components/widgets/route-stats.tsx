@@ -1,14 +1,10 @@
-import { useMemo } from "react";
-
 type RouteStatsProps = {
   distance: number;
   paceInSeconds: number;
 };
 
 export function RouteStats({ distance, paceInSeconds }: RouteStatsProps): React.ReactElement {
-  const time = useMemo(() => {
-    return Number((distance * paceInSeconds) / 60).toFixed(0);
-  }, [distance, paceInSeconds]);
+  const time = Number((distance * paceInSeconds) / 60).toFixed(0);
 
   return (
     <>

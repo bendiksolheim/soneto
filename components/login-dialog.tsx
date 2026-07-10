@@ -1,5 +1,6 @@
 import { signIn } from "next-auth/react";
-import { Button, Modal } from "./base";
+import { Button } from "./base/button";
+import { Modal } from "./base/modal";
 
 type LoginDialogProps = {
   isOpen: boolean;
@@ -8,7 +9,12 @@ type LoginDialogProps = {
 
 export function LoginDialog(props: LoginDialogProps): React.ReactElement {
   return (
-    <Modal className="text-center" isOpen={props.isOpen} setIsOpen={props.setIsOpen}>
+    <Modal
+      className="text-center"
+      isOpen={props.isOpen}
+      setIsOpen={props.setIsOpen}
+      label="Logg inn"
+    >
       <h3 className="pb-2 font-bold">Logg inn</h3>
       <LoginButton />
     </Modal>

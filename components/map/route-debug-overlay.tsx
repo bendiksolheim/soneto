@@ -11,13 +11,13 @@ type RouteDebugOverlayProps = {
   data: RouteDebugData;
 };
 
+const toCoord = (p: { longitude: number; latitude: number }): [number, number] => [
+  p.longitude,
+  p.latitude,
+];
+
 export function RouteDebugOverlay({ data }: RouteDebugOverlayProps): ReactNode {
   const { start, pFar, pLatL, pLatR, midpoints } = data.diamond;
-
-  const toCoord = (p: { longitude: number; latitude: number }): [number, number] => [
-    p.longitude,
-    p.latitude,
-  ];
 
   // Draw the waypoint path the algorithm sends to Mapbox as a closed LineString.
   // When midpoints are present (rounded topology) draw all 8 points; otherwise

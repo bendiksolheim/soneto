@@ -10,7 +10,7 @@ beforeEach(() => {
 describe("Modal", () => {
   it("renders children inside the modal box", () => {
     render(
-      <Modal isOpen={false} setIsOpen={vi.fn()}>
+      <Modal isOpen={false} setIsOpen={vi.fn()} label="Test modal">
         Modal content
       </Modal>,
     );
@@ -19,7 +19,7 @@ describe("Modal", () => {
 
   it("calls showModal when isOpen becomes true", () => {
     const { container } = render(
-      <Modal isOpen={true} setIsOpen={vi.fn()}>
+      <Modal isOpen={true} setIsOpen={vi.fn()} label="Test modal">
         content
       </Modal>,
     );
@@ -29,7 +29,7 @@ describe("Modal", () => {
 
   it("calls close when isOpen is false", () => {
     const { container } = render(
-      <Modal isOpen={false} setIsOpen={vi.fn()}>
+      <Modal isOpen={false} setIsOpen={vi.fn()} label="Test modal">
         content
       </Modal>,
     );
@@ -40,7 +40,7 @@ describe("Modal", () => {
   it("calls setIsOpen(false) when close button is clicked", () => {
     const setIsOpen = vi.fn();
     render(
-      <Modal isOpen={true} setIsOpen={setIsOpen}>
+      <Modal isOpen={true} setIsOpen={setIsOpen} label="Test modal">
         content
       </Modal>,
     );
@@ -51,7 +51,7 @@ describe("Modal", () => {
   it("calls setIsOpen(false) when backdrop button is clicked", () => {
     const setIsOpen = vi.fn();
     render(
-      <Modal isOpen={true} setIsOpen={setIsOpen}>
+      <Modal isOpen={true} setIsOpen={setIsOpen} label="Test modal">
         content
       </Modal>,
     );
@@ -61,7 +61,7 @@ describe("Modal", () => {
 
   it("applies custom className to dialog", () => {
     const { container } = render(
-      <Modal isOpen={false} setIsOpen={vi.fn()} className="custom-modal">
+      <Modal isOpen={false} setIsOpen={vi.fn()} className="custom-modal" label="Test modal">
         content
       </Modal>,
     );

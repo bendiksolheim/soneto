@@ -5,9 +5,17 @@ type ModalProps = React.PropsWithChildren<{
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   className?: string;
+  /** Accessible name announced by screen readers when the dialog opens. */
+  label: string;
 }>;
 
-export function Modal({ isOpen, setIsOpen, className, children }: ModalProps): React.ReactElement {
+export function Modal({
+  isOpen,
+  setIsOpen,
+  className,
+  label,
+  children,
+}: ModalProps): React.ReactElement {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -19,7 +27,12 @@ export function Modal({ isOpen, setIsOpen, className, children }: ModalProps): R
   }, [isOpen]);
 
   return (
-    <dialog ref={ref} className={cn("modal", className)} onCancel={() => setIsOpen(false)}>
+    <dialog
+      ref={ref}
+      aria-label={label}
+      className={cn("modal", className)}
+      onCancel={() => setIsOpen(false)}
+    >
       <div className="modal-box">
         <form method="dialog">
           {/* if there is a button in form, it will close the modal */}

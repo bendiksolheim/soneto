@@ -13,7 +13,9 @@ import {
 import type { Point } from "@/lib/map/point";
 import type { RouteWithCalculatedData } from "@/lib/types/route";
 import { cn } from "@/lib/utils";
-import { Button, Card, Dropdown } from "../base";
+import { Button } from "../base/button";
+import { Card } from "../base/card";
+import { Dropdown } from "../base/dropdown";
 import { LoginButton } from "../login-dialog";
 
 type ChooseRouteProps = {
@@ -121,7 +123,7 @@ type MenuSectionProps = React.PropsWithChildren<{
 function MenuSection({ title, icon, children }: MenuSectionProps): React.ReactElement {
   return (
     <div className="collapse collapse-arrow border border-base-300 bg-base-100">
-      <input type="checkbox" />
+      <input type="checkbox" aria-label={title} />
       <div className="collapse-title flex items-center gap-2 font-medium">
         {icon}
         {title}
@@ -219,6 +221,7 @@ function SaveRouteFormContent({ onSave }: SaveRouteFormProps): React.ReactElemen
           type="text"
           className="input join-item"
           placeholder="Løypenavn"
+          aria-label="Løypenavn"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />

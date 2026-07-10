@@ -24,9 +24,26 @@ export function readFlag(key: string): boolean {
   }
 }
 
+const listeners = new Set<() => void>();
+
+// Subscribe to flag changes. Fires for both same-tab writes (via writeFlag) and
+// cross-tab writes (via the storage event), so useSyncExternalStore stays in sync.
+export function subscribeToFlags(callback: () => void): () => void {
+  listeners.add(callback);
+  window.addEventListener("storage", callback);
+  return () => {
+    listeners.delete(callback);
+    window.removeEventListener("storage", callback);
+  };
+}
+
 export function writeFlag(key: string, value: boolean): void {
   try {
     localStorage.setItem(key, String(value));
+    // localStorage writes don't fire "storage" in the same tab, so notify manually.
+    for (const listener of listeners) {
+      listener();
+    }
   } catch (error) {
     console.warn("Failed to write feature flag to localStorage:", error);
   }

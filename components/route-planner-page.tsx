@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/base";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/base/button";
 import { Frame } from "@/components/frame";
 import { RunMap } from "@/components/map";
 import { RunModeOverlay } from "@/components/map/run-mode-overlay";
 import { Share } from "@/components/widgets/share";
 import { useDeviceHeading } from "@/hooks/use-device-heading";
 import { useFadeTransition } from "@/hooks/use-fade-transition";
+import { useFeatureFlag } from "@/hooks/use-feature-flag";
 import type { UserPosition } from "@/hooks/use-user-location";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import { PlayIcon } from "@/icons";
-import { readFlag } from "@/lib/feature-flags";
 import type { Point } from "@/lib/map/point";
 import { computeWaypointDistances } from "@/lib/map/waypoint-distances";
 import { type Directions, directions } from "@/lib/mapbox";
@@ -24,6 +24,9 @@ interface RoutePlannerPageProps {
 }
 
 export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps) {
+  // Mapbox public (pk.) tokens are designed to ship in the browser bundle and are
+  // restricted by URL, so this NEXT_PUBLIC_ name is not a leaked secret.
+  // react-doctor-disable-next-line react-doctor/public-env-secret-name
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
   const [directions, setDirections] = useState<Array<Directions>>([]);
@@ -32,12 +35,12 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
   >([]);
   const [hoveredElevationIndex, setHoveredElevationIndex] = useState<number | null>(null);
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
-  const [shouldFitBounds, setShouldFitBounds] = useState(false);
-  const [autoRouteEnabled, setAutoRouteEnabled] = useState(false);
   const [userLocation, setUserLocation] = useState<UserPosition | null>(null);
   const [debugData, setDebugData] = useState<RouteDebugData | null>(null);
   const [runMode, setRunMode] = useState(false);
-  const [showRunButton, setShowRunButton] = useState(false);
+
+  const autoRouteEnabled = useFeatureFlag("autoroute");
+  const showRunButton = useFeatureFlag("show-run-button");
 
   const wakeLock = useWakeLock();
   const deviceHeading = useDeviceHeading();
@@ -57,11 +60,15 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
     }
   });
 
-  const distance = useMemo(() => {
-    return directions.reduce((acc, direction) => acc + direction.routes[0].distance / 1000, 0);
-  }, [directions]);
+  // Fit bounds on mount when we loaded an initial route (from URL or localStorage).
+  const [shouldFitBounds, setShouldFitBounds] = useState(() => routePoints.length >= 2);
 
-  const pointDistances = useMemo(() => computeWaypointDistances(directions), [directions]);
+  const distance = directions.reduce(
+    (acc, direction) => acc + direction.routes[0].distance / 1000,
+    0,
+  );
+
+  const pointDistances = computeWaypointDistances(directions);
 
   // Clean up URL if route was loaded from URL parameter
   useEffect(() => {
@@ -73,12 +80,6 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [initialRoute]);
-
-  // Read feature flags from localStorage on mount (client-only, avoids SSR mismatch)
-  useEffect(() => {
-    setAutoRouteEnabled(readFlag("autoroute"));
-    setShowRunButton(readFlag("show-run-button"));
-  }, []);
 
   // Save draft route to localStorage whenever routePoints changes
   useEffect(() => {
@@ -105,15 +106,6 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
     }
     updateDirections();
   }, [routePoints, mapboxToken]);
-
-  // Fit bounds when initial route is loaded (from URL or localStorage)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: dont rerun useEffect on route change
-  useEffect(() => {
-    if (routePoints.length >= 2) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setShouldFitBounds(true);
-    }
-  }, []); // Only run on mount
 
   const handleClearPoints = () => {
     setRoutePoints([]);

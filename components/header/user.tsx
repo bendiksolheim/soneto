@@ -3,7 +3,9 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { UserCircleIcon } from "@/icons";
 import { cn } from "@/lib/utils";
-import { Button, Dropdown, Menu } from "../base";
+import { Button } from "../base/button";
+import { Dropdown } from "../base/dropdown";
+import { Menu } from "../base/menu";
 import { LoginDialog } from "../login-dialog";
 
 type UserProps = { className?: string };

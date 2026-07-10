@@ -1,5 +1,5 @@
 import { LocateFixedIcon } from "@/icons";
-import { Button } from "../base";
+import { Button } from "../base/button";
 
 export type TrackingMode = "off" | "following" | "located";
 

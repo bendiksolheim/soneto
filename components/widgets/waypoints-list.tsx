@@ -1,7 +1,7 @@
 import { XCircleIcon } from "@/icons";
 import type { Point } from "@/lib/map/point";
 import { cn } from "@/lib/utils";
-import { Button } from "../base";
+import { Button } from "../base/button";
 
 type WaypointsListProps = {
   points: Array<Point>;

@@ -1,6 +1,6 @@
+import { DatabaseSync } from "node:sqlite";
 import { drizzle } from "drizzle-orm/node-sqlite";
 import { migrate } from "drizzle-orm/node-sqlite/migrator";
-import { DatabaseSync } from "node:sqlite";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 

@@ -1,9 +1,7 @@
 {
   "dialect": "sqlite",
   "id": "7a0608a6-043d-45ce-be21-f1a8e9069d5f",
-  "prevIds": [
-    "00000000-0000-0000-0000-000000000000"
-  ],
+  "prevIds": ["00000000-0000-0000-0000-000000000000"],
   "version": "7",
   "ddl": [
     {
@@ -21,9 +19,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "routes_pk",
       "table": "routes",

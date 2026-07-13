@@ -1,5 +1,9 @@
 "use client";
 
+// recharts is intentionally imported eagerly here: this module is itself loaded via
+// next/dynamic ({ ssr: false }) from elevation-profile.tsx and only mounts once the user
+// opens the elevation panel, so recharts is already kept out of the initial bundle.
+// react-doctor-disable-next-line react-doctor/prefer-dynamic-import
 import {
   Area,
   AreaChart,

@@ -20,7 +20,6 @@ export function RouteMarker(props: RouteMarkerProps): React.ReactElement {
   const isFinish = index === numberOfPoints - 1;
   return (
     <Marker
-      key={`route-${index}`}
       longitude={point.longitude}
       latitude={point.latitude}
       draggable

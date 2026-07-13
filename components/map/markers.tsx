@@ -25,21 +25,20 @@ export function Markers(props: RouteProps): ReactNode {
     props.setRoute(newRoutePoints);
   };
 
-  return props.route.map((point, index) => (
-    // A point's identity in the route is its index (delete/hover/drag all key off index),
-    // and two points can legitimately share coordinates (e.g. a loop returning to its
-    // start), so a coordinate-based key would collide. The index is the correct key here.
-    <RouteMarker
-      // biome-ignore lint/suspicious/noArrayIndexKey: index is the route point's identity (coords aren't unique for loops)
-      key={index}
-      index={index}
-      point={point}
-      numberOfPoints={props.route.length}
-      isHovered={props.hoveredIndex === index}
-      onClick={(e) => handleMarkerClick(index, e)}
-      onDrag={(e) => handleMarkerDrag(index, e)}
-      onMouseEnter={() => props.onHover(index)}
-      onMouseLeave={() => props.onHover(null)}
-    />
-  ));
+  return props.route.map((point, index) => {
+    const key = `${point.latitude}-${point.longitude}-${index}`;
+    return (
+      <RouteMarker
+        key={key}
+        index={index}
+        point={point}
+        numberOfPoints={props.route.length}
+        isHovered={props.hoveredIndex === index}
+        onClick={(e) => handleMarkerClick(index, e)}
+        onDrag={(e) => handleMarkerDrag(index, e)}
+        onMouseEnter={() => props.onHover(index)}
+        onMouseLeave={() => props.onHover(null)}
+      />
+    );
+  });
 }

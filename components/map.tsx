@@ -1,17 +1,12 @@
 "use client";
 
 import { LngLatBounds } from "mapbox-gl";
-import {
-  calculateDistance,
-  generateElevationPoints,
-  interpolatePointAtDistance,
-} from "@/lib/elevation/elevation-data";
-import { createElevationLookup, fetchElevations } from "@/lib/elevation/terrain-rgb";
+import { calculateDistance } from "@/lib/elevation/elevation-data";
 import type { Point } from "@/lib/map/point";
 import type { Directions } from "@/lib/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import MapboxMap, {
   type HillshadeLayerSpecification,
   Layer,
@@ -21,8 +16,11 @@ import MapboxMap, {
   ScaleControl,
   Source,
 } from "react-map-gl/mapbox";
+import { useElevationProfile } from "@/hooks/use-elevation-profile";
+import { useMapResizeObserver } from "@/hooks/use-map-resize-observer";
+import { useRunModeInteractionLock } from "@/hooks/use-run-mode-interaction-lock";
 import { useSmoothFollow } from "@/hooks/use-smooth-follow";
-import { type UserPosition, useUserLocation } from "@/hooks/use-user-location";
+import type { UserPosition } from "@/hooks/use-user-location";
 import type { RouteDebugData } from "@/lib/routes";
 import { DistanceMarkers } from "./map/distance-markers";
 import { HoverMarker } from "./map/hover-marker";
@@ -35,6 +33,19 @@ import { UserLocationMarker } from "./map/user-location-marker";
 const SearchBox = dynamic(() => import("./map/search-box").then((mod) => mod.SearchBox), {
   ssr: false,
 });
+
+// Imperative camera commands the parent triggers on discrete events (a route being
+// loaded, run mode being exited) instead of syncing them through a prop + effect.
+export type RunMapHandle = {
+  // Frame the camera around the given route points.
+  fitRouteBounds: (points: Array<Point>) => void;
+  // Return to the flat, north-up planner view (used when leaving run mode).
+  resetCamera: () => void;
+  // Arm the fly-in so the next GPS fix of a fresh following session zooms in.
+  // Called by the parent on the off -> following transition (a resume from
+  // "located" deliberately skips this and keeps the current zoom).
+  beginFollowSession: () => void;
+};
 
 interface MapContainerProps {
   mapboxToken: string;
@@ -53,20 +64,25 @@ interface MapContainerProps {
   hoveredPointIndex: number | null;
   onPointHover: (index: number | null) => void;
   onDeletePoint: (index: number) => void;
-  shouldFitBounds?: boolean;
-  onFitBoundsComplete?: () => void;
-  onUserLocationFound?: (location: UserPosition) => void;
   debugData?: RouteDebugData | null;
   // When true, the map becomes a locked-down follow-me view: interaction is
   // disabled, planner chrome is hidden, and the camera follows the user.
   runMode?: boolean;
-  // Called when run mode can't proceed (e.g. location permission denied) so the
-  // parent can drop out of run mode.
-  onExitRunMode?: () => void;
+  // The user's live GPS position, owned by the parent (which also feeds it to
+  // Auto-Route). null until tracking starts.
+  userLocation: UserPosition | null;
+  // Location-tracking UI state and its toggle, owned by the parent.
+  trackingMode: TrackingMode;
+  onLocationToggle: () => void;
+  // Called when the user manually pans the map, so the parent can detach the follow
+  // camera (following -> located).
+  onManualPan: () => void;
   // Smoothed device-compass heading (degrees clockwise from north), owned by the
   // parent so the permission prompt can be triggered from the user's gesture. Used
   // to rotate the follow camera instantly when the user turns.
   headingRef?: React.RefObject<number | null>;
+  // Imperative handle for parent-triggered camera commands.
+  ref?: React.Ref<RunMapHandle>;
 }
 
 export function RunMap({
@@ -80,39 +96,30 @@ export function RunMap({
   hoveredPointIndex,
   onPointHover,
   onDeletePoint,
-  shouldFitBounds,
-  onFitBoundsComplete,
-  onUserLocationFound,
   debugData,
   runMode = false,
-  onExitRunMode,
+  userLocation,
+  trackingMode,
+  onLocationToggle,
+  onManualPan,
   headingRef,
+  ref,
 }: MapContainerProps) {
   const mapRef = useRef<MapRef>(null);
-  const [elevationData, setElevationDataState] = useState<
-    Array<{ distance: number; elevation: number; coordinate: [number, number] }>
-  >([]);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [trackingMode, setTrackingMode] = useState<TrackingMode>("off");
-  const hasCenteredOnUser = useRef(false);
-  const runModeRef = useRef(runMode);
-  runModeRef.current = runMode;
-  const {
-    location: userLocation,
-    start,
-    stop,
-  } = useUserLocation({
-    onError: () => {
-      setTrackingMode("off");
-      // If location fails while running, there's nothing to follow — leave run mode.
-      if (runModeRef.current) onExitRunMode?.();
-    },
-  });
+  // Armed by beginFollowSession() when a fresh following session starts; the next GPS
+  // fix flies in at street zoom and disarms it, so subsequent fixes just ease.
+  const pendingFlyIn = useRef(false);
+  // Fit the initial route (loaded from URL/localStorage before mount) exactly once,
+  // when the map first reports ready.
+  const hasFittedInitial = useRef(false);
 
   // The compass heading is owned by the parent (so iOS permission can be requested
   // from a user gesture); fall back to a local empty ref when not provided.
   const fallbackHeadingRef = useRef<number | null>(null);
   const activeHeadingRef = headingRef ?? fallbackHeadingRef;
+
+  const elevationData = useElevationProfile(directions, mapboxToken, setElevation);
 
   // Smoothly interpolate the follow camera + marker between the ~1Hz GPS fixes so
   // run-mode tracking looks live rather than jumping once per second.
@@ -124,170 +131,44 @@ export function RunMap({
     ready: mapLoaded,
   });
 
-  // Toggle location tracking through the OFF -> FOLLOWING -> OFF cycle, with LOCATED
-  // (camera detached after a manual pan) resuming FOLLOWING on the next press.
-  const handleLocationToggle = () => {
-    switch (trackingMode) {
-      case "off":
-        hasCenteredOnUser.current = false;
-        setTrackingMode("following");
-        start();
-        break;
-      case "following":
-        setTrackingMode("off");
-        stop();
-        break;
-      case "located":
-        setTrackingMode("following");
-        break;
-    }
-  };
+  useImperativeHandle(
+    ref,
+    () => ({
+      fitRouteBounds: (points: Array<Point>) => {
+        if (mapRef.current) fitBoundsToPoints(mapRef.current, points);
+      },
+      // Leaving run mode: ease back to the flat, north-up planner view. (Entering is
+      // handled by useSmoothFollow's fly-in; it doesn't reset the camera on exit.)
+      resetCamera: () => {
+        mapRef.current?.easeTo({ pitch: 0, bearing: 0, duration: 500 });
+      },
+      beginFollowSession: () => {
+        pendingFlyIn.current = true;
+      },
+    }),
+    [],
+  );
 
-  // Keep the camera on the user while following. The first fix flies in at street zoom;
-  // subsequent fixes (and resuming from LOCATED) ease to the new position at the current
-  // zoom so we don't yank the user around. Disabled in run mode: there useSmoothFollow
-  // owns the camera, and this effect's pitch-less easeTo would otherwise cancel the
-  // nav-view fly-in's tilt on every GPS fix.
+  // Keep the camera on the user while following. When beginFollowSession() has armed a
+  // fresh session, the next fix flies in at street zoom; every other fix (including a
+  // resume from LOCATED) eases to the new position at the current zoom so we don't yank
+  // the user around. Disabled in run mode: there useSmoothFollow owns the camera, and
+  // this effect's pitch-less easeTo would otherwise cancel the nav-view fly-in's tilt on
+  // every GPS fix.
   useEffect(() => {
     if (runMode || trackingMode !== "following" || !userLocation || !mapRef.current) return;
 
     const center: [number, number] = [userLocation.longitude, userLocation.latitude];
-    if (hasCenteredOnUser.current) {
-      mapRef.current.easeTo({ center, duration: 500 });
-    } else {
+    if (pendingFlyIn.current) {
       mapRef.current.flyTo({ center, zoom: 15 });
-      hasCenteredOnUser.current = true;
+      pendingFlyIn.current = false;
+    } else {
+      mapRef.current.easeTo({ center, duration: 500 });
     }
   }, [runMode, trackingMode, userLocation]);
 
-  // Surface the latest position upward (e.g. for Auto-Route) regardless of follow state.
-  useEffect(() => {
-    if (userLocation) {
-      onUserLocationFound?.(userLocation);
-    }
-  }, [userLocation, onUserLocationFound]);
-
-  // Entering run mode starts the GPS watch; exiting stops the watch and returns the
-  // camera to the flat, north-up planner view. (The follow camera itself is driven by
-  // useSmoothFollow.)
-  useEffect(() => {
-    if (runMode) {
-      start();
-    } else {
-      stop();
-      mapRef.current?.easeTo({ pitch: 0, bearing: 0, duration: 500 });
-    }
-  }, [runMode, start, stop]);
-
-  // Mapbox doesn't reliably resize its canvas when the planner chrome collapses
-  // (frame.tsx animates the container's padding + header height), so the canvas keeps
-  // its old size and leaves the grown right/bottom edges uncovered. Observe the
-  // container and resize to match — but debounce to a single resize once the size
-  // settles, since resizing on every animation frame reallocates the GL drawing buffer
-  // each frame and flickers.
-  useEffect(() => {
-    const map = mapRef.current?.getMap();
-    if (!map || !mapLoaded) return;
-
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const observer = new ResizeObserver(() => {
-      clearTimeout(timer);
-      timer = setTimeout(() => map.resize(), 40);
-    });
-    observer.observe(map.getContainer());
-    return () => {
-      clearTimeout(timer);
-      observer.disconnect();
-    };
-  }, [mapLoaded]);
-
-  // Lock down all map interaction while in run mode.
-  useEffect(() => {
-    const map = mapRef.current?.getMap();
-    if (!map || !mapLoaded) return;
-
-    const handlers = [
-      map.dragPan,
-      map.scrollZoom,
-      map.boxZoom,
-      map.dragRotate,
-      map.keyboard,
-      map.doubleClickZoom,
-      map.touchZoomRotate,
-    ];
-    handlers.forEach((handler) => {
-      if (runMode) {
-        handler.disable();
-      } else {
-        handler.enable();
-      }
-    });
-  }, [runMode, mapLoaded]);
-
-  // Query elevation for route points and generate elevation profile
-  useEffect(() => {
-    if (!directions || directions.length < 1) return;
-
-    const coordinates = directions[0].routes[0].geometry.coordinates;
-    const totalDistanceMeters = directions[0].routes[0].distance;
-    const sampleIntervalMeters = 30;
-
-    let cancelled = false;
-
-    async function fetchAndGenerateElevation() {
-      // Sample points along the route
-      const numSamples = Math.floor(totalDistanceMeters / sampleIntervalMeters) + 1;
-      const sampleCoordinates: [number, number][] = [];
-
-      for (let i = 0; i < numSamples; i++) {
-        const targetDistance = i * sampleIntervalMeters;
-        const point = interpolatePointAtDistance(coordinates, targetDistance);
-        if (point) {
-          sampleCoordinates.push(point);
-        }
-      }
-
-      // Fetch elevation data from Mapbox API
-      const elevationMap = await fetchElevations(sampleCoordinates, mapboxToken);
-
-      if (cancelled) return;
-
-      // Generate elevation points using the fetched data
-      const data = generateElevationPoints(
-        coordinates,
-        totalDistanceMeters,
-        sampleIntervalMeters,
-        createElevationLookup(elevationMap),
-      );
-
-      setElevationDataState(data);
-      setElevation(data);
-    }
-
-    fetchAndGenerateElevation();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [directions, setElevation, mapboxToken]);
-
-  // Fit map bounds when a route is loaded
-  useEffect(() => {
-    if (shouldFitBounds && mapLoaded && routePoints.length >= 2 && mapRef.current) {
-      const bounds = new LngLatBounds();
-      routePoints.forEach((point) => {
-        bounds.extend([point.longitude, point.latitude]);
-      });
-
-      mapRef.current.fitBounds(bounds, {
-        padding: 50,
-        maxZoom: 16,
-        duration: 1000,
-      });
-
-      onFitBoundsComplete?.();
-    }
-  }, [shouldFitBounds, mapLoaded, routePoints, onFitBoundsComplete]);
+  useMapResizeObserver(mapRef, mapLoaded);
+  useRunModeInteractionLock(mapRef, mapLoaded, runMode);
 
   const hoveredCoordinate =
     hoveredElevationIndex !== null && elevationData[hoveredElevationIndex]
@@ -337,13 +218,15 @@ export function RunMap({
         maxZoom={20}
         minZoom={3}
         onClick={onClick}
-        onLoad={() => setMapLoaded(true)}
-        onDragStart={() => {
-          // A manual pan detaches the camera but keeps the marker updating.
-          if (trackingMode === "following") {
-            setTrackingMode("located");
+        onLoad={() => {
+          setMapLoaded(true);
+          // Frame the route we mounted with (from URL/localStorage) once the map is ready.
+          if (!hasFittedInitial.current && mapRef.current) {
+            hasFittedInitial.current = true;
+            fitBoundsToPoints(mapRef.current, routePoints);
           }
         }}
+        onDragStart={onManualPan}
         terrain={terrain}
         onMouseMove={(e: MapMouseEvent) => {
           const features = e.target.queryRenderedFeatures(e.point, {
@@ -391,9 +274,27 @@ export function RunMap({
         {!runMode && debugData && <RouteDebugOverlay data={debugData} />}
       </MapboxMap>
       {!runMode && <SearchBox mapboxToken={mapboxToken} mapRef={mapRef} />}
-      {!runMode && <LocationControl mode={trackingMode} onClick={handleLocationToggle} />}
+      {!runMode && <LocationControl mode={trackingMode} onClick={onLocationToggle} />}
     </>
   );
+}
+
+// Frame the camera around a set of route points. Pure given the map instance, so it lives
+// at module scope (no per-render identity, no memoization needed) and is shared by the
+// imperative fitRouteBounds handle and the initial onLoad fit.
+function fitBoundsToPoints(map: MapRef, points: Array<Point>) {
+  if (points.length < 2) return;
+
+  const bounds = new LngLatBounds();
+  points.forEach((point) => {
+    bounds.extend([point.longitude, point.latitude]);
+  });
+
+  map.fitBounds(bounds, {
+    padding: 50,
+    maxZoom: 16,
+    duration: 1000,
+  });
 }
 
 // Terrain source data

@@ -8,6 +8,9 @@ function FlagRow({ flag }: { flag: FeatureFlag }) {
 
   return (
     <li className="flex items-start gap-3">
+      {/* Labeled by the <label htmlFor={flag.key}> below via the matching id; the tool
+          doesn't resolve that association for the dynamic label text. */}
+      {/* react-doctor-disable-next-line react-doctor/control-has-associated-label */}
       <input
         id={flag.key}
         type="checkbox"

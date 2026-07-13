@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/base/button";
 import { Frame } from "@/components/frame";
-import { RunMap } from "@/components/map";
+import { RunMap, type RunMapHandle } from "@/components/map";
+import type { TrackingMode } from "@/components/map/location-control";
 import { RunModeOverlay } from "@/components/map/run-mode-overlay";
 import { Share } from "@/components/widgets/share";
 import { useDeviceHeading } from "@/hooks/use-device-heading";
 import { useFadeTransition } from "@/hooks/use-fade-transition";
 import { useFeatureFlag } from "@/hooks/use-feature-flag";
-import type { UserPosition } from "@/hooks/use-user-location";
+import { useUserLocation } from "@/hooks/use-user-location";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import { PlayIcon } from "@/icons";
 import type { Point } from "@/lib/map/point";
@@ -35,15 +36,71 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
   >([]);
   const [hoveredElevationIndex, setHoveredElevationIndex] = useState<number | null>(null);
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
-  const [userLocation, setUserLocation] = useState<UserPosition | null>(null);
   const [debugData, setDebugData] = useState<RouteDebugData | null>(null);
   const [runMode, setRunMode] = useState(false);
+  // Location-tracking UI state (off -> following -> located), driven by the location
+  // button and manual map pans. Lives here alongside the GPS hook it controls.
+  const [trackingMode, setTrackingMode] = useState<TrackingMode>("off");
 
   const autoRouteEnabled = useFeatureFlag("autoroute");
   const showRunButton = useFeatureFlag("show-run-button");
 
   const wakeLock = useWakeLock();
   const deviceHeading = useDeviceHeading();
+  // Imperative camera commands into the map (frame a route, reset the view on run exit).
+  const mapControlRef = useRef<RunMapHandle>(null);
+
+  // Common run-mode teardown. Defined before useUserLocation so the hook's onError can
+  // call it without a forward reference. Deliberately omits stopping the GPS watch: the
+  // geolocation error path (which fires onError) has already cleared it, while the
+  // user-initiated exitRunMode below stops it explicitly.
+  const teardownRunMode = () => {
+    setRunMode(false);
+    wakeLock.release();
+    deviceHeading.stop();
+    mapControlRef.current?.resetCamera();
+  };
+
+  // The user's GPS position lives here so it can feed both the map (down as a prop) and
+  // Auto-Route (via Frame), without the map handing it back up through an effect.
+  const {
+    location: userLocation,
+    start: startLocation,
+    stop: stopLocation,
+  } = useUserLocation({
+    onError: () => {
+      setTrackingMode("off");
+      // If location fails while running, there's nothing to follow — leave run mode.
+      if (runMode) teardownRunMode();
+    },
+  });
+
+  // Cycle location tracking OFF -> FOLLOWING -> OFF, with LOCATED (camera detached after a
+  // manual pan) resuming FOLLOWING on the next press.
+  const handleLocationToggle = () => {
+    switch (trackingMode) {
+      case "off":
+        setTrackingMode("following");
+        startLocation();
+        // A fresh session (not a resume from "located") should zoom in on the first fix.
+        mapControlRef.current?.beginFollowSession();
+        break;
+      case "following":
+        setTrackingMode("off");
+        stopLocation();
+        break;
+      case "located":
+        setTrackingMode("following");
+        break;
+    }
+  };
+
+  // A manual pan detaches the follow camera but keeps the marker updating.
+  const handleManualPan = () => {
+    if (trackingMode === "following") {
+      setTrackingMode("located");
+    }
+  };
   // Crossfade between the planner overlays (run/share buttons) and the run-mode overlay.
   const plannerUi = useFadeTransition(!runMode, 250);
   const runUi = useFadeTransition(runMode, 250);
@@ -60,9 +117,6 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
     }
   });
 
-  // Fit bounds on mount when we loaded an initial route (from URL or localStorage).
-  const [shouldFitBounds, setShouldFitBounds] = useState(() => routePoints.length >= 2);
-
   const distance = directions.reduce(
     (acc, direction) => acc + direction.routes[0].distance / 1000,
     0,
@@ -70,9 +124,12 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
 
   const pointDistances = computeWaypointDistances(directions);
 
-  // Clean up URL if route was loaded from URL parameter
+  // Clean up URL if route was loaded from URL parameter. This is a one-shot,
+  // mount-time cleanup that reacts to a hydration prop (there is no user event to hang
+  // it off), so the effect is the right place for it.
   useEffect(() => {
     if (
+      // react-doctor-disable-next-line react-doctor/no-event-handler
       initialRoute &&
       typeof window !== "undefined" &&
       window.location.search.includes("route=")
@@ -120,14 +177,14 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
     setRoutePoints(routePoints.filter((_, i) => i !== index));
   };
 
-  const handleRouteLoad = (routePoints: Array<Point>) => {
-    setRoutePoints(routePoints);
-    setShouldFitBounds(true);
+  const handleRouteLoad = (points: Array<Point>) => {
+    setRoutePoints(points);
+    mapControlRef.current?.fitRouteBounds(points);
   };
 
   const handleAutoRouteGenerated = (result: GenerateRouteResult) => {
     setRoutePoints(result.points);
-    setShouldFitBounds(true);
+    mapControlRef.current?.fitRouteBounds(result.points);
   };
 
   const enterRunMode = () => {
@@ -135,12 +192,12 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
     wakeLock.request();
     // Must run from this click so iOS allows the compass permission prompt.
     deviceHeading.start();
+    startLocation();
   };
 
   const exitRunMode = () => {
-    setRunMode(false);
-    wakeLock.release();
-    deviceHeading.stop();
+    teardownRunMode();
+    stopLocation();
   };
 
   return (
@@ -162,6 +219,7 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
       hideChrome={runMode}
     >
       <RunMap
+        ref={mapControlRef}
         mapboxToken={mapboxToken}
         routePoints={routePoints}
         setRoutePoints={setRoutePoints}
@@ -172,12 +230,12 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
         hoveredPointIndex={hoveredPointIndex}
         onPointHover={setHoveredPointIndex}
         onDeletePoint={handleDeletePoint}
-        shouldFitBounds={shouldFitBounds}
-        onFitBoundsComplete={() => setShouldFitBounds(false)}
-        onUserLocationFound={setUserLocation}
         debugData={debugData}
         runMode={runMode}
-        onExitRunMode={exitRunMode}
+        userLocation={userLocation}
+        trackingMode={trackingMode}
+        onLocationToggle={handleLocationToggle}
+        onManualPan={handleManualPan}
         headingRef={deviceHeading.headingRef}
       />
       {plannerUi.mounted && showRunButton && (
@@ -221,6 +279,10 @@ async function getRoute(
       const endIndex = Math.min(i + maxWaypoints, coordinates.length);
       const chunk = coordinates.slice(i, endIndex);
 
+      // Sequential on purpose: the 200ms delay below throttles the Mapbox Directions
+      // API. Parallelizing with Promise.all would remove that throttle and risk rate
+      // limits, so keep these awaits serial.
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
       const response = await directions(chunk, mapboxToken);
       allDirections.push(response);
 

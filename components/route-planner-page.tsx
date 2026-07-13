@@ -240,7 +240,7 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
       />
       {plannerUi.mounted && showRunButton && (
         <div
-          className={`absolute bottom-14 left-1/2 -translate-x-1/2 z-10 transition-opacity duration-[250ms] ease-in-out ${
+          className={`absolute bottom-14 left-1/2 -translate-x-1/2 z-10 transition-opacity duration-250 ease-in-out ${
             plannerUi.visible ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
         >
@@ -252,7 +252,7 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
       )}
       {plannerUi.mounted && (
         <div
-          className={`absolute bottom-2 left-[50%] transform-[translate(-50%, 0)] transition-opacity duration-[250ms] ease-in-out ${
+          className={`absolute bottom-2 left-[50%] transform-[translate(-50%, 0)] transition-opacity duration-250 ease-in-out ${
             plannerUi.visible ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
         >

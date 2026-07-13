@@ -33,12 +33,12 @@ type FrameProps = React.PropsWithChildren<{
 export function Frame(props: FrameProps): React.ReactElement {
   return (
     <div
-      className={`flex flex-col w-full h-full transition-[padding] duration-[250ms] ease-in-out ${
+      className={`flex flex-col w-full h-full transition-[padding] duration-250 ease-in-out ${
         props.hideChrome ? "" : "px-2 md:px-4 pb-2 md:pb-4"
       }`}
     >
       <div
-        className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-[250ms] ease-in-out ${
+        className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-250 ease-in-out ${
           props.hideChrome ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
         }`}
       >
@@ -51,13 +51,13 @@ export function Frame(props: FrameProps): React.ReactElement {
         </div>
       </div>
       <div
-        className={`w-full h-full overflow-hidden relative transition-[border-radius] duration-[250ms] ease-in-out ${
+        className={`w-full h-full overflow-hidden relative transition-[border-radius] duration-250 ease-in-out ${
           props.hideChrome ? "" : "card card-border border-base-300"
         }`}
       >
         {props.children}
         <div
-          className={`transition-opacity duration-[250ms] ease-in-out ${
+          className={`transition-opacity duration-250 ease-in-out ${
             props.hideChrome ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
         >

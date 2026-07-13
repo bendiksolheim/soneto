@@ -1,7 +1,7 @@
 "use client";
 
 import { XCircleIcon } from "@/icons";
-import { Button } from "../base";
+import { Button } from "../base/button";
 
 type RunModeOverlayProps = {
   onExit: () => void;

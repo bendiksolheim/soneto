@@ -2,11 +2,9 @@ import type { Point } from "../map/point";
 import { densifyLineString, type LngLat } from "./densify";
 import { bearingTo, destinationPoint } from "./geo";
 
-export const DENSIFY_INTERVAL_METERS = 500;
-export const DISTANCE_TOLERANCE = 0.15;
 export const MAX_DISTANCE_SCALING_RETRIES = 2;
-export const MAX_DIRECTION_ROTATION_RETRIES = 2;
-export const DIRECTION_ROTATION_STEP_DEGREES = 45;
+const MAX_DIRECTION_ROTATION_RETRIES = 2;
+const DIRECTION_ROTATION_STEP_DEGREES = 45;
 
 export type GenerateRouteInput = {
   start: Point;
@@ -130,7 +128,13 @@ export function elongatedWaypoints(
   elongation: number,
   lateralOffset: number,
 ): ElongatedWaypoints {
-  const { pLatL, pLatR } = lateralWaypoints(start, bearing, scale, scale * elongation, lateralOffset);
+  const { pLatL, pLatR } = lateralWaypoints(
+    start,
+    bearing,
+    scale,
+    scale * elongation,
+    lateralOffset,
+  );
   return {
     pFar: destinationPoint(start, bearing, scale * elongation),
     pLatL,

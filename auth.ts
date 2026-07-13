@@ -16,7 +16,7 @@ declare module "next-auth/jwt" {
   }
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth } = NextAuth({
   providers: [GitHub],
   session: { strategy: "jwt" },
   callbacks: {

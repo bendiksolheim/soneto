@@ -11,6 +11,8 @@ type ButtonProps = React.PropsWithChildren<{
   square?: boolean;
   active?: boolean;
   disabled?: boolean;
+  "aria-label"?: string;
+  "aria-expanded"?: boolean;
 }>;
 export function Button(props: ButtonProps) {
   const variant = variants[props.variant] || undefined;
@@ -37,6 +39,8 @@ export function Button(props: ButtonProps) {
       onClick={props.onClick}
       disabled={props.disabled}
       type="button"
+      aria-label={props["aria-label"]}
+      aria-expanded={props["aria-expanded"]}
     >
       {props.children}
     </button>

@@ -1,0 +1,16 @@
+minimumReleaseAge: 1440
+trustPolicy: no-downgrade
+# These packages publish without provenance attestation while earlier versions
+# had it, which trips no-downgrade. They're known-good direct/transitive deps
+# (next-auth v5 is still in beta), so exempt them until they ship provenance.
+trustPolicyExclude:
+  - next-auth
+  - react-redux
+  - reselect
+  - semver
+  - undici-types
+allowBuilds:
+  better-sqlite3: false
+  esbuild: true
+  msw: true
+  sharp: true

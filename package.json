@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "biome check",
     "lint:fix": "biome check --write",
+    "format": "biome format --write app/ components/ hooks/ icons/ lib/ test/",
+    "doctor": "react-doctor --verbose --json",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
@@ -20,11 +22,10 @@
     "@mapbox/polyline": "^1.2.1",
     "@mapbox/search-js-react": "^1.5.1",
     "babel-plugin-react-compiler": "^1.0.0",
-    "better-sqlite3": "^12.9.0",
     "clsx": "^2.1.1",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "1.0.0-rc.4",
     "mapbox-gl": "^3.22.0",
-    "next": "^16.2.4",
+    "next": "^16.2.6",
     "next-auth": "5.0.0-beta.31",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
@@ -37,7 +38,6 @@
     "@tailwindcss/postcss": "^4.2.4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.19.17",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
@@ -45,20 +45,16 @@
     "@vitest/coverage-v8": "^4.1.5",
     "@vitest/ui": "^4.1.5",
     "daisyui": "^5.5.19",
-    "drizzle-kit": "^0.31.10",
+    "drizzle-kit": "1.0.0-rc.4",
     "happy-dom": "^20.9.0",
     "knip": "^6.7.0",
     "msw": "^2.13.6",
     "postcss": "^8.5.12",
+    "react-doctor": "^0.7.1",
     "tailwindcss": "^4.2.4",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5"
   },
   "browserslist": "> 1%",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "better-sqlite3"
-    ]
-  },
-  "packageManager": "pnpm@10.26.1"
+  "packageManager": "pnpm@11.10.0"
 }

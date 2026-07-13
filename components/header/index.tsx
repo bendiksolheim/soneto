@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
+import { BarsIcon, XMarkIcon } from "@/icons";
 import type { Point } from "@/lib/map/point";
-import { ChooseRoute, MobileMenu } from "./choose-route";
-import { User } from "./user";
+import { Button } from "../base/button";
+import { Menu } from "./menu";
 
 type HeaderProps = {
   points: Array<Point>;
@@ -11,24 +13,28 @@ type HeaderProps = {
 };
 
 export function Header({ points, onClearPoints, onRouteLoad }: HeaderProps): React.ReactElement {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <div className="flex justify-between h-12 items-center">
-      <div className="text-lg justify-self-start content-center">Soneto</div>
-      <ChooseRoute
-        className="justify-self-center content-center max-md:hidden"
-        points={points}
-        onRouteLoad={onRouteLoad}
-        onClearPoints={onClearPoints}
-      />
-      <div className="justify-self-end flex justify-end items-center">
-        <User className="max-md:hidden" />
-        <MobileMenu
-          className="md:hidden"
+      <div className="text-lg content-center">Soneto</div>
+      <Button
+        square
+        active={isOpen}
+        aria-label="Meny"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((v) => !v)}
+      >
+        {isOpen ? <XMarkIcon size={20} /> : <BarsIcon size={20} />}
+      </Button>
+      {isOpen && (
+        <Menu
           points={points}
+          onClose={() => setIsOpen(false)}
           onRouteLoad={onRouteLoad}
           onClearPoints={onClearPoints}
         />
-      </div>
+      )}
     </div>
   );
 }

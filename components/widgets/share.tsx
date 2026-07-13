@@ -1,4 +1,4 @@
-import { Button } from "@/components/base";
+import { Button } from "@/components/base/button";
 import { ArrowDownCircleIcon, ShareIcon } from "@/icons";
 import { directionsToGeoJson } from "@/lib/map/directions-to-geojson";
 import { exportGpx } from "@/lib/map/gpx";

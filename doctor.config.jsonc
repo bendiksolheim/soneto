@@ -1,0 +1,11 @@
+{
+  // React Doctor scans the whole tree, and its security-scan rules
+  // (e.g. artifact-env-leak) deliberately walk build output such as
+  // .next/ — these files are gitignored but not skipped by the scanner.
+  // We only want findings for our own source, so drop diagnostics that
+  // land in generated/build directories. This filters the reported
+  // results; the rules themselves stay enabled for real source files.
+  "ignore": {
+    "files": [".next/**", "out/**", "dist/**", "dist-ssr/**"]
+  }
+}

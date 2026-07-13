@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Point } from "@/lib/map/point";
 import {
   type GenerateRouteInput,
   type GenerateRouteResult,
-  type RouteDebugData,
   generateRouteDirections,
   generateRouteIsochrone,
   generateRouteOptimization,
+  type RouteDebugData,
 } from "@/lib/routes";
-import { Button } from "../base";
+import { Button } from "../base/button";
 
 type Algorithm = "directions" | "isochrone" | "optimization";
 
@@ -78,7 +78,9 @@ export function AutoRoute(props: AutoRouteProps): React.ReactElement {
   const [distanceTolerance, setDistanceTolerance] = useState<string>("0.15");
   const [densifyIntervalMeters, setDensifyIntervalMeters] = useState<string>("500");
   const [showDebug, setShowDebug] = useState<boolean>(false);
-  const [lastDebugData, setLastDebugData] = useState<RouteDebugData | null>(null);
+  // Only read inside the debug-toggle handler, never rendered, so a ref avoids
+  // re-rendering the whole form on every generated route.
+  const lastDebugData = useRef<RouteDebugData | null>(null);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   const locationUnavailable = props.userLocation === null;
@@ -113,7 +115,7 @@ export function AutoRoute(props: AutoRouteProps): React.ReactElement {
     try {
       const result: GenerateRouteResult = await runAlgorithm(algorithm, input, props.mapboxToken);
 
-      setLastDebugData(result.debug);
+      lastDebugData.current = result.debug;
       props.onRouteGenerated(result);
       props.onDebugDataChanged(showDebug ? result.debug : null);
       setStatus({ kind: "success", actualDistanceMeters: result.actualDistanceMeters });
@@ -280,7 +282,7 @@ export function AutoRoute(props: AutoRouteProps): React.ReactElement {
           checked={showDebug}
           onChange={(e) => {
             setShowDebug(e.target.checked);
-            props.onDebugDataChanged(e.target.checked ? lastDebugData : null);
+            props.onDebugDataChanged(e.target.checked ? lastDebugData.current : null);
           }}
         />
         <span className="label-text text-xs">Show debug overlay</span>

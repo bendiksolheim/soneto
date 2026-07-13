@@ -1,21 +1,39 @@
 import type { ReactNode } from "react";
-import { Layer, type LineLayerSpecification, type FillLayerSpecification, Source } from "react-map-gl/mapbox";
+import {
+  type FillLayerSpecification,
+  Layer,
+  type LineLayerSpecification,
+  Source,
+} from "react-map-gl/mapbox";
 import type { RouteDebugData } from "@/lib/routes";
 
 type RouteDebugOverlayProps = {
   data: RouteDebugData;
 };
 
+const toCoord = (p: { longitude: number; latitude: number }): [number, number] => [
+  p.longitude,
+  p.latitude,
+];
+
 export function RouteDebugOverlay({ data }: RouteDebugOverlayProps): ReactNode {
   const { start, pFar, pLatL, pLatR, midpoints } = data.diamond;
-
-  const toCoord = (p: { longitude: number; latitude: number }): [number, number] => [p.longitude, p.latitude];
 
   // Draw the waypoint path the algorithm sends to Mapbox as a closed LineString.
   // When midpoints are present (rounded topology) draw all 8 points; otherwise
   // draw the 4-point kite/triangle path.
   const coords: [number, number][] = midpoints
-    ? [start, midpoints[0], pLatL, midpoints[1], pFar, midpoints[2], pLatR, midpoints[3], start].map(toCoord)
+    ? [
+        start,
+        midpoints[0],
+        pLatL,
+        midpoints[1],
+        pFar,
+        midpoints[2],
+        pLatR,
+        midpoints[3],
+        start,
+      ].map(toCoord)
     : [start, pLatL, pFar, pLatR, start].map(toCoord);
 
   const waypointPath: GeoJSON.Feature<GeoJSON.LineString> = {

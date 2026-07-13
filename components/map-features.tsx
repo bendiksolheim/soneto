@@ -4,11 +4,19 @@ import { AdjustmentsHorizontalIcon, CalculatorIcon, ListOrdered, SparklesIcon } 
 import { LineChartArea } from "@/icons/line-chart-area";
 import type { Point } from "@/lib/map/point";
 import type { GenerateRouteResult, RouteDebugData } from "@/lib/routes";
-import { Button, Card, Modal } from "./base";
+import { Button } from "./base/button";
+import { Card } from "./base/card";
+import { Modal } from "./base/modal";
 import { AutoRoute } from "./widgets/auto-route";
 import { ElevationProfile } from "./widgets/elevation-profile";
 import { RouteStats } from "./widgets/route-stats";
 import { WaypointsList } from "./widgets/waypoints-list";
+
+function formatPace(pace: number): string {
+  const minutes = Math.floor(pace / 60);
+  const seconds = Math.round(pace - minutes * 60);
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
 
 type MapFeatureProps = {
   elevation: Array<{
@@ -120,12 +128,6 @@ function RouteStatsCard(props: RouteStatsCardProps): React.ReactElement {
     setPace(Number(event.target.value));
   };
 
-  const formatPace = (pace: number) => {
-    const minutes = Math.floor(pace / 60);
-    const seconds = Math.round(pace - minutes * 60);
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-  };
-
   return (
     <Card
       title="Detaljer"
@@ -136,7 +138,7 @@ function RouteStatsCard(props: RouteStatsCardProps): React.ReactElement {
             <AdjustmentsHorizontalIcon size={16} />
           </Button>
           {isPacePopupOpen && (
-            <Modal isOpen={isPacePopupOpen} setIsOpen={setIsPacePopupOpen}>
+            <Modal isOpen={isPacePopupOpen} setIsOpen={setIsPacePopupOpen} label="Adjust pace">
               <div className="space-y-3">
                 <div className="text-center">
                   <div className="text-sm text-gray-500">{formatPace(paceInSeconds)} min/km</div>
@@ -145,6 +147,7 @@ function RouteStatsCard(props: RouteStatsCardProps): React.ReactElement {
                   <input
                     type="range"
                     className="range w-full"
+                    aria-label="Pace in minutes per kilometer"
                     min={120}
                     max={720}
                     step={10}

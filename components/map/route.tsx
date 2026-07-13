@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo } from "react";
+import type { ReactNode } from "react";
 import { Layer, type LineLayerSpecification, Source } from "react-map-gl/mapbox";
 import { directionsToGeoJson } from "@/lib/map/directions-to-geojson";
 import { buildGradientStops } from "@/lib/map/route-gradient";
@@ -16,8 +16,8 @@ type RouteProps = {
 };
 
 export function Route(props: RouteProps): ReactNode {
-  const routeGeoJson = useMemo(() => directionsToGeoJson(props.directions), [props.directions]);
-  const gradientStops = useMemo(() => buildGradientStops(props.elevation), [props.elevation]);
+  const routeGeoJson = directionsToGeoJson(props.directions);
+  const gradientStops = buildGradientStops(props.elevation);
 
   const useGradient = gradientStops.length >= 4;
   const lineStyle = useGradient ? buildGradientStyle(gradientStops) : flatStyle;

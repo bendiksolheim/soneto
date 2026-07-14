@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs_22", "python3", "gnumake"]
+nixPkgs = ["nodejs_26", "python3", "gnumake"]
 
 [phases.build]
 cmds = ["pnpm build"]

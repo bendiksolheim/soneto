@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs_26", "python3", "gnumake"]
+nixPkgs = ["nodejs_26", "corepack", "python3", "gnumake"]
 nixpkgsArchive = "753cc8a3a87467296ddd1fa93f0cc3e81120ee46"
 
 [phases.build]

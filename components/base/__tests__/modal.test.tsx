@@ -44,7 +44,7 @@ describe("Modal", () => {
         content
       </Modal>,
     );
-    fireEvent.click(screen.getByRole("button", { name: "✕", hidden: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Lukk", hidden: true }));
     expect(setIsOpen).toHaveBeenCalledWith(false);
   });
 

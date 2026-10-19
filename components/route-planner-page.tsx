@@ -8,6 +8,7 @@ import type { TrackingMode } from "@/components/map/location-control";
 import { RunModeOverlay } from "@/components/map/run-mode-overlay";
 import { Share } from "@/components/widgets/share";
 import { useDeviceHeading } from "@/hooks/use-device-heading";
+import { useElevationProfile } from "@/hooks/use-elevation-profile";
 import { useFadeTransition } from "@/hooks/use-fade-transition";
 import { useFeatureFlag } from "@/hooks/use-feature-flag";
 import { useUserLocation } from "@/hooks/use-user-location";
@@ -31,9 +32,6 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
   const [directions, setDirections] = useState<Array<Directions>>([]);
-  const [elevation, setElevation] = useState<
-    Array<{ distance: number; elevation: number; coordinate: [number, number] }>
-  >([]);
   const [hoveredElevationIndex, setHoveredElevationIndex] = useState<number | null>(null);
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
   const [debugData, setDebugData] = useState<RouteDebugData | null>(null);
@@ -151,17 +149,23 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
     }
   }, [routePoints]);
 
-  // Fetch directions when route points change
+  // Elevation for the current route, shared by the map (hover lookup) and the elevation panel.
+  const elevation = useElevationProfile(directions, mapboxToken);
+
+  // Fetch directions when route points change. A newer edit can resolve before an older
+  // one, so ignore results from superseded runs.
   useEffect(() => {
+    let cancelled = false;
+
     async function updateDirections() {
-      if (routePoints.length >= 2) {
-        const direction = await getRoute(routePoints, mapboxToken);
-        setDirections(direction);
-      } else {
-        setDirections([]);
-      }
+      const direction = routePoints.length >= 2 ? await getRoute(routePoints, mapboxToken) : [];
+      if (!cancelled) setDirections(direction);
     }
-    updateDirections();
+    updateDirections().catch((error) => console.error("Failed to fetch directions:", error));
+
+    return () => {
+      cancelled = true;
+    };
   }, [routePoints, mapboxToken]);
 
   const handleClearPoints = () => {
@@ -224,7 +228,7 @@ export default function RoutePlannerPage({ initialRoute }: RoutePlannerPageProps
         routePoints={routePoints}
         setRoutePoints={setRoutePoints}
         directions={directions}
-        setElevation={setElevation}
+        elevation={elevation}
         hoveredElevationIndex={hoveredElevationIndex}
         onElevationHover={setHoveredElevationIndex}
         hoveredPointIndex={hoveredPointIndex}

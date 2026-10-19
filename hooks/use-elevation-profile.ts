@@ -6,15 +6,14 @@ import {
 import { createElevationLookup, fetchElevations } from "@/lib/elevation/terrain-rgb";
 import type { Directions } from "@/lib/mapbox";
 
-type ElevationSample = { distance: number; elevation: number; coordinate: [number, number] };
+export type ElevationSample = { distance: number; elevation: number; coordinate: [number, number] };
 
-// Query elevation for the current route and generate the elevation profile. The result
-// is both returned (for the map's hover lookup) and pushed to the caller via
-// setElevation (for the elevation panel), so both stay in sync from a single fetch.
+// Query elevation for the current route and generate the elevation profile. Called by the
+// page that owns the route, which hands the result to both the map (hover lookup) and the
+// elevation panel, so both stay in sync from a single fetch.
 export function useElevationProfile(
   directions: Array<Directions>,
   mapboxToken: string,
-  setElevation: (elevation: Array<ElevationSample>) => void,
 ): Array<ElevationSample> {
   const [elevationData, setElevationData] = useState<Array<ElevationSample>>([]);
 
@@ -54,7 +53,6 @@ export function useElevationProfile(
       );
 
       setElevationData(data);
-      setElevation(data);
     }
 
     fetchAndGenerateElevation();
@@ -62,7 +60,7 @@ export function useElevationProfile(
     return () => {
       cancelled = true;
     };
-  }, [directions, setElevation, mapboxToken]);
+  }, [directions, mapboxToken]);
 
   return elevationData;
 }

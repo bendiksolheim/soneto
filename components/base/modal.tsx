@@ -40,6 +40,7 @@ export function Modal({
             className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
             onClick={() => setIsOpen(false)}
             type="button"
+            aria-label="Lukk"
           >
             ✕
           </button>

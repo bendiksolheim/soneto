@@ -7,13 +7,16 @@ export function useFadeTransition(active: boolean, durationMs: number) {
   const [mounted, setMounted] = useState(active);
   const [visible, setVisible] = useState(active);
 
+  // Mount / start fading out in the same render `active` flips, instead of an extra
+  // render from an effect. Only the delayed steps below need effects.
+  if (active && !mounted) setMounted(true);
+  if (!active && visible) setVisible(false);
+
   useEffect(() => {
     if (active) {
-      setMounted(true);
       const id = requestAnimationFrame(() => setVisible(true));
       return () => cancelAnimationFrame(id);
     }
-    setVisible(false);
     const id = setTimeout(() => setMounted(false), durationMs);
     return () => clearTimeout(id);
   }, [active, durationMs]);

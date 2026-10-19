@@ -34,12 +34,7 @@ export function directions(coordinates: Array<Point>, token: string): Promise<Di
     .map((coord) => `${coord.longitude},${coord.latitude}`)
     .join(";");
   const query = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinatesString}?overview=full&geometries=geojson&exclude=ferry&continue_straight=true&access_token=${token}`;
-  try {
-    return fetch(query).then((res) => res.json());
-  } catch (error) {
-    console.error(error);
-    return Promise.reject(error);
-  }
+  return fetchJson(query);
 }
 
 export type OptimizedTrips = {
@@ -69,12 +64,7 @@ export function optimizedTrips(coordinates: Array<Point>, token: string): Promis
   const query =
     `https://api.mapbox.com/optimized-trips/v1/mapbox/walking/${coordinatesString}` +
     `?roundtrip=true&source=first&overview=full&geometries=geojson&access_token=${token}`;
-  try {
-    return fetch(query).then((res) => res.json());
-  } catch (error) {
-    console.error(error);
-    return Promise.reject(error);
-  }
+  return fetchJson(query);
 }
 
 export type Isochrone = {
@@ -91,10 +81,16 @@ export function isochrone(center: Point, contourMeters: number, token: string): 
   const query =
     `https://api.mapbox.com/isochrone/v1/mapbox/walking/${center.longitude},${center.latitude}` +
     `?contours_meters=${Math.round(contourMeters)}&polygons=true&access_token=${token}`;
-  try {
-    return fetch(query).then((res) => res.json());
-  } catch (error) {
-    console.error(error);
-    return Promise.reject(error);
+  return fetchJson(query);
+}
+
+// fetch() resolves on HTTP 4xx/5xx, so reject explicitly instead of handing an error
+// payload to callers as if it were a successful response. "No route found" style
+// answers come back as 200 with empty results, which callers handle themselves.
+async function fetchJson<T>(url: string): Promise<T> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Mapbox request failed with status ${response.status}`);
   }
+  return response.json();
 }

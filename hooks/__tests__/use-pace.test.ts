@@ -10,36 +10,24 @@ describe("usePace", () => {
     localStorageMock = setupLocalStorageMock();
   });
 
-  it("initializes with default pace (360s)", async () => {
+  it("initializes with default pace (360s)", () => {
     localStorageMock.getItem.mockReturnValue(null);
 
     const { result } = renderHook(() => usePace());
 
-    await waitFor(() => {
-      expect(result.current.isLoaded).toBe(true);
-    });
-
     expect(result.current.pace).toBe(360);
   });
 
-  it("loads saved pace from localStorage", async () => {
+  it("loads saved pace from localStorage", () => {
     localStorageMock.getItem.mockReturnValue("420"); // 7 min/km
 
     const { result } = renderHook(() => usePace());
-
-    await waitFor(() => {
-      expect(result.current.isLoaded).toBe(true);
-    });
 
     expect(result.current.pace).toBe(420);
   });
 
   it("saves valid pace to localStorage", async () => {
     const { result } = renderHook(() => usePace());
-
-    await waitFor(() => {
-      expect(result.current.isLoaded).toBe(true);
-    });
 
     act(() => {
       result.current.setPace(300); // 5 min/km
@@ -52,12 +40,8 @@ describe("usePace", () => {
     expect(localStorageMock.setItem).toHaveBeenCalledWith("running-pace", "300");
   });
 
-  it("rejects pace below minimum (120s)", async () => {
+  it("rejects pace below minimum (120s)", () => {
     const { result } = renderHook(() => usePace());
-
-    await waitFor(() => {
-      expect(result.current.isLoaded).toBe(true);
-    });
 
     result.current.setPace(60); // Too fast
 
@@ -66,31 +50,23 @@ describe("usePace", () => {
     expect(localStorageMock.setItem).not.toHaveBeenCalledWith("running-pace", "60");
   });
 
-  it("rejects pace above maximum (720s)", async () => {
+  it("rejects pace above maximum (720s)", () => {
     const { result } = renderHook(() => usePace());
-
-    await waitFor(() => {
-      expect(result.current.isLoaded).toBe(true);
-    });
 
     result.current.setPace(800); // Too slow
 
     expect(result.current.pace).toBe(360);
   });
 
-  it("uses default pace when localStorage has invalid data", async () => {
+  it("uses default pace when localStorage has invalid data", () => {
     localStorageMock.getItem.mockReturnValue("invalid");
 
     const { result } = renderHook(() => usePace());
 
-    await waitFor(() => {
-      expect(result.current.isLoaded).toBe(true);
-    });
-
     expect(result.current.pace).toBe(360);
   });
 
-  it("handles localStorage errors gracefully", async () => {
+  it("handles localStorage errors gracefully", () => {
     // Silence warnings
     vi.spyOn(console, "warn").mockImplementation(() => {});
     localStorageMock.getItem.mockImplementation(() => {
@@ -98,10 +74,6 @@ describe("usePace", () => {
     });
 
     const { result } = renderHook(() => usePace());
-
-    await waitFor(() => {
-      expect(result.current.isLoaded).toBe(true);
-    });
 
     // Should still work with default
     expect(result.current.pace).toBe(360);

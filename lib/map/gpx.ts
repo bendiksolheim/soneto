@@ -8,6 +8,9 @@ export function exportGpx(geojson: unknown) {
   const link = document.createElement("a");
   link.download = "route.gpx";
   const blob = new Blob([gpxString], { type: "text/xml" });
-  link.href = window.URL.createObjectURL(blob);
+  const url = window.URL.createObjectURL(blob);
+  link.href = url;
   link.click();
+  // Revoke on the next tick so the browser has started the download before the Blob is freed.
+  setTimeout(() => window.URL.revokeObjectURL(url), 0);
 }

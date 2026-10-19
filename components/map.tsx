@@ -6,7 +6,7 @@ import type { Point } from "@/lib/map/point";
 import type { Directions } from "@/lib/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import dynamic from "next/dynamic";
-import { useEffect, useImperativeHandle, useRef, useState } from "react";
+import { useImperativeHandle, useRef, useState } from "react";
 import MapboxMap, {
   type HillshadeLayerSpecification,
   Layer,
@@ -16,7 +16,8 @@ import MapboxMap, {
   ScaleControl,
   Source,
 } from "react-map-gl/mapbox";
-import { useElevationProfile } from "@/hooks/use-elevation-profile";
+import type { ElevationSample } from "@/hooks/use-elevation-profile";
+import { useFollowCamera } from "@/hooks/use-follow-camera";
 import { useMapResizeObserver } from "@/hooks/use-map-resize-observer";
 import { useRunModeInteractionLock } from "@/hooks/use-run-mode-interaction-lock";
 import { useSmoothFollow } from "@/hooks/use-smooth-follow";
@@ -52,13 +53,8 @@ interface MapContainerProps {
   routePoints: Array<Point>;
   setRoutePoints: (points: Array<Point>) => void;
   directions: Array<Directions>;
-  setElevation: (
-    elevation: Array<{
-      distance: number;
-      elevation: number;
-      coordinate: [number, number];
-    }>,
-  ) => void;
+  // Elevation profile for the current route, used to highlight the hovered point.
+  elevation: Array<ElevationSample>;
   hoveredElevationIndex: number | null;
   onElevationHover: (index: number | null) => void;
   hoveredPointIndex: number | null;
@@ -90,7 +86,7 @@ export function RunMap({
   routePoints,
   setRoutePoints,
   directions,
-  setElevation,
+  elevation,
   hoveredElevationIndex,
   onElevationHover,
   hoveredPointIndex,
@@ -107,9 +103,6 @@ export function RunMap({
 }: MapContainerProps) {
   const mapRef = useRef<MapRef>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  // Armed by beginFollowSession() when a fresh following session starts; the next GPS
-  // fix flies in at street zoom and disarms it, so subsequent fixes just ease.
-  const pendingFlyIn = useRef(false);
   // Fit the initial route (loaded from URL/localStorage before mount) exactly once,
   // when the map first reports ready.
   const hasFittedInitial = useRef(false);
@@ -118,8 +111,6 @@ export function RunMap({
   // from a user gesture); fall back to a local empty ref when not provided.
   const fallbackHeadingRef = useRef<number | null>(null);
   const activeHeadingRef = headingRef ?? fallbackHeadingRef;
-
-  const elevationData = useElevationProfile(directions, mapboxToken, setElevation);
 
   // Smoothly interpolate the follow camera + marker between the ~1Hz GPS fixes so
   // run-mode tracking looks live rather than jumping once per second.
@@ -130,6 +121,8 @@ export function RunMap({
     enabled: runMode,
     ready: mapLoaded,
   });
+
+  const { beginFollowSession } = useFollowCamera({ mapRef, userLocation, trackingMode, runMode });
 
   useImperativeHandle(
     ref,
@@ -142,38 +135,15 @@ export function RunMap({
       resetCamera: () => {
         mapRef.current?.easeTo({ pitch: 0, bearing: 0, duration: 500 });
       },
-      beginFollowSession: () => {
-        pendingFlyIn.current = true;
-      },
+      beginFollowSession,
     }),
-    [],
+    [beginFollowSession],
   );
-
-  // Keep the camera on the user while following. When beginFollowSession() has armed a
-  // fresh session, the next fix flies in at street zoom; every other fix (including a
-  // resume from LOCATED) eases to the new position at the current zoom so we don't yank
-  // the user around. Disabled in run mode: there useSmoothFollow owns the camera, and
-  // this effect's pitch-less easeTo would otherwise cancel the nav-view fly-in's tilt on
-  // every GPS fix.
-  useEffect(() => {
-    if (runMode || trackingMode !== "following" || !userLocation || !mapRef.current) return;
-
-    const center: [number, number] = [userLocation.longitude, userLocation.latitude];
-    if (pendingFlyIn.current) {
-      mapRef.current.flyTo({ center, zoom: 15 });
-      pendingFlyIn.current = false;
-    } else {
-      mapRef.current.easeTo({ center, duration: 500 });
-    }
-  }, [runMode, trackingMode, userLocation]);
 
   useMapResizeObserver(mapRef, mapLoaded);
   useRunModeInteractionLock(mapRef, mapLoaded, runMode);
 
-  const hoveredCoordinate =
-    hoveredElevationIndex !== null && elevationData[hoveredElevationIndex]
-      ? elevationData[hoveredElevationIndex].coordinate
-      : null;
+  const hoveredCoordinate = coordinateAt(elevation, hoveredElevationIndex);
 
   // In run mode we flatten the terrain (exaggeration 0). The follow camera looks at the
   // ground at a steep pitch, and draping the route onto 3D terrain let hills occlude the
@@ -183,25 +153,18 @@ export function RunMap({
   // shades the map; the planning view keeps the 3D terrain.
   const terrain = { source: "terrain-source", exaggeration: runMode ? 0 : 0.5 };
 
-  const onClick = async (e: MapMouseEvent) => {
+  const onClick = (e: MapMouseEvent) => {
     // Run mode is read-only — never add points by tapping the map.
     if (runMode) return;
-    // Use unproject to get more accurate coordinates with terrain enabled
-    const map = mapRef.current;
-    if (map) {
-      const point = map.unproject(e.point);
-      const newPoint: Point = { latitude: point.lat, longitude: point.lng };
-      const newRoutePoints = [...routePoints, newPoint];
-      setRoutePoints(newRoutePoints);
-    } else {
-      // Fallback to original method
-      const newPoint: Point = {
-        latitude: e.lngLat.lat,
-        longitude: e.lngLat.lng,
-      };
-      const newRoutePoints = [...routePoints, newPoint];
-      setRoutePoints(newRoutePoints);
-    }
+    // Use unproject to get more accurate coordinates with terrain enabled, falling back
+    // to the event's own coordinates if the map isn't available.
+    const { lat, lng } = mapRef.current?.unproject(e.point) ?? e.lngLat;
+    setRoutePoints([...routePoints, { latitude: lat, longitude: lng }]);
+  };
+
+  const onMouseMove = (e: MapMouseEvent) => {
+    const index = elevationIndexUnderCursor(e, elevation);
+    if (index !== hoveredElevationIndex) onElevationHover(index);
   };
 
   return (
@@ -228,25 +191,15 @@ export function RunMap({
         }}
         onDragStart={onManualPan}
         terrain={terrain}
-        onMouseMove={(e: MapMouseEvent) => {
-          const features = e.target.queryRenderedFeatures(e.point, {
-            layers: ["route-layer"],
-          });
-
-          if (features.length > 0) {
-            const nearestIndex = findNearestElevationPoint(e.lngLat, elevationData);
-            if (nearestIndex !== null) {
-              onElevationHover(nearestIndex);
-            }
-          } else if (hoveredElevationIndex !== null) {
-            // Clear hover if not over route
-            onElevationHover(null);
-          }
-        }}
+        onMouseMove={onMouseMove}
         interactiveLayerIds={["route-layer"]}
       >
-        {!runMode && <NavigationControl position="bottom-right" />}
-        {!runMode && <ScaleControl position="bottom-left" unit="metric" />}
+        {!runMode && (
+          <>
+            <NavigationControl position="bottom-right" />
+            <ScaleControl position="bottom-left" unit="metric" />
+          </>
+        )}
 
         {/* Terrain source */}
         <Source id="terrain-source" {...terrainSource} />
@@ -255,7 +208,7 @@ export function RunMap({
         <Layer {...hillshadeStyle} source="terrain-source" />
 
         {/* The planned route stays visible as a guide, even in run mode. */}
-        <Route directions={directions} elevation={elevationData} />
+        <Route directions={directions} elevation={elevation} />
         <DistanceMarkers directions={directions} />
         {!runMode && (
           <Markers
@@ -270,13 +223,42 @@ export function RunMap({
           location={runMode ? (renderedPosition ?? userLocation) : userLocation}
           bearing={runMode ? renderedBearing : undefined}
         />
-        {!runMode && hoveredCoordinate && <HoverMarker coordinate={hoveredCoordinate} />}
-        {!runMode && debugData && <RouteDebugOverlay data={debugData} />}
+        {!runMode && (
+          <>
+            {hoveredCoordinate && <HoverMarker coordinate={hoveredCoordinate} />}
+            {debugData && <RouteDebugOverlay data={debugData} />}
+          </>
+        )}
       </MapboxMap>
-      {!runMode && <SearchBox mapboxToken={mapboxToken} mapRef={mapRef} />}
-      {!runMode && <LocationControl mode={trackingMode} onClick={onLocationToggle} />}
+      {!runMode && (
+        <>
+          <SearchBox mapboxToken={mapboxToken} mapRef={mapRef} />
+          <LocationControl mode={trackingMode} onClick={onLocationToggle} />
+        </>
+      )}
     </>
   );
+}
+
+// Coordinate of the elevation sample at `index`, or null when nothing is hovered or the
+// index is out of range for the current profile.
+function coordinateAt(
+  elevation: Array<ElevationSample>,
+  index: number | null,
+): [number, number] | null {
+  if (index === null) return null;
+  return elevation[index]?.coordinate ?? null;
+}
+
+// Index of the elevation sample nearest the cursor while it's over the route line, or
+// null when the cursor isn't on the route.
+function elevationIndexUnderCursor(
+  e: MapMouseEvent,
+  elevation: Array<ElevationSample>,
+): number | null {
+  const features = e.target.queryRenderedFeatures(e.point, { layers: ["route-layer"] });
+  if (features.length === 0) return null;
+  return findNearestElevationPoint(e.lngLat, elevation);
 }
 
 // Frame the camera around a set of route points. Pure given the map instance, so it lives

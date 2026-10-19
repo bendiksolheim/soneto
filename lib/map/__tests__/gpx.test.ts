@@ -21,7 +21,10 @@ describe("exportGpx", () => {
         serializeToString = serializeToString;
       },
     );
-    vi.stubGlobal("URL", { createObjectURL: vi.fn().mockReturnValue("blob:mock") });
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn().mockReturnValue("blob:mock"),
+      revokeObjectURL: vi.fn(),
+    });
 
     exportGpx({ type: "FeatureCollection", features: [] });
 
@@ -41,7 +44,7 @@ describe("exportGpx", () => {
       },
     );
     const createObjectURL = vi.fn().mockReturnValue("blob:mock");
-    vi.stubGlobal("URL", { createObjectURL });
+    vi.stubGlobal("URL", { createObjectURL, revokeObjectURL: vi.fn() });
 
     exportGpx({ type: "FeatureCollection", features: [] });
 
@@ -49,5 +52,29 @@ describe("exportGpx", () => {
     const blob: Blob = createObjectURL.mock.calls[0][0];
     expect(blob).toBeInstanceOf(Blob);
     expect(blob.type).toBe("text/xml");
+  });
+
+  it("revokes the object URL after the download has started", () => {
+    vi.useFakeTimers();
+    const mockLink = { download: "", href: "", click: vi.fn() };
+    vi.spyOn(document, "createElement").mockReturnValueOnce(mockLink as unknown as HTMLElement);
+    vi.stubGlobal(
+      "XMLSerializer",
+      class {
+        serializeToString = vi.fn().mockReturnValue("<gpx />");
+      },
+    );
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn().mockReturnValue("blob:mock"),
+      revokeObjectURL,
+    });
+
+    exportGpx({ type: "FeatureCollection", features: [] });
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+
+    vi.runAllTimers();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:mock");
+    vi.useRealTimers();
   });
 });

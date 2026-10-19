@@ -6,8 +6,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { id } = await params;
-  const body = await request.json();
+  const [{ id }, body] = await Promise.all([params, request.json()]);
   const route = await dbRouteStorage.updateRoute(id, body, session.user.id);
   if (!route) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(route);

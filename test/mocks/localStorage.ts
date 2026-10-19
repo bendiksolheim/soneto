@@ -27,6 +27,7 @@ const createLocalStorageMock = () => {
 // Setup global localStorage mock
 export const setupLocalStorageMock = () => {
   const localStorageMock = createLocalStorageMock();
-  global.localStorage = localStorageMock as Storage;
+  // happy-dom exposes localStorage as a getter-only property, so plain assignment throws.
+  vi.stubGlobal("localStorage", localStorageMock as Storage);
   return localStorageMock;
 };

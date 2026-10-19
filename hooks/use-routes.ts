@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import type { Point } from "@/lib/map/point";
+import CloudRouteStorageService from "@/lib/services/cloud-route-storage";
 import RouteStorageService from "@/lib/services/route-storage";
 import {
   calculateRouteDistance,
@@ -35,26 +36,21 @@ export function useRoutes(): UseRoutesReturn {
   const isCloudStorage = !!user;
 
   const loadRoutes = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
+    setIsLoading(true);
+    setError(null);
 
-      if (user) {
-        const response = await fetch("/api/routes");
-        if (!response.ok) throw new Error("Failed to load routes from cloud storage");
-        const cloudRoutes: RouteWithCalculatedData[] = await response.json();
-        setRoutes(cloudRoutes);
-      } else {
-        const localRoutes = RouteStorageService.getRoutesWithDistance();
-        setRoutes(localRoutes);
-      }
+    try {
+      const loadedRoutes = user
+        ? await CloudRouteStorageService.getRoutes()
+        : RouteStorageService.getRoutesWithDistance();
+      setRoutes(loadedRoutes);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to load routes";
       setError(errorMessage);
       console.error("Failed to load routes:", err);
-    } finally {
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
   }, [user]);
 
   useEffect(() => {
@@ -70,20 +66,9 @@ export function useRoutes(): UseRoutesReturn {
         setError(null);
 
         if (user) {
-          const response = await fetch("/api/routes", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(routeData),
-          });
-          if (!response.ok) throw new Error("Failed to save route to cloud storage");
-          const newRoute: RouteWithCalculatedData = await response.json();
+          const newRoute = await CloudRouteStorageService.saveRoute(routeData);
           setRoutes((prev) => [newRoute, ...prev]);
-          return {
-            id: newRoute.id,
-            name: newRoute.name,
-            points: newRoute.points,
-            createdAt: newRoute.createdAt,
-          };
+          return toStoredRoute(newRoute);
         } else {
           const newRoute = RouteStorageService.saveRoute(routeData);
           const routeWithDistance: RouteWithCalculatedData = {
@@ -108,21 +93,10 @@ export function useRoutes(): UseRoutesReturn {
         setError(null);
 
         if (user) {
-          const response = await fetch(`/api/routes/${id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updates),
-          });
-          if (response.status === 404) return null;
-          if (!response.ok) throw new Error("Failed to update route in cloud storage");
-          const updatedRoute: RouteWithCalculatedData = await response.json();
+          const updatedRoute = await CloudRouteStorageService.updateRoute(id, updates);
+          if (!updatedRoute) return null;
           setRoutes((prev) => prev.map((route) => (route.id === id ? updatedRoute : route)));
-          return {
-            id: updatedRoute.id,
-            name: updatedRoute.name,
-            points: updatedRoute.points,
-            createdAt: updatedRoute.createdAt,
-          };
+          return toStoredRoute(updatedRoute);
         } else {
           const updatedRoute = RouteStorageService.updateRoute(id, updates);
           if (updatedRoute) {
@@ -149,9 +123,7 @@ export function useRoutes(): UseRoutesReturn {
         setError(null);
 
         if (user) {
-          const response = await fetch(`/api/routes/${id}`, { method: "DELETE" });
-          if (!response.ok && response.status !== 404)
-            throw new Error("Failed to delete route from cloud storage");
+          await CloudRouteStorageService.deleteRoute(id);
           setRoutes((prev) => prev.filter((route) => route.id !== id));
           return true;
         } else {
@@ -175,8 +147,7 @@ export function useRoutes(): UseRoutesReturn {
       setError(null);
 
       if (user) {
-        const response = await fetch("/api/routes", { method: "DELETE" });
-        if (!response.ok) throw new Error("Failed to clear routes from cloud storage");
+        await CloudRouteStorageService.clearAllRoutes();
       } else {
         RouteStorageService.clearAllRoutes();
       }
@@ -210,5 +181,16 @@ export function useRoutes(): UseRoutesReturn {
     getRoute,
     refreshRoutes,
     isCloudStorage,
+  };
+}
+
+// The cloud API returns routes with calculated data; callers of save/update only get the
+// stored fields, matching what local storage returns.
+function toStoredRoute(route: RouteWithCalculatedData): StoredRoute {
+  return {
+    id: route.id,
+    name: route.name,
+    points: route.points,
+    createdAt: route.createdAt,
   };
 }

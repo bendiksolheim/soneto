@@ -25,20 +25,30 @@ export function Markers(props: RouteProps): ReactNode {
     props.setRoute(newRoutePoints);
   };
 
-  return props.route.map((point, index) => {
-    const key = `${point.latitude}-${point.longitude}-${index}`;
-    return (
-      <RouteMarker
-        key={key}
-        index={index}
-        point={point}
-        numberOfPoints={props.route.length}
-        isHovered={props.hoveredIndex === index}
-        onClick={(e) => handleMarkerClick(index, e)}
-        onDrag={(e) => handleMarkerDrag(index, e)}
-        onMouseEnter={() => props.onHover(index)}
-        onMouseLeave={() => props.onHover(null)}
-      />
-    );
+  return withMarkerKeys(props.route).map(({ point, index, key }) => (
+    <RouteMarker
+      key={key}
+      index={index}
+      point={point}
+      numberOfPoints={props.route.length}
+      isHovered={props.hoveredIndex === index}
+      onClick={(e) => handleMarkerClick(index, e)}
+      onDrag={(e) => handleMarkerDrag(index, e)}
+      onMouseEnter={() => props.onHover(index)}
+      onMouseLeave={() => props.onHover(null)}
+    />
+  ));
+}
+
+// Key each marker by its coordinates so a marker keeps its identity when points before
+// it are removed. A route can visit the same spot more than once (e.g. a loop that ends
+// where it starts), so repeated coordinates get an occurrence suffix.
+function withMarkerKeys(route: Array<Point>): Array<{ point: Point; index: number; key: string }> {
+  const coordinateKey = (point: Point) => `${point.latitude},${point.longitude}`;
+  return route.map((point, index) => {
+    const occurrence = route
+      .slice(0, index)
+      .filter((earlier) => coordinateKey(earlier) === coordinateKey(point)).length;
+    return { point, index, key: `${coordinateKey(point)}#${occurrence}` };
   });
 }

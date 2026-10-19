@@ -10,7 +10,10 @@ const twoPoints: Point[] = [
 const mockResponse = { routes: [], uuid: "test", waypoints: [] };
 
 beforeEach(() => {
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ json: () => Promise.resolve(mockResponse) }));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(mockResponse) }),
+  );
 });
 
 afterEach(() => {
@@ -57,16 +60,27 @@ describe("directions", () => {
 
   it("returns the parsed JSON response", async () => {
     const data = { routes: [{ distance: 150 }], uuid: "abc", waypoints: [] };
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ json: () => Promise.resolve(data) }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(data) }),
+    );
 
     const result = await directions(twoPoints, "token");
     expect(result).toEqual(data);
   });
 
   it("rejects when fetch throws", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network error")));
 
     await expect(directions(twoPoints, "token")).rejects.toThrow("network error");
+  });
+
+  it("rejects when the API responds with an HTTP error", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, status: 401, json: () => Promise.resolve({}) }),
+    );
+
+    await expect(directions(twoPoints, "token")).rejects.toThrow("status 401");
   });
 });

@@ -35,9 +35,13 @@ export function useUserLocation(options: UseUserLocationOptions = {}): UseUserLo
   const [isTracking, setIsTracking] = useState(false);
   const watchId = useRef<number | null>(null);
 
-  // Keep the latest onError in a ref so start/stop stay referentially stable.
-  const onErrorRef = useRef(options.onError);
-  onErrorRef.current = options.onError;
+  // Keep the latest onError in a ref so start/stop stay referentially stable. Synced in
+  // an effect rather than during render; it's only ever called from async callbacks.
+  const { onError } = options;
+  const onErrorRef = useRef(onError);
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
 
   const clearWatch = useCallback(() => {
     if (watchId.current !== null) {

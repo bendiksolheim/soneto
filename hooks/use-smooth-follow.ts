@@ -74,20 +74,18 @@ export function useSmoothFollow({
   const introEndRef = useRef(0);
   const lastPublishRef = useRef(0);
 
-  // Reset all follow state when a session starts/ends so re-entering run mode flies in
-  // afresh and leaving stops publishing a stale marker.
+  // Reset all follow state when a session starts so re-entering run mode flies in
+  // afresh, and drop the published marker when it ends so it doesn't linger stale.
   useEffect(() => {
-    if (enabled) {
-      fromRef.current = null;
-      toRef.current = null;
-      renderedRef.current = null;
-      gpsHeadingRef.current = null;
-      bearingRef.current = 0;
-      introEndRef.current = 0;
-      lastPublishRef.current = 0;
-    } else {
-      setRenderedPosition(null);
-    }
+    if (!enabled) return;
+    fromRef.current = null;
+    toRef.current = null;
+    renderedRef.current = null;
+    gpsHeadingRef.current = null;
+    bearingRef.current = 0;
+    introEndRef.current = 0;
+    lastPublishRef.current = 0;
+    return () => setRenderedPosition(null);
   }, [enabled]);
 
   const publish = useCallback((center: [number, number], bearing: number, now: number) => {
